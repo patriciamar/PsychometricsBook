@@ -1,8 +1,8 @@
 #-----------------------------------------------------------------
 # Chapter 3 - Reliability in complex designs
 # Introduction to psychometric methods
-# in educational, psychological, and health-related measurements.
-# Using R.
+# in education, psychology, and health.
+# With examples in R.
 # P. Martinkova & A. Hladka
 #-----------------------------------------------------------------
 
