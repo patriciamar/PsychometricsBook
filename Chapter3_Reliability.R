@@ -1,8 +1,8 @@
 #-----------------------------------------------------------------
 # Chapter 3 - Reliability in complex designs
 # Introduction to psychometric methods
-# in educational, psychological, and health-related measurements.
-# Using R.
+# in education, psychology, and health.
+# With examples in R.
 # P. Martinkova & A. Hladka
 #-----------------------------------------------------------------
 
@@ -109,30 +109,6 @@ cor.test(HCI_test$total, HCI_retest$total)
 ## sample estimates:
 ##       cor
 ## 0.7700
-#--------------
-
-#--------------
-cor.test(HCI_test$total, HCI_retest$total, method = "spearman")
-## Spearman's rank correlation rho
-##
-## data:  HCI_test$total and HCI_retest$total
-## S = 3730.7, p-value = 2e-09
-## alternative hypothesis: true rho is not equal to 0
-## sample estimates:
-##       rho
-## 0.7542
-#--------------
-
-#--------------
-cor.test(HCI_test$total, HCI_retest$total, method = "kendall")
-## Kendall's rank correlation tau
-##
-## data:  HCI_test$total and HCI_retest$total
-## z = 5.5673, p-value = 3e-08
-## alternative hypothesis: true tau is not equal to 0
-## sample estimates:
-##       tau
-## 0.6222
 #--------------
 
 #-----------------------------------------------------------------
@@ -925,3 +901,4 @@ Var
 ## absolute error variance?
 ## absolute standard error of measurement?
 #--------------
+

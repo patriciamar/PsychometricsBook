@@ -1,8 +1,8 @@
 #-----------------------------------------------------------------
 # Chapter 6 - Regression models for description of item properties
 # Introduction to psychometric methods
-# in educational, psychological, and health-related measurements.
-# Using R.
+# in education, psychology, and health.
+# With examples in R.
 # P. Martinkova & A. Hladka
 #-----------------------------------------------------------------
 

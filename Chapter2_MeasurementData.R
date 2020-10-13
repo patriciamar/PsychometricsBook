@@ -91,7 +91,7 @@ summary(HCI[,6])
 #--------------
 
 #--------------
-by(HCI$`Item 1`, HCI$gender, summary, simplify = TRUE)
+by(HCI$`Item 1`, HCI$gender, summary)
 ## HCI$gender: 0
 ##  Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
 ## 0.000   0.000   1.000   0.716   1.000   1.000
@@ -141,7 +141,9 @@ unlist(HCIkey)
 ## key12 key13 key14 key15 key16 key17 key18 key19 key20
 ##     D     A     A     C     A     C     C     C     D
 ## Levels: A B C D
+#--------------
 
+#--------------
 HCIscored <- score(items = HCItest[, 1:20],
                    key = unlist(HCIkey),
                    output.scored = TRUE)
@@ -151,6 +153,12 @@ head(HCIscored$scored, n = 3)
 ## [2,]      1      1      1      1      1      1      0      1      1
 ## [3,]      1      1      1      1      0      1      0      1      1
 ## ...
+
+table(HCIscored$scored[, "Item 1"])
+##   0   1
+## 196 455
+#--------------
+
 summary(HCIscored$score)
 ## Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
 ##  3.0    10.0    12.0    12.2    15.0    20.0
@@ -160,11 +168,34 @@ summary(HCIscored$score)
 # 2.2.3. Ordinal items
 #-----------------------------------------------------------------
 
+#--------------
+data(Science, package = "mirt")
+head(Science, n = 3)
+##   Comfort Work Future Benefit
+## 1       4    4      3       2
+## 2       3    3      3       3
+## 3       3    2      2       3
+
+table(Science$Comfort)
+##  1   2   3   4
+##  5  32 266  89
+#--------------
 
 #-----------------------------------------------------------------
 # 2.2.4. Continuous items
 #-----------------------------------------------------------------
 
+#--------------
+data(EPIA, package = "EstCRM")
+head(EPIA, n = 2)
+##   Item 1 Item 2 Item 3 Item 4 Item 5
+## 1     96     36     80     78     79
+## 2     42      2      1      1      1
+
+summary(EPIA$`Item 1`)
+##   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
+##   1.00   40.00   63.00   62.83   89.00  111.00
+#--------------
 
 #-----------------------------------------------------------------
 # 2.3. Total scores
@@ -220,7 +251,8 @@ tscore <- 10 * zscore + 50 # T-score
 percentiles <- 100 * round(ecdf(HCI$score)(HCI$score), 2) # percentiles
 success_rate <- 100 * (HCI$score / max(HCI$score)) # success rate
 
-head(data.frame(score = HCI$score, zscore, tscore, percentiles, success_rate))
+head(data.frame(score = HCI$score, zscore, tscore,
+                percentiles, success_rate))
 ##   score zscore tscore percentiles success_rate
 ## 1    16 1.0408 60.408          87           80
 ## 2    19 1.8650 68.650          99           95
