@@ -89,6 +89,14 @@ coef(lm(`Item 1` ~ zscore, data = EPIA))
 #--------------
 
 #--------------
+# Correspondence to classical item parameters:
+mean(EPIA$`Item 1`)
+## [1] 62.8296
+
+cor(EPIA$`Item 1`, EPIA$zscore) * sd(EPIA$`Item 1`)
+## [1,] 17.3876
+
+#--------------
 # plot of estimated curve
 ggplot(data = EPIA, aes(x = `zscore`, y = `Item 1`)) +
   geom_point(
@@ -240,6 +248,47 @@ setNames(
 #--------------
 
 #--------------
+# Joint model for all items: data preparation
+HCI$zscore <- scale(rowSums(HCI[, 1:20])) # Z-score
+HCI$person <- 1:nrow(HCI)
+
+# converting data to the long format
+HCI.long <- reshape(
+  data = HCI,
+  varying = list(paste("Item", 1:20)), timevar = "item", v.names = "rating",
+  idvar = c("person", "gender", "major", "zscore"),
+  direction = "long", new.row.names = 1:13020
+)
+
+head(HCI.long, n = 2)
+##   gender major   zscore person item rating
+## 1      0     1 1.040755      1    1      1
+## 2      0     1 1.865002      2    1      1
+
+summary(HCI.long)
+# person ID and item ID as factors:
+HCI.long$person <- as.factor(HCI.long$person)
+HCI.long$item <- as.factor(HCI.long$item)
+#--------------
+
+#--------------
+# Joint model for all items: data preparation
+# 1PL model for all items
+fit_glm1PL <- glm(rating ~ -1 + item, data = HCI.long,
+                  family = binomial)
+coef(fit_glm1PL)
+
+# 2PL model for all items
+fit_glm2PL <- glm(rating ~ -1 + item + zscore:item, data = HCI.long,
+                  family = binomial)
+coef(fit_glm2PL)
+#--------------
+
+#-----------------------------------------------------------------
+# 6.4.2  Nonlinear regression models
+#-----------------------------------------------------------------
+
+#--------------
 # NLR 3P model for item 13
 mod_3PL <- function(x, a, b, c) {
   c + (1 - c) * exp(a * (x - b)) / (1 + exp(a * (x - b)))
@@ -286,10 +335,6 @@ ggplot(df, aes(x = x, y = y)) +
 
 # ggsave("regression_3pl_HCI_item13.png",
 #        width = 6, height = 4, dpi = 300, bg = "transparent")
-
-#-----------------------------------------------------------------
-# 6.4.2  Nonlinear regression models
-#-----------------------------------------------------------------
 
 #--------------
 # NLR 4P model for item 13
@@ -388,7 +433,7 @@ plotAdjacent(fit.adj, matching.name = "Z-score") + ggtitle("Item 18")
 #        width = 6, height = 4, dpi = 300, bg = "transparent")
 
 #-----------------------------------------------------------------
-# 6.5.1  Nominal response models
+# 6.5.2  Nominal response models
 #-----------------------------------------------------------------
 
 #--------------
@@ -425,3 +470,4 @@ plotMultinomial(
 
 # ggsave("regression_multinomial_HCI_item13.png",
 #        width = 6, height = 4, dpi = 300, bg = "transparent")
+
