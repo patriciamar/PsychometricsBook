@@ -214,7 +214,7 @@ coef(fit_rasch_glmer)$ID[1, -1]
 
 #--------------
 # Wright map
-b <- coef(fit_rasch_mirt, simplify = TRUE)$items[, "d"]
+b <- coef(fit_mirt, simplify = TRUE)$items[, "d"]
 ggWrightMap(fs, b)
 #--------------
 
@@ -238,24 +238,22 @@ coef(fit_2PL_mirt, IRTpars = TRUE, simplify = TRUE)
 ## ..
 #--------------
 
-#--------------
-# ICC
-plot(fit_2PL_mirt, type = "trace", facet_items = FALSE)
-# IIC
-plot(fit_2PL_mirt, type = "infotrace", facet_items = FALSE)
-# TIC
-plot(fit_2PL_mirt, type = "infoSE")
-# test score curve
-plot(fit_2PL_mirt)
-#--------------
+# #--------------
+# # ICC
+# plot(fit_2PL_mirt, type = "trace", facet_items = FALSE)
+# # IIC
+# plot(fit_2PL_mirt, type = "infotrace", facet_items = FALSE)
+# # TIC
+# plot(fit_2PL_mirt, type = "infoSE")
+# #--------------
 
-#--------------
-# latent abilities (a.k.a factor scores)
-fs <- as.vector(fscores(fit_2PL_mirt))
-summary(fs)
-##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
-## -2.0438 -0.6429 -0.0262  0.0000  0.6541  1.8618
-#--------------
+# #--------------
+# # Latent abilities (a.k.a factor scores), with S.E.
+# fs <- as.vector(fscores(fit_2PL_mirt))
+# summary(fs)
+# ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
+# ## -2.0438 -0.6429 -0.0262  0.0000  0.6541  1.8618
+# #--------------
 
 #--------------
 # ltm package
@@ -280,6 +278,7 @@ coef(fit_2PL_ltm)
 #-----------------------------------------------------------------
 
 #--------------
+# mirt() of mirt package
 fit_3PL_mirt <- mirt(HCI[, 1:20],
   model = 1, itemtype = "3PL", SE = TRUE,
   technical = list(NCYCLES = 2000)
@@ -296,28 +295,28 @@ coef(fit_3PL_mirt, IRTpars = TRUE, simplify = TRUE)
 ## ..
 #--------------
 
-#--------------
-# test score function
-plot(fit_3PL_mirt)
-# ICC
-plot(fit_3PL_mirt, type = "trace", facet_items = FALSE)
-# IIC
-plot(fit_3PL_mirt, type = "infotrace", facet_items = FALSE)
-# TIC
-plot(fit_3PL_mirt, type = "infoSE")
-#--------------
+# #--------------
+# # Item score function
+# plot(fit_3PL_mirt)
+# # Item Characteristic Curves
+# plot(fit_3PL_mirt, type = "trace", facet_items = FALSE)
+# # Item Information Curves
+# plot(fit_3PL_mirt, type = "infotrace", facet_items = FALSE)
+# # Test Information Function
+# plot(fit_3PL_mirt, type = "infoSE")
+# #--------------
 
-#--------------
-# latent abilities (a.k.a factor scores)
-fs.se <- as.vector(fscores(fit_3PL_mirt))
-summary(fs)
-#--------------
+# #--------------
+# # Latent abilities (a.k.a factor scores), with S.E.
+# fs <- as.vector(fscores(fit_3PL_mirt))
+# summary(fs)
+# #--------------
 
 #--------------
 # ltm package
 fit_3PL_ltm <- tpm(HCI[, 1:20])
 coef(fit_3PL_ltm)
-##         Gussng  Dffclt Dscrmn
+## Gussng  Dffclt Dscrmn
 ## Item 1  0.2983 -0.3177 1.0864
 ## Item 2  0.1785 -1.2092 0.7837
 ## Item 3  0.4571 -0.7067 2.4263
@@ -334,32 +333,30 @@ fit_4PL_mirt <- mirt(
   HCI[, 1:20],
   model = 1, itemtype = "4PL", SE = TRUE
 )
-# Warning message:
-# Could not invert information matrix; model likely is not empirically identified.
 #--------------
 
-#--------------
-# ICC
-plot(fit_4PL_mirt, type = "trace", facet_items = FALSE)
-# IIC
-plot(fit_4PL_mirt, type = "infotrace", facet_items = FALSE)
-# TIC
-plot(fit_4PL_mirt, type = "infoSE")
-# test score function
-plot(fit_4PL_mirt)
-#--------------
+# #--------------
+# # Item score function
+# plot(fit_4PL_mirt)
+# # Item Characteristic Curves
+# plot(fit_4PL_mirt, type = "trace", facet_items = FALSE)
+# # Item Information Curves
+# plot(fit_4PL_mirt, type = "infotrace", facet_items = FALSE)
+# # Test Information Function
+# plot(fit_4PL_mirt, type = "infoSE")
+# #--------------
 
-#--------------
-# coefficients
-coef(fit_4PL_mirt, simplify = TRUE)
-coef(fit_4PL_mirt, IRTpars = TRUE, simplify = TRUE)
-#--------------
+# #--------------
+# # Coefficients
+# coef(fit_4PL_mirt, simplify = TRUE)
+# coef(fit_4PL_mirt, IRTpars = TRUE, simplify = TRUE)
+# #--------------
 
-#--------------
-# latent abilities (a.k.a factor scores)
-fs <- as.vector(fscores(fit_4PL_mirt))
-summary(fs)
-#--------------
+# #--------------
+# # Latent abilities (a.k.a factor scores), with S.E.
+# fs <- as.vector(fscores(fit_4PL_mirt))
+# summary(fs)
+# #--------------
 
 #-----------------------------------------------------------------
 # 7.3.6 Item and test information
@@ -378,29 +375,16 @@ plot(fit_2PL_mirt, type = "infoSE")
 # 7.4  IRT models for polytomous items
 #-----------------------------------------------------------------
 
-#--------------
-data("Anxiety", package = "lordif")
-head(Anxiety[, paste0("R", 1:29)], n = 2)
-##   R1 R2 R3 R4 R5 R6 R7 R8 R9 R10 R11 R12 R13 R14 R15 R16 R17
-## 1  1  1  1  1  1  1  1  2  2   1   2   2   1   1   1   1   1
-## 2  1  1  1  1  1  1  1  1  1   1   1   1   1   1   1   1   1
-##   R18 R19 R20 R21 R22 R23 R24 R25 R26 R27 R28 R29
-## 1   2   1   2   2   1   1   2   3   2   1   1   2
-## 2   1   1   1   1   1   1   1   2   1   1   1   1
-#--------------
-
 #-----------------------------------------------------------------
 # 7.4.1  Graded response model
 #-----------------------------------------------------------------
 
 #--------------
-# GRM with mirt package
+data("Anxiety", package = "lordif")
 fit_GRM_mirt <- mirt(
   Anxiety[, paste0("R", 1:29)],
   model = 1, itemtype = "graded", SE = TRUE
 )
-
-# coefficients with CI
 coef(fit_GRM_mirt, IRTpars = TRUE)
 ## $R1
 ##             a    b1    b2    b3    b4
@@ -410,104 +394,36 @@ coef(fit_GRM_mirt, IRTpars = TRUE)
 ## ...
 #--------------
 
-# coefficients in IRT parametrization (matrix form)
-coef(fit_GRM_mirt, IRTpars = TRUE, simplify = TRUE)
-## $items
-##         a     b1    b2    b3    b4
-## R1  3.449  0.494 1.251 2.031 2.814
-## R2  3.168  0.568 1.426 2.253 3.253
-##  ...
-
-# coefficients in intercept-slope parametrization (matrix form)
-coef(fit_GRM_mirt, simplify = TRUE)
-## $items
-##        a1     d1     d2     d3      d4
-## R1  3.449 -1.703 -4.316 -7.005  -9.704
-## R2  3.168 -1.800 -4.518 -7.138 -10.305
-## ...
-
-# IRC
-plot(fit_GRM_mirt, type = "trace")
-plot(fit_GRM_mirt, type = "trace", facet_items = FALSE)
-# ICC
-plot(fit_GRM_mirt, type = "itemscore")
-plot(fit_GRM_mirt, type = "itemscore", facet_items = FALSE)
-itemplot(fit_GRM_mirt, item = 1, type = "score")
-# IIC
-plot(fit_GRM_mirt, type = "infotrace")
-plot(fit_GRM_mirt, type = "infotrace", facet_items = FALSE)
-itemplot(fit_GRM_mirt, item = 1, type = "info")
-
-itemplot(fit_GRM_mirt, item = 1, type = "infotrace")
-itemplot(fit_GRM_mirt, item = 25, type = "infotrace")
-
-itemplot(fit_GRM_mirt, item = 1)
-
-# test score curve
-plot(fit_GRM_mirt)
-# test score curve with 95% CI
-plot(fit_GRM_mirt, MI = 200)
-
-# TIC
-plot(fit_GRM_mirt, type = "info") # test information
-plot(fit_GRM_mirt, type = "infoSE") # test information and SE
-#--------------
-
-#--------------
-# Factor scores vs standardized total scores
-fs <- as.vector(fscores(fit_GRM_mirt))
-sts <- as.vector(scale(rowSums(Anxiety[, paste0("R", 1:29)])))
-plot(fs ~ sts)
-#--------------
-
-#--------------
-# GRM in ltm package
-fit_GRM_ltm <- ltm::grm(Anxiety[, paste0("R", 1:29)])
-coef(fit_GRM_ltm)
-##     Extrmt1 Extrmt2 Extrmt3 Extrmt4 Dscrmn
-## R1    0.560   1.461   2.366   3.325  2.773
-## R2    0.657   1.667   2.604   3.741  2.605
-## ...
-#--------------
-
-#--------------
-fs_GRM_mirt <- unique(sort(as.vector(fscores(fit_GRM_mirt))))
-fs_GRM_ltm <- factor.scores(fit_GRM_ltm)$score.dat[, "z1"]
-summary(fs_GRM_ltm)
-plot(fs_GRM_mirt ~ fs_GRM_ltm)
-cor(fs_GRM_mirt, fs_GRM_ltm)
-## [1] 0.907
-#--------------
+# # Item Characteristic Curves
+# plot(fit, type = "trace")
+#
+# # Item Information Curves
+# plot(fit, type = "infotrace")
+# plot(fit, type = "infotrace", facet_items = F)
+#
+# # Test Score Curve
+# plot(fit)
+#
+# # Test Score Curve with 95% CI
+# plot(fit, MI = 200)
+#
+# # Test Information Curve
+# plot(fit, type = "info") # test information
+# plot(fit, type = "infoSE") # test information and SE
+#
+# # Coefficients
+# coef(fit, simplify = TRUE)
+# coef(fit, IRTpars = TRUE, simplify = TRUE)
+#
+# # Factor scores vs Standardized total scores
+# fs <- as.vector(fscores(fit))
+# sts <- as.vector(scale(apply(data, 1, sum)))
+# plot(fs ~ sts)
 
 #-----------------------------------------------------------------
-# 7.4.2  Graded rating scale model
+# 7.4.2  Partial credit model
 #-----------------------------------------------------------------
 
-#--------------
-# GRSM with IRT parametrization
-fit_GRSMirt_mirt <- mirt(
-  Anxiety[, paste0("R", 1:29)],
-  model = 1, itemtype = "grsmIRT", SE = TRUE
-)
-
-# coefficients
-coef(fit_GRSMirt_mirt, simplify = TRUE)
-##  $items
-##        a1     d1     d2     d3     d4      c
-## R1  3.200 -0.454 -1.256 -2.214 -3.202  0.000
-## R2  3.109 -0.454 -1.256 -2.214 -3.202 -0.110
-## ...
-#--------------
-
-#--------------
-anova(fit_GRSMirt_mirt, fit_GRM_mirt)
-##        AIC     AICc    SABIC       HQ      BIC    logLik
-## 1 35268.78 35279.52 35358.19 35377.76 35551.89 -17573.39
-## 2 35130.82 35199.11 35343.35 35389.87 35803.79 -17420.41
-##        X2  df   p
-## 1     NaN NaN NaN
-## 2 305.959  84   0
-#--------------
 
 #-----------------------------------------------------------------
 # 7.4.3  Generalized partial credit model
@@ -518,30 +434,17 @@ fit_GPCM_mirt <- mirt(
   Anxiety[, paste0("R", 1:29)],
   model = 1, itemtype = "gpcm", SE = TRUE
 )
-coef(fit_GPCM_mirt, IRTpars = TRUE, simplify = TRUE)
-## $items
-##         a     b1     b2    b3    b4
-## R1  2.935  0.614  1.204 1.859 2.439
-## R2  2.823  0.680  1.355 2.012 2.829
+coef(fit_GPCM_mirt, IRTpars = TRUE)
+## $R1
+##             a    b1    b2    b3    b4
+## par     2.935 0.614 1.204 1.859 2.439
+## CI_2.5  2.461 0.497 1.054 1.630 2.028
+## CI_97.5 3.409 0.732 1.354 2.088 2.850
 ## ...
-## R25 0.741  0.013 -0.182 1.468 2.119
-## ...
 #--------------
 
-#--------------
-itemplot(fit_GPCM_mirt, item = 1, type = "infotrace") 
-itemplot(fit_GPCM_mirt, item = 25, type = "infotrace") 
-#--------------
-
-
 #-----------------------------------------------------------------
-# 7.4.4  Partial credit model
-#-----------------------------------------------------------------
-
-# NEEDS TO BE ADDED
-
-#-----------------------------------------------------------------
-# 7.4.5  Rating scale model
+# 7.4.4  Rating scale model
 #-----------------------------------------------------------------
 
 #--------------
@@ -549,131 +452,23 @@ fit_RSM_mirt <- mirt(
   Anxiety[, paste0("R", 1:29)],
   model = 1, itemtype = "rsm", SE = TRUE
 )
-coef(fit_RSM_mirt, IRTpars = TRUE, simplify = TRUE)
-## $items
-##     a1    b1   b2    b3    b4      c
-## R1   1 1.347 2.09 3.797 5.101  0.000
-## R2   1 1.347 2.09 3.797 5.101 -0.205
+coef(fit_RSM_mirt, IRTpars = TRUE)
+## $R1
+##         a1    b1    b2    b3    b4  c
+## par      1 1.347 2.090 3.797 5.101  0
+## CI_2.5  NA 1.170 1.904 3.595 4.853 NA
+## CI_97.5 NA 1.523 2.275 3.999 5.348 NA
 ## ...
-## R25  1 1.347 2.09 3.797 5.101  2.030
-## ...
-#--------------
-
-#--------------
-itemplot(fit_RSM_mirt, item = 1, type = "infotrace")
-itemplot(fit_RSM_mirt, item = 25, type = "infotrace") 
-#--------------
-
-#--------------
-anova(fit_RSM_mirt, fit_GPCM_mirt)
-##        AIC     AICc    SABIC       HQ      BIC    logLik
-## 1 36446.99 36450.05 36495.36 36505.94 36600.15 -18190.49
-## 2 35326.84 35395.13 35539.37 35585.89 35999.81 -17518.42
-##
-## X2  df   p
-## 1      NaN NaN NaN
-## 2 1344.149 112   0
 #--------------
 
 #-----------------------------------------------------------------
-# 7.4.6  Nominal response model
+# 7.4.5  Nominal response model
 #-----------------------------------------------------------------
 
-# NEEDS TO BE ADDED, on HCI data
+# TO BE ADDED
 
 #-----------------------------------------------------------------
-# 7.4.7  Item-specific models
+# 7.4.6  Item-specific models
 #-----------------------------------------------------------------
 
-#--------------
-load("datasets/CZmatura/CZmathS_sample.RData")
-names(CZmathS)
-summary(CZmathS)
-
-CZmathS$b7 <- CZmathS$b7.1 + CZmathS$b7.2
-CZmathS$b8 <- CZmathS$b8.1 + CZmathS$b8.2
-CZmathS$b9 <- CZmathS$b9.1 + CZmathS$b9.2
-CZmathS <- CZmathS[, paste0("b", 1:26)]
-head(CZmathS, n = 2)
-##      b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 b12 b13 b14 b15 b16 b17 b18
-## 2463  1  0  0  0  0  0  0  0  1   0   1   0   0   0   0   1   0   0
-## 2511  1  1  1  2  1  2  3  1  1   1   1   1   1   3   1   2   2   2
-##      b19 b20 b21 b22 b23 b24 b25 b26
-## 2463   0   0   0   0   0   0   0   0
-## 2511   2   2   2   2   2   2   4   3
-summary(CZmathS)
-
-# 17-24 are scored multiple-choice items (2 points awarded for correct answer)
-CZmathS[, 17:24] <- as.numeric(CZmathS[, 17:24] == 2)
-summary(CZmathS)
-
-maxscore <- sapply(CZmathS, max) # maximal item scores
-maxscore
-# https://maturita.cermat.cz/files/files/Matematika/intaktni-zaci/MZ2020/MA_jaro_2020_klic.pdf
-## b1  b2  b3  b4  b5  b6  b7  b8  b9 b10 b11 b12 b13 b14 b15 b16 b17
-##  1   1   1   2   1   2   3   2   2   1   1   1   1   3   3   2   1
-## b18 b19 b20 b21 b22 b23 b24 b25 b26
-##   1   1   1   1   1   1   1   4   3
-itemtype <- ifelse(maxscore == 1, "2PL", "gpcm")
-itemtype[17:24] <- "3PL"
-#--------------
-
-#--------------
-CZmathS_binary <- as.data.frame(key2binary(CZmathS, maxscore))
-summary(CZmathS_binary)
-
-fit_binary <- mirt(CZmathS_binary, model = 1, itemtype = "2PL")
-fit_mixed <- mirt(CZmathS, model = 1, itemtype = itemtype)
-
-# seems not appropriate, different data
-# anova(fit_mixed, fit_binary)
-#--------------
-
-#--------------
-head(df_fs_CERMAT <- data.frame(
-  fs_mixed = as.vector(fscores(fit_mixed)),
-  fs_binary = as.vector(fscores(fit_binary))
-), n = 3)
-##   fs_mixed fs_binary
-## 1  -1.5180   -1.8272
-## 2   1.3271    1.2489
-## 3   1.4002    1.3361
-
-ggplot(df_fs_CERMAT,
-       aes(x = fs_binary, y = fs_mixed)) +
-  geom_point() +
-  geom_smooth(method = "lm") +
-  xlab("Factor scores - 2PL IRT model") + ylab("Factor scores - item-specific model") +
-  theme_app()
-# ggsave("figures/irt_factorscores_CERMAT.png",
-#       width = 6, height = 4, dpi = 300, bg = "transparent")
-cor(df_fs_CERMAT$fs_mixed, df_fs_CERMAT$fs_binary)
-## [1] 0.9908
-#--------------
-
-#--------------
-# TSC
-plot(fit_mixed)
-plot(fit_binary) 
-
-# ICC selected items 
-plot(fit_binary, type = "trace")
-plot(fit_mixed, type = "trace")
-
-# ICC selected items 2, 22 and 26
-itemplot(fit_binary, item = 2, type = "infotrace")
-itemplot(fit_mixed, item = 2, type = "infotrace")
-itemplot(fit_binary, item = 22, type = "infotrace")
-itemplot(fit_mixed, item = 22, type = "infotrace") # 3pl
-itemplot(fit_binary, item = 26, type = "infotrace")
-itemplot(fit_mixed, item = 26, type = "infotrace") # gpcm
-
-# IIC
-plot(fit_mixed, type = "infotrace", facet_items = FALSE)
-plot(fit_binary, type = "infotrace", facet_items = FALSE)
-
-# TIC
-plot(fit_mixed, type = "infoSE")
-plot(fit_binary, type = "infoSE")
-#--------------
-
+# TO BE ADDED
