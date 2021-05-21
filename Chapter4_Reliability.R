@@ -1,8 +1,6 @@
 #-----------------------------------------------------------------
-# Chapter 3 - Reliability in complex designs
-# Introduction to psychometric methods
-# in education, psychology, and health.
-# With examples in R.
+# Chapter 4 - Reliability in complex designs
+# Computational aspects of psychometric methods. With R.
 # P. Martinkova & A. Hladka
 #-----------------------------------------------------------------
 
@@ -19,9 +17,38 @@ library(psych)
 library(psychometric)
 library(ShinyItemAnalysis)
 library(sirt)
+library(plotrix)
+library(ggforce)
+library(Cairo)
 
 #-----------------------------------------------------------------
-# 3.2.5.1  Spearman-Brown prophecy formula
+# Plot settings
+#-----------------------------------------------------------------
+
+theme_fig <- function(base_size = 17, base_family = "") {
+  theme_bw(base_size = base_size, base_family = base_family) +
+    theme(
+      legend.key = element_rect(fill = "white", colour = NA),
+      axis.line = element_line(colour = "black"),
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank(),
+      panel.background = element_blank(),
+      plot.title = element_blank(),
+      legend.background = element_blank()
+    )
+}
+
+# margins for mirt plots
+lw <- list(left.padding = list(x = 0.1, units = "inches"))
+lw$right.padding <- list(x = -0.1, units = "inches")
+lh <- list(bottom.padding = list(x = 0, units = "inches"))
+lh$top.padding <- list(x = -0.2, units = "inches")
+
+lattice.options(layout.widths = lw, layout.heights = lh)
+
+
+#-----------------------------------------------------------------
+# 4.2.5.1  Spearman-Brown prophecy formula
 #-----------------------------------------------------------------
 
 #--------------
@@ -73,15 +100,15 @@ ceiling(m * items.original) # new test length
 #--------------
 
 #-----------------------------------------------------------------
-# 3.3.1  Correlation coefficients
+# 4.3.1  Correlation coefficients
 #-----------------------------------------------------------------
 
-#--------------
-load("datasets/HCI/HCI_test_retest.RData")
+data(HCItestretest, package = "ShinyItemAnalysis")
+
 
 # divide dataset by `test`
-HCI_test <- HCI_test_retest[HCI_test_retest$test == "1", ]
-HCI_retest <- HCI_test_retest[HCI_test_retest$test == "2", ]
+HCI_test    <- HCItestretest[HCItestretest$test == "test", ]
+HCI_retest  <- HCItestretest[HCItestretest$test == "retest", ]
 #--------------
 
 #--------------
@@ -91,11 +118,8 @@ ggplot(
 ) +
   geom_point() +
   geom_smooth(method = "lm") +
-  theme_app()
+  theme_fig()
 #--------------
-
-# ggsave("figures/reliability_scatterplot_testretest_HCI.png",
-#        width = 6, height = 4, dpi = 300, bg = "transparent")
 
 #--------------
 cor.test(HCI_test$total, HCI_retest$total)
@@ -112,7 +136,7 @@ cor.test(HCI_test$total, HCI_retest$total)
 #--------------
 
 #-----------------------------------------------------------------
-# 3.3.2.1  Split-half coefficient
+# 4.3.2.1  Split-half coefficient
 #-----------------------------------------------------------------
 
 #--------------
@@ -197,7 +221,7 @@ mean(split$raw)
 #--------------
 
 #-----------------------------------------------------------------
-# 3.3.2  Cronbach's alpha
+# 4.3.2  Cronbach's alpha
 #-----------------------------------------------------------------
 
 #--------------
@@ -232,7 +256,7 @@ psychometric::alpha(data)
 #--------------
 
 #-----------------------------------------------------------------
-# 3.3.2.1  Cronbach's alpha and inter-item correlations
+# 4.3.2.1  Cronbach's alpha and inter-item correlations
 #-----------------------------------------------------------------
 
 #--------------
@@ -250,7 +274,7 @@ m * c_bar / (v_bar + (m - 1) * c_bar)
 #--------------
 
 #-----------------------------------------------------------------
-# 3.3.2.2  Cronbach's alpha in ANOVA framework
+# 4.3.2.2  Cronbach's alpha in ANOVA framework
 #-----------------------------------------------------------------
 
 #--------------
@@ -385,11 +409,11 @@ ICC(data)
 #--------------
 
 #-----------------------------------------------------------------
-# 3.4. More sources of error and G-theory
+# 4.4. More sources of error and G-theory
 #-----------------------------------------------------------------
 
 #-----------------------------------------------------------------
-# 3.4.1 A one facet study
+# 4.4.1 A one facet study
 #-----------------------------------------------------------------
 
 #--------------
@@ -524,12 +548,12 @@ hemp::dstudy(G_pxi, n = c("item" = 20), unit = "person")
 #--------------
 dstudy_plot(
   G_pxi, unit = "person",
-  facets = list("item" = seq(from = 0, to = 30, by = 5)),
+  facets = list("Item" = seq(from = 0, to = 30, by = 5)),
   g_coef = TRUE
 )
 dstudy_plot(
   G_pxi, unit = "person",
-  facets = list("item" = seq(from = 0, to = 30, by = 5)),
+  facets = list("Item" = seq(from = 0, to = 30, by = 5)),
   g_coef = FALSE
 )
 #--------------
@@ -675,7 +699,7 @@ dstudy_plot(
 #--------------
 
 #-----------------------------------------------------------------
-# 3.5.1.1 ANOVA method of estimation
+# 4.5.1.1 ANOVA method of estimation
 #-----------------------------------------------------------------
 
 #--------------
@@ -704,7 +728,7 @@ MSe1way <- SSe1way / ((m - 1) * n)
 
 
 #-----------------------------------------------------------------
-# 3.5.1.2 Maximum likelihood
+# 4.5.1.2 Maximum likelihood
 #-----------------------------------------------------------------
 
 #--------------
@@ -723,7 +747,7 @@ as.data.frame(VarCorr(fit))
 
 
 #-----------------------------------------------------------------
-# 3.5.1.3 Restricted maximum likelihood (REML)
+# 4.5.1.3 Restricted maximum likelihood (REML)
 #-----------------------------------------------------------------
 
 #--------------
@@ -735,7 +759,7 @@ as.data.frame(VarCorr(fit_1wayr))
 #--------------
 
 #-----------------------------------------------------------------
-# 3.5.1.4 Bootstrap
+# 4.5.1.4 Bootstrap
 #-----------------------------------------------------------------
 
 #--------------
@@ -785,17 +809,15 @@ ggplot(
   geom_vline(xintercept = quantile(bootAlphaCR, 0.025), col = "red") +
   geom_vline(xintercept = quantile(bootAlphaCR, 0.975), col = "red") +
   xlab("Cronbach's alpha") + ylab("Count") +
-  theme_app()
+  theme_fig()
 #--------------
 
-# ggsave("figures/reliability_histogram_HCI_bootstrap.png",
-#        width = 6, height = 4, dpi = 300, bg = "transparent")
-
 #-----------------------------------------------------------------
-# 3.5.1.5 Bayesian estimation
+# 4.5.1.5 Bayesian estimation
 #-----------------------------------------------------------------
 
 #--------------
+set.seed(1234) # TODO: resave results with seed
 fitB <- brm(
   rating ~ (1 | person) + (1 | item),
   data = data.long
@@ -833,72 +855,6 @@ ggplot(
   geom_vline(xintercept = quantile(bootAlphaCR, 0.025), col = "red") +
   geom_vline(xintercept = quantile(bootAlphaCR, 0.975), col = "red") +
   xlab("Cronbach's alpha") + ylab("Count") +
-  theme_app()
-#--------------
-
-# ggsave("figures/reliability_histogram_HCI_brm.png",
-#        width = 6, height = 4, dpi = 300, bg = "transparent")
-
-#-----------------------------------------------------------------
-# Exercises
-#-----------------------------------------------------------------
-
-#--------------
-# Exercise 1.10
-l1 <- lme4::lmer(ratings ~ (1 | items) + (1 | rater) + (1 | idstud) +
-  (1 | items:rater) + (1 | idstud:rater) +
-  (1 | idstud:items),
-data = data.long
-)
-summary(l1)
-## Linear mixed model fit by REML ['lmerMod']
-## Formula: ratings ~ (1 | items) + (1 | rater) + (1 | idstud) + (1 | items:rater) +
-## (1 | idstud:rater) + (1 | idstud:items)
-## Data: data.long
-##
-## REML criterion at convergence: 5413.7
-##
-## Scaled residuals:
-## Min      1Q  Median      3Q     Max
-## -4.9159 -0.5219 -0.0086  0.5302  4.0807
-##
-## Random effects:
-## Groups       Name        Variance Std.Dev.
-## idstud:items (Intercept) 0.10369  0.32202
-## idstud:rater (Intercept) 0.06896  0.26260
-## idstud       (Intercept) 0.36818  0.60677
-## items:rater  (Intercept) 0.01803  0.13426
-## rater        (Intercept) 0.04181  0.20447
-## items        (Intercept) 0.00287  0.05357
-## Residual                 0.18800  0.43359
-## Number of obs: 3075, groups:
-## idstud:items, 890; idstud:rater, 615; idstud, 178; items:rater, 80; rater, 16; items, 5
-##
-## Fixed effects:
-## Estimate Std. Error t value
-## (Intercept)  1.31403    0.07675   17.12
-
-matrixSD <- as.matrix(lme4::VarCorr(l1))
-Var <- data.frame(c(matrixSD, attr(matrixSD, "sc")^2))
-names(Var) <- c(
-  "idstud:items", "idstud:rater", "idstud", "items:rater",
-  "rater", "items", "Residual"
-)
-Var
-##             idstud:items idstud:rater    idstud items:rater
-## (Intercept)    0.1036941    0.0689583 0.3681753  0.01802671
-##                    rater        items  Residual
-## (Intercept)    0.0418083    0.0028701 0.1879999
-
-
-## variance ratios?
-## variance ratios of average rating?
-## var.universe?
-## generalizability?
-## relative error variance?
-## relative standard error of measurement?
-## dependability?
-## absolute error variance?
-## absolute standard error of measurement?
+  theme_fig()
 #--------------
 
