@@ -1,8 +1,6 @@
 #-----------------------------------------------------------------
 # Chapter 2 - Measurement data
-# Introduction to psychometric methods
-# in education, psychology, and health.
-# With examples in R.
+# Computational aspects of psychometric methods. With R.
 # P. Martinkova & A. Hladka
 #-----------------------------------------------------------------
 
@@ -10,15 +8,34 @@
 # Packages
 #-----------------------------------------------------------------
 
-library(CTT)
-library(difNLR)
 library(ggplot2)
 library(moments)
+library(mirt)
+library(psych)
 library(ShinyItemAnalysis)
+library(Cairo)
+library(tidyverse)
+library(psycho)
 
 #-----------------------------------------------------------------
-# Selected R code
+# Plot settings
 #-----------------------------------------------------------------
+
+theme_fig <- function(base_size = 17, base_family = "") {
+  theme_bw(base_size = base_size, base_family = base_family) +
+    theme(
+      legend.key = element_rect(fill = "white", colour = NA),
+      axis.line = element_line(colour = "black"),
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank(),
+      panel.background = element_blank(),
+      plot.title = element_blank(),
+      legend.background = element_blank()
+    )
+}
+
+par(mgp = c(2.1, 0.7, 0), mar = c(3.4, 3.4, 1.3, 0.9), cex.axis = 1.2,
+    cex.lab = 1.2, ann = FALSE, lwd = 0.6)
 
 #-----------------------------------------------------------------
 # 2.2.1. Binary items
@@ -36,8 +53,8 @@ dim(HCI)
 colnames(HCI)
 ##  [1] "Item 1"  "Item 2"  "Item 3"  "Item 4"  "Item 5"  "Item 6"
 ##  [7] "Item 7"  "Item 8"  "Item 9"  "Item 10" "Item 11" "Item 12"
-##  [13] "Item 13" "Item 14" "Item 15" "Item 16" "Item 17" "Item 18"
-##  [19] "Item 19" "Item 20" "gender"  "major"
+## [13] "Item 13" "Item 14" "Item 15" "Item 16" "Item 17" "Item 18"
+## [19] "Item 19" "Item 20" "gender"  "major"
 
 # view data head
 head(HCI, n = 3)
@@ -49,23 +66,15 @@ head(HCI, n = 3)
 #--------------
 
 #--------------
-table(HCI$`Item 1`)
+table(HCI$"Item 1")
 ##   0   1
 ## 196 455
 #--------------
 
 #--------------
-table(HCI$`Item 1`, HCI$major)
-##    0   1
-## 0  97  99
-## 1 168 287
-#--------------
-
-#--------------
-prop.table(table(HCI$`Item 1`, HCI$major), margin = 2)
-##        0      1
-## 0 0.3660 0.2565
-## 1 0.6340 0.7435
+prop.table(table(HCI$"Item 1"))
+##      0      1
+## 0.3011 0.6989
 #--------------
 
 #--------------
@@ -81,24 +90,13 @@ summary(HCI)
 #--------------
 
 #--------------
-summary(HCI$`Item 6`)
+summary(HCI$"Item 6")
 ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
 ## 0.0000  0.0000  0.0000  0.3625  1.0000  1.0000
 
-summary(HCI[,6])
+summary(HCI[, 6])
 ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
 ## 0.0000  0.0000  0.0000  0.3625  1.0000  1.0000
-#--------------
-
-#--------------
-by(HCI$`Item 1`, HCI$gender, summary)
-## HCI$gender: 0
-##  Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
-## 0.000   0.000   1.000   0.716   1.000   1.000
-## ----------------------------------------------------
-## HCI$gender: 1
-##   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
-## 0.0000  0.0000  1.0000  0.6707  1.0000  1.0000
 #--------------
 
 #-----------------------------------------------------------------
@@ -109,7 +107,7 @@ by(HCI$`Item 1`, HCI$gender, summary)
 # loading data
 data(HCItest, package = "ShinyItemAnalysis")
 
-# view data head and tail
+# view data head
 head(HCItest, n = 3)
 ##   Item 1 Item 2 Item 3 Item 4 Item 5 Item 6 Item 7 Item 8 Item 9
 ## 1      D      B      A      D      B      B      B      C      D
@@ -119,49 +117,33 @@ head(HCItest, n = 3)
 #--------------
 
 #--------------
-table(HCItest$`Item 1`)
+table(HCItest$"Item 1")
+##  A   B   C   D 
 ## 27  59 110 455
 
-table(HCItest$gender, HCItest$`Item 1`)
-##     A   B   C   D
-## 0  16  34  65 290
-## 1  11  25  45 165
-
-prop.table(table(HCItest$gender, HCItest$`Item 1`), margin = 1)
-##        A      B      C      D
-## 0 0.0395 0.0840 0.1605 0.7160
-## 1 0.0447 0.1016 0.1829 0.6707
+prop.table(table(HCItest$"Item 1"))
+##      A      B      C      D 
+## 0.0415 0.0906 0.1690 0.6989 
 #--------------
 
 #--------------
 data("HCIkey", package = "ShinyItemAnalysis")
 unlist(HCIkey)
-## key1  key2  key3  key4  key5  key6  key7  key8  key9 key10 key11
-##    D     B     A     D     B     C     C     C     D     A     A
+##  key1  key2  key3  key4  key5  key6  key7  key8  key9 key10 key11
+##     D     B     A     D     B     C     C     C     D     A     A
 ## key12 key13 key14 key15 key16 key17 key18 key19 key20
 ##     D     A     A     C     A     C     C     C     D
 ## Levels: A B C D
 #--------------
 
 #--------------
-HCIscored <- score(items = HCItest[, 1:20],
-                   key = unlist(HCIkey),
-                   output.scored = TRUE)
-head(HCIscored$scored, n = 3)
-##      Item 1 Item 2 Item 3 Item 4 Item 5 Item 6 Item 7 Item 8 Item 9
-## [1,]      1      1      1      1      1      0      0      1      1
-## [2,]      1      1      1      1      1      1      0      1      1
-## [3,]      1      1      1      1      0      1      0      1      1
+HCIscored <- as.data.frame(mirt::key2binary(HCItest[, 1:20], HCIkey))
+head(HCIscored, n = 3)
+##   Item 1 Item 2 Item 3 Item 4 Item 5 Item 6 Item 7 Item 8 Item 9
+## 1      1      1      1      1      1      0      0      1      1
+## 2      1      1      1      1      1      1      0      1      1
+## 3      1      1      1      1      0      1      0      1      1
 ## ...
-
-table(HCIscored$scored[, "Item 1"])
-##   0   1
-## 196 455
-#--------------
-
-summary(HCIscored$score)
-## Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
-##  3.0    10.0    12.0    12.2    15.0    20.0
 #--------------
 
 #-----------------------------------------------------------------
@@ -169,16 +151,31 @@ summary(HCIscored$score)
 #-----------------------------------------------------------------
 
 #--------------
-data(Science, package = "mirt")
-head(Science, n = 3)
-##   Comfort Work Future Benefit
-## 1       4    4      3       2
-## 2       3    3      3       3
-## 3       3    2      2       3
+data("BFI2", package = "ShinyItemAnalysis")
 
-table(Science$Comfort)
-##  1   2   3   4
-##  5  32 266  89
+head(BFI2, n = 3)
+##   i1 i2 i3 i4 i5 i6 i7 i8 i9 i10 i11 i12 i13 i14 i15 i16 i17 i18 
+## 1  5  5  2  3  5  4  4  3  4   5   5   4   3   4   2   3   5   3 
+## 2  4  5  4  3  3  3  5  3  2   4   4   2   4   2   3   4   5   4 
+## 3  1  4  3  5  2  1  3  1  5   4   4   1   5   5   2   1   5   5   
+##  ...
+#--------------
+
+#--------------
+table(BFI2$i1)
+##  1   2   3   4   5
+## 50 264 321 758 340
+#--------------
+
+#--------------
+BFI2binary <- 1 * as.data.frame(BFI2[, 1:60] >= 3)
+
+head(BFI2binary, n = 3)
+##   i1 i2 i3 i4 i5 i6 i7 i8 i9 i10 i11 i12 i13 i14 i15 i16 i17 i18
+## 1  1  1  0  1  1  1  1  1  1   1   1   1   1   1   0   1   1   1
+## 2  1  1  1  1  1  1  1  1  0   1   1   0   1   0   1   1   1   1
+## 3  0  1  1  1  0  0  1  0  1   1   1   0   1   1   0   0   1   1 
+## ...
 #--------------
 
 #-----------------------------------------------------------------
@@ -187,14 +184,17 @@ table(Science$Comfort)
 
 #--------------
 data(EPIA, package = "EstCRM")
+
 head(EPIA, n = 2)
 ##   Item 1 Item 2 Item 3 Item 4 Item 5
 ## 1     96     36     80     78     79
 ## 2     42      2      1      1      1
+#--------------
 
-summary(EPIA$`Item 1`)
-##   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
-##   1.00   40.00   63.00   62.83   89.00  111.00
+#--------------
+summary(EPIA$"Item 1")
+##   Min.   1st Qu.  Median     Mean  3rd Qu.     Max. 
+## 1.0000  40.0000  63.0000  62.8296  89.0000 111.0000
 #--------------
 
 #-----------------------------------------------------------------
@@ -210,56 +210,112 @@ HCI$score <- apply(HCI[, 1:20], 1, sum)
 #--------------
 # summary of total score
 summary(HCI$score)
-## Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
-##  3.0    10.0    12.0    12.2    15.0    20.0
+##   Min.  1st Qu.   Median     Mean  3rd Qu.     Max.
+## 3.0000  10.0000  12.0000  12.2120  15.0000  20.0000
+#--------------
 
-c(min(HCI$score), max(HCI$score),
-  mean(HCI$score), median(HCI$score),
-  var(HCI$score), sd(HCI$score),
-  skewness(HCI$score), kurtosis(HCI$score))
-## [1] 3.0000 20.0000 12.2120 12.0000 13.2473  3.6397 -0.1982  2.3474
+#--------------
+c(Min = min(HCI$score), Max = max(HCI$score),
+  Mean = mean(HCI$score), Med = median(HCI$score),
+  Var = var(HCI$score), SD = sd(HCI$score),
+  Skew = moments::skewness(HCI$score),
+  Kurt = moments::kurtosis(HCI$score))
+##     Min     Max    Mean     Med     Var      SD    Skew    Kurt
+##  3.0000 20.0000 12.2120 12.0000 13.2473  3.6397 -0.1982  2.3474
+
+kurtosis(HCI$score) - 3
+## [1] -0.6526
+
+psych::describe(HCI$score, type = 1)
+##    vars   n  mean   sd median trimmed  mad min max range
+## X1    1 651 12.21 3.64     12   12.32 4.45   3  20    17
+##    skew kurtosis   se
+## X1 -0.2    -0.65 0.14
 #--------------
 
 #--------------
 # histogram
 hist(HCI$score, breaks = seq(3, 20, 1), col = "gold",
      main = "", xlab = "Total score", ylab = "Number of respondents")
+#--------------
 
-# ggsave("figures/data_histogram_HCI_base.png",
-#       plot = hist(HCI$score, breaks = seq(3, 20, 1), col = "gold",
-#                   main = "",
-#                   xlab = "HCI Total score", ylab = "Number of respondents"),
-#       width = 6, height = 5, dpi = 300, bg = "transparent")
-
+#--------------
 ggplot(data = HCI, aes(score)) +
-  geom_histogram(binwidth = 1, col = "black") +
-  xlab("Total score") +
-  ylab("Number of respondents") +
-  theme_app()
-
-# ggsave("figures/data_histogram_HCI_ggplot.png",
-#        width = 6, height = 5, dpi = 300, bg = "transparent")
+  geom_histogram(binwidth = 1, fill = "gold", col = "black") +
+  xlab("Total score") + ylab("Number of respondents") + 
+  scale_y_continuous(breaks = seq(0, 70, 10)) + 
+  theme_fig()
 #--------------
 
 #-----------------------------------------------------------------
-# 2.3.1 Standardized total scores
+# 2.3.1 Standardized scores
 #-----------------------------------------------------------------
 
 #--------------
 zscore <- scale(HCI$score) # Z-score
 tscore <- 10 * zscore + 50 # T-score
-percentiles <- 100 * round(ecdf(HCI$score)(HCI$score), 2) # percentiles
+centiles <- 100 * round(ecdf(HCI$score)(HCI$score), 2) # percentiles
 success_rate <- 100 * (HCI$score / max(HCI$score)) # success rate
 
 head(data.frame(score = HCI$score, zscore, tscore,
-                percentiles, success_rate))
-##   score zscore tscore percentiles success_rate
-## 1    16 1.0408 60.408          87           80
-## 2    19 1.8650 68.650          99           95
-## 3    17 1.3155 63.155          94           85
-## 4    20 2.1398 71.398         100          100
-## 5    19 1.8650 68.650          99           95
-## 6    20 2.1398 71.398         100          100
+                centiles, success_rate), n = 4)
+##   score zscore  tscore centiles success_rate
+## 1    16 1.0408 60.4075       87           80
+## 2    19 1.8650 68.6500       99           95
+## 3    17 1.3155 63.1550       94           85
+## 4    20 2.1398 71.3975      100          100
+#--------------
+
+#-----------------------------------------------------------------
+# 2.4 Covariates
+#-----------------------------------------------------------------
+
+#-----------------------------------------------------------------
+# 2.4.1 Criterion variable
+#-----------------------------------------------------------------
+
+#--------------
+table(HCI$"Item 1", HCI$major)
+##    0   1
+## 0  97  99
+## 1 168 287
+#--------------
+
+#--------------
+prop.table(table(HCI$"Item 1", HCI$major), margin = 2)
+##        0      1
+## 0 0.3660 0.2565
+## 1 0.6340 0.7435
+#--------------
+
+#-----------------------------------------------------------------
+# 2.4.2 Observed score
+#-----------------------------------------------------------------
+
+
+#-----------------------------------------------------------------
+# 2.4.3 Grouping variable
+#-----------------------------------------------------------------
+
+#--------------
+table(HCItest$gender, HCItest$"Item 1")
+##     A   B   C   D
+## 0  16  34  65 290
+## 1  11  25  45 165
+
+prop.table(table(HCItest$gender, HCItest$"Item 1"), margin = 1)
+##        A      B      C      D
+## 0 0.0395 0.0840 0.1605 0.7160
+## 1 0.0447 0.1016 0.1829 0.6707
+
+by(HCI$"Item 1", HCI$gender, FUN = summary)
+## HCI$gender: 0
+##  Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
+## 0.000   0.000   1.000   0.716   1.000   1.000
+## ----------------------------------------------------
+## HCI$gender: 1
+##   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
+## 0.0000  0.0000  1.0000  0.6707  1.0000  1.0000
 #--------------
 
 #-----------------------------------------------------------------
@@ -278,12 +334,12 @@ HCI.long <- reshape(
   direction = "long", new.row.names = 1:13020
 )
 
-head(HCI.long, n = 2)
-##   gender major score person zscore item rating
-## 1      0     1    16      1  1.041    1      1
-## 2      0     1    19      2  1.865    1      1
-
-HCI.long$item <- as.factor(HCI.long$item)
+head(HCI.long, n = 3)
+##   gender major score person  zscore item rating
+## 1      0     1    16      1  1.0408    1      1
+## 2      0     1    19      2  1.8650    1      1
+## 3      1     1    17      3  1.3155    1      1
+# HCI.long$item <- as.factor(HCI.long$item)
 #--------------
 
 #--------------
@@ -294,8 +350,98 @@ HCI.wide <- reshape(
   direction = "wide"
 )
 
-head(HCI.wide, n = 2)
-##   gender major score person zscore rating.1 rating.2
-## 1      0     1    16      1  1.041        1        1
-## 2      0     1    19      2  1.865        1        1
+head(HCI.wide, n = 3)
+##   gender major score person zscore rating.1 rating.2 
+## 1      0     1    16      1 1.0409        1        1 
+## 2      0     1    19      2 1.8650        1        1 
+## 3      1     1    17      3 1.3155        1        1 
+## ...
+#--------------
+
+#-----------------------------------------------------------------
+# 2.6 Random variables
+#-----------------------------------------------------------------
+
+#-----------------------------------------------------------------
+# 2.6.1 Discrete random variables
+#-----------------------------------------------------------------
+
+#--------------
+# Bernoulli distribution
+dbinom(x = 1, size = 1, prob = 0.3)
+## [1] 0.3
+dbinom(x = 0, size = 1, prob = 0.3)
+## [1] 0.7
+#--------------
+
+#--------------
+# simulating a Bernoulli trial
+set.seed(42)
+(item1 <- rbinom(n = 100, size = 1, prob = 0.3))
+##   [1] 0 0 1 0 0 1 0 1 0 0 1 0 0 1 1 0 0 1 1 1 0 1 0 0 1 1 1
+##  [28] 0 1 0 0 0 1 0 1 0 1 1 0 0 1 1 1 0 1 0 0 0 0 0 1 1 1 0
+##  [55] 1 0 0 1 1 1 0 0 0 1 0 1 1 0 0 1 1 1 1 1 1 0 1 1 1 1 1
+##  [82] 1 1 0 0 1 1 1 1 1 0 1 1 0 0 0 1 1 0 0
+
+# sample mean and variance
+mean(item1)
+## [1] 0.3400
+var(item1)
+## [1] 0.2267
+#--------------
+
+#--------------
+# probability of gaining total score of exact value
+dbinom(5, size = 10, prob = 0.5)
+## [1] 0.2461
+dbinom(10, size = 10, prob = 0.5)
+## [1] 0.0010
+#--------------
+
+#--------------
+# probability of gaining total score at least of given value or in range
+pbinom(5, size = 10, prob = 0.5)
+## [1] 0.6230
+pbinom(10, size = 10, prob = 0.5)
+## [1] 1.0000
+pbinom(8, size = 10, prob = 0.5) - pbinom(2, size = 10, prob = 0.5)
+## [1] 0.9346
+#--------------
+
+#--------------
+# simulating from a binomial distribution
+score <- rbinom(n = 100, size = 20, prob = 0.7)
+
+mean(score)
+# [1] 13.9600
+20 * 0.7
+# [1] 14.0000
+
+sd(score)
+## [1] 1.9065
+sqrt(20 * 0.7 * (1 - 0.7))
+## [1] 2.0494
+#--------------
+
+#-----------------------------------------------------------------
+# 2.6.2 Continuous random variables
+#-----------------------------------------------------------------
+
+#--------------
+dnorm(x = 5, mean = 10 * 0.5, sd = sqrt(10 * 0.5 * 0.5))
+## [1] 0.2523
+dnorm(x = 10, mean = 10 * 0.5, sd = sqrt(10 * 0.5 * 0.5))
+## [1] 0.0017
+
+pnorm(q = 5, mean = 10 * 0.5, sd = sqrt(10 * 0.5 * 0.5))
+## [1] 0.5000
+pnorm(q = 10, mean = 10 * 0.5, sd = sqrt(10 * 0.5 * 0.5))
+## [1] 0.9992
+#--------------
+
+#--------------
+qnorm(0.975)
+## [1] 1.9600
+qnorm(0.025)
+## [1] -1.9600
 #--------------
