@@ -106,7 +106,7 @@ ceiling(m * items.original) # new test length
 data(HCItestretest, package = "ShinyItemAnalysis")
 
 
-# divide dataset by `test`
+# divide dataset by "test"
 HCI_test    <- HCItestretest[HCItestretest$test == "test", ]
 HCI_retest  <- HCItestretest[HCItestretest$test == "retest", ]
 #--------------
