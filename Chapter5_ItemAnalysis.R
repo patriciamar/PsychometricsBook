@@ -1,8 +1,6 @@
 #-----------------------------------------------------------------
 # Chapter 5 - Traditional item analysis
-# Introduction to psychometric methods
-# in education, psychology, and health.
-# With examples in R.
+# Computational aspects of psychometric methods. With R.
 # P. Martinkova & A. Hladka
 #-----------------------------------------------------------------
 
@@ -14,19 +12,22 @@ library(ggplot2)
 library(naniar)
 library(ShinyItemAnalysis)
 
-theme_book <- function(base_size = 15) {
-  theme_bw(base_size = base_size) +
-  theme(
-    legend.key = element_rect(fill = "white", colour = NA),
-    axis.line = element_line(colour = "black"),
-    legend.title = element_blank(),
-    panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank(),
-    panel.background = element_blank(),
-    plot.title = element_text(face = "bold")
-  )
+#-----------------------------------------------------------------
+# Plot settings
+#-----------------------------------------------------------------
+
+theme_fig <- function(base_size = 17, base_family = "") {
+  theme_bw(base_size = base_size, base_family = base_family) +
+    theme(
+      legend.key = element_rect(fill = "white", colour = NA),
+      axis.line = element_line(colour = "black"),
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank(),
+      panel.background = element_blank(),
+      plot.title = element_blank(),
+      legend.background = element_blank()
+    )
 }
-theme_side_by_side <- theme_book(base_size = 19)
 
 #-----------------------------------------------------------------
 # 5.2.1  Item difficulty in binary items
@@ -109,7 +110,18 @@ diag(cor(dataMedicalgraded[, 1:5], dataR))
 #-----------------------------------------------------------------
 
 #--------------
-gDiscrim(HCI[, 1:20])
+HCI$HCItotal  <- rowSums(HCI[, 1:20])
+HCIcolor      <- c(rep("red", 8), rep("#FED600", 4), rep("#00CC00", 6))
+
+ggplot(HCI, aes(HCItotal)) + 
+  geom_histogram(binwidth = 1, fill = HCIcolor, col = "black") + 
+  xlab("Total score") + 
+  ylab("Number of respondents") + 
+  theme_fig()
+#--------------
+
+#--------------
+gDiscrim(Data = HCI[, 1:20])
 ## Item 1  Item 2  Item 3  Item 4  Item 5  Item 6  Item 7  Item 8
 ## 0.4194  0.3041  0.3272  0.3088  0.4562  0.5069  0.2350  0.4470
 ## Item 9 Item 10 Item 11 Item 12 Item 13 Item 14 Item 15 Item 16
@@ -117,7 +129,7 @@ gDiscrim(HCI[, 1:20])
 ## Item 17 Item 18 Item 19 Item 20
 ## 0.1659  0.4286  0.4147  0.4562
 
-gDiscrim(HCI[, 1:20], k = 5, l = 4, u = 5)
+gDiscrim(Data = HCI[, 1:20], k = 5, l = 4, u = 5)
 ## Item 1  Item 2  Item 3  Item 4  Item 5  Item 6  Item 7  Item 8
 ## 0.07692 0.07692 0.01538 0.27692 0.19231 0.15385 0.19231 0.12308
 ## Item 9 Item 10 Item 11 Item 12 Item 13 Item 14 Item 15 Item 16
@@ -127,28 +139,20 @@ gDiscrim(HCI[, 1:20], k = 5, l = 4, u = 5)
 #--------------
 
 #--------------
-DDplot(HCI[, 1:20], discrim = "ULI")
-# ggsave(plot = DDplot(setNames(HCI[, 1:20], 1:20), discrim = "ULI") +
-#          theme_side_by_side +
-#          theme(legend.position = c(0.26, 0.84)),
-#        "figures/itemanalysis_DDplot_uli_HCI.png",
-#        width = 6, height = 4, dpi = 300, bg = "transparent")
-DDplot(HCI[, 1:20],
-  discrim = "ULI", k = 5, l = 4, u = 5,
+DDplot(Data = HCI[, 1:20], discrim = "ULI")
+#--------------
+
+#--------------
+DDplot(
+  Data = HCI[, 1:20], discrim = "ULI", k = 5, l = 4, u = 5,
   thr = 0.1
 )
-# ggsave(plot = DDplot(setNames(HCI[, 1:20], 1:20),
-#                      discrim = "ULI", k = 5, l = 4, u = 5,
-#                      thr = 0.1) + theme_side_by_side +
-#          theme(legend.position = c(0.26, 0.84)),
-#        "figures/itemanalysis_DDplot_guli_HCI.png",
-#        width = 6, height = 4, dpi = 300, bg = "transparent")
 #--------------
 
 #--------------
 # complex item analysis
-ItemAnalysis(HCI[, 1:20], k = 5, l = 4, u = 5)[
-  , c("diff", "SD", "ULI", "gULI", "RIT", "RIR")
+ItemAnalysis(Data = HCI[, 1:20], k = 5, l = 4, u = 5)[
+  , c("Difficulty", "SD", "ULI", "gULI", "RIT", "RIR")
 ]
 
 ##           diff     SD    ULI    gULI    RIT    RIR
@@ -175,39 +179,13 @@ ItemAnalysis(HCI[, 1:20], k = 5, l = 4, u = 5)[
 #--------------
 
 #-----------------------------------------------------------------
-# 5.4 Item characteristic curve
-#-----------------------------------------------------------------
-
-#--------------
-totalscore <- (0:10)
-item1 <- c(0.00, 0.05, 0.12, 0.30, 0.50, 0.70, 0.90, 1.00, 1.00, 1.00, 1.00)
-item2 <- c(0.00, 0.02, 0.05, 0.12, 0.30, 0.50, 0.70, 0.90, 1.00, 1.00, 1.00)
-item3 <- rep(0.5, 11)
-item4 <- 1 - item2
-item5 <- c(rep(0, 5), rep(1, 6))
-
-df <- data.frame(x = totalscore,
-                 icc = c(item1, item2, item3, item4, item5),
-                 Item = as.factor(rep(paste("Item", 1:5), each = 11)))
-
-ggplot(df, aes(x = x, y = icc, col = Item, shape = Item)) +
-  geom_point() +
-  geom_line() +
-  xlab("Total score") + ylab("Proportion of correct answer") +
-  theme_book()
-#--------------
-
-# ggsave("figures/itemanalysis_icc.png",
-#       width = 6, height = 4, dpi = 300, bg = "transparent")
-
-#--------------#-----------------------------------------------------------------
 # 5.5 Distractor analysis
 #-----------------------------------------------------------------
 
 #--------------
 data(HCIkey, HCItest, package = "ShinyItemAnalysis")
 
-DistractorAnalysis(HCItest[, 1:20], key = unlist(HCIkey))$`Item 1`
+DistractorAnalysis(Data = HCItest[, 1:20], key = unlist(HCIkey))$`Item 1`
 ## score.level
 ## response Group1 Group2 Group3
 ##        A     20      7      0
@@ -218,39 +196,20 @@ DistractorAnalysis(HCItest[, 1:20], key = unlist(HCIkey))$`Item 1`
 
 #--------------
 plotDistractorAnalysis(
-  HCItest[, 1:20],
+  Data = HCItest[, 1:20],
   key = unlist(HCIkey),
   num.group = 5, item = 3,
   multiple.answers = TRUE
 )
-# ggsave(plot = plotDistractorAnalysis(
-#   HCItest[, 1:20],
-#   key = unlist(HCIkey),
-#   num.group = 5, item = 3,
-#   multiple.answers = TRUE
-# ) +
-#          theme_side_by_side +
-#          theme(legend.position = c(0.075, 0.83),
-#                legend.margin = margin(unit(c(-0.5, 0, 0, 0), "cm"))),
-#        "figures/itemanalysis_distractorplot_item3_HCI.png",
-#        width = 6, height = 4, dpi = 300, bg = "transparent")
+#--------------
+
+#--------------
 plotDistractorAnalysis(
-  HCItest[, 1:20],
+  Data = HCItest[, 1:20],
   key = unlist(HCIkey),
   num.group = 5, item = 17,
   multiple.answers = TRUE
 )
-# ggsave(plot = plotDistractorAnalysis(
-#   HCItest[, 1:20],
-#   key = unlist(HCIkey),
-#   num.group = 5, item = 17,
-#   multiple.answers = TRUE
-# ) +
-#   theme_side_by_side +
-#   theme(legend.position = c(0.075, 0.79),
-#         legend.margin = margin(unit(c(-0.5, 0, 0, 0), "cm"))),
-# "figures/itemanalysis_distractorplot_item17_HCI.png",
-# width = 6, height = 4, dpi = 300, bg = "transparent")
 #--------------
 
 #-----------------------------------------------------------------
@@ -261,20 +220,20 @@ plotDistractorAnalysis(
 
 #--------------
 # Cronbach's alpha
-psych::alpha(HCI[, 1:20])$total[1]
+psych::alpha(x = HCI[, 1:20])$total[1]
 #  raw_alpha
 #  0.715314
 
 # calculation of alpha drop
-psych::alpha(HCI[, 1:20])$alpha.drop[, 1]
+psych::alpha(x = HCI[, 1:20])$alpha.drop[, 1]
 ## [1] 0.7042 0.7099 0.7007 0.7151 0.7054 0.6991 0.7220 0.7009 0.7114
 ## [10] 0.7064 0.7047 0.7016 0.6972 0.7001 0.7030 0.6952 0.7253 0.6943
 ## [19] 0.6981 0.6997
 #--------------
 
 #--------------
-ItemAnalysis(HCI[, 1:20], y = HCI$major)[, "rel"]
-## [1] 0.1844 0.1432 0.1563 0.1484 0.1989 0.2192 0.1172 0.1984 0.1690
+ItemAnalysis(Data = HCI[, 1:20], criterion = HCI$major)[, "Index.rel"]
+## [1]  0.1844 0.1432 0.1563 0.1484 0.1989 0.2192 0.1172 0.1984 0.1690
 ## [10] 0.1835 0.1611 0.2154 0.2319 0.1885 0.2098 0.2413 0.0769 0.2036
 ## [19] 0.1899 0.1999
 #--------------
@@ -284,43 +243,32 @@ ItemAnalysis(HCI[, 1:20], y = HCI$major)[, "rel"]
 #-----------------------------------------------------------------
 
 #--------------
-ItemAnalysis(HCI[, 1:20], y = HCI$major)[, "itemCritCor"]
+ItemAnalysis(Data = HCI[, 1:20], criterion = HCI$major)[, "Corr.criterion"]
 ## [1]  0.1173  0.1265  0.1541  0.0832  0.1274  0.0980 -0.0194  0.0949
 ## [9]  0.0681  0.0968  0.0782  0.0938  0.0909  0.0664  0.0859  0.0499
-## [17]  0.0312  0.1187  0.1295  0.0650
+## [17] 0.0312  0.1187  0.1295  0.0650
 #--------------
 
 #--------------
-ItemAnalysis(HCI[, 1:20], y = HCI$major)[, "valInd"]
+ItemAnalysis(Data = HCI[, 1:20], criterion = HCI$major)[, "Index.val"]
 ## [1]  0.0538  0.0546  0.0553  0.0408  0.0633  0.0471 -0.0096  0.0433
 ## [9]  0.0337  0.0462  0.0325  0.0464  0.0444  0.0284  0.0427  0.0244
-## [17]  0.0143  0.0477  0.0532  0.0291
+## [17] 0.0143  0.0477  0.0532  0.0291
 #--------------
 
 #--------------
-DDplot(HCI[, 1:20], criterion = HCI$major, thr = NULL, val_type = "simple")
-# ggsave(plot = DDplot(setNames(HCI[, 1:20], 1:20), criterion = HCI$major, thr = NULL, val_type = "simple") +
-#   theme_side_by_side +
-#   theme(legend.position = c(0.23, 0.83),
-#         legend.margin = margin(unit(c(-0.5, 0, 0, 0), "cm"))) + ggtitle(""),
-# "figures/itemanalysis_DDplot_criterion_HCI.png",
-# width = 6, height = 4, dpi = 300, bg = "transparent")
-#--------------
-
-#--------------
-plotDistractorAnalysis(HCItest[, 1:20],
-  key = unlist(HCIkey), item = 5,
-  matching = HCI$major, match.discrete = TRUE
+DDplot(
+  Data = HCI[, 1:20], criterion = HCI$major, thr = NULL,
+  val_type = "simple"
 )
-# ggsave(plot = plotDistractorAnalysis(HCItest[, 1:20],
-#                                      key = unlist(HCIkey), item = 5,
-#                                      matching = HCI$major, match.discrete = TRUE
-# ) +
-#   theme_side_by_side +
-#   theme(legend.position = c(0.075, 0.79),
-#         legend.margin = margin(unit(c(-0.5, 0, 0, 0), "cm"))),
-# "figures/itemanalysis_distractorplot_criterion_HCI.png",
-# width = 6, height = 4, dpi = 300, bg = "transparent")
+#--------------
+
+#--------------
+plotDistractorAnalysis(
+  Data = HCItest[, 1:20], key = unlist(HCIkey),
+  item = 5, criterion = HCI$major,
+  crit.discrete = TRUE
+)
 #--------------
 
 #-----------------------------------------------------------------
@@ -343,7 +291,7 @@ for (i in 1:150) {
     NA # missed with random location
 }
 # visualize missingness
-naniar::vis_miss(HCImissed)
+# naniar::vis_miss(HCImissed)
 
 #--------------
 # number of missed answers in item 1
@@ -356,34 +304,49 @@ length(HCImissed[, 1])
 100 * sum(is.na(HCImissed[, 1])) / length(HCImissed[, 1])
 ## [1] 1.075
 
-sapply(HCImissed[, 1:20], function(x)
-{100 * sum(is.na(x)) / length(x)})
+sapply(HCImissed[, 1:20], function(x) {
+  100 * sum(is.na(x)) / length(x)
+})
 
-ItemAnalysis(HCImissed[, 1:20])$"missedPerc"
-## [1]  1.0753  0.6144  0.7680  1.0753  1.0753  0.9217  0.9217
-## [8]  1.3825  1.2289  2.7650  5.2227  6.2980  7.8341  9.5238
+ItemAnalysis(Data = HCImissed[, 1:20])$"Perc.miss"
+## [1]   1.0753  0.6144  0.7680  1.0753  1.0753  0.9217  0.9217
+## [8]   1.3825  1.2289  2.7650  5.2227  6.2980  7.8341  9.5238
 ## [15] 11.2135 13.8249 16.5899 18.5868 19.2012 22.2734
+
+ItemAnalysis(Data = HCImissed[, 1:20])$"Perc.nr"
+## [1]   0.0000  0.0000  0.0000  0.0000  0.0000  0.0000  0.0000
+## [8]   0.0000  0.1536  1.8433  4.4547  5.0691  7.2197  8.7558
+## [15] 10.1382 12.9032 15.0538 16.8971 18.5868 22.2734
 #--------------
-# ALL INDICES
-ItemAnalysis(HCI[, 1:20], y = HCI$major)[1:5, ]
-##          diff avgScore     SD min max obtMin obtMax cutScore   gULI
-## Item 1 0.6989   0.6989 0.4591   0   1      0      1        1 0.4194
-## Item 2 0.7527   0.7527 0.4318   0   1      0      1        1 0.3041
-## Item 3 0.8479   0.8479 0.3594   0   1      0      1        1 0.3272
-## Item 4 0.4040   0.4040 0.4911   0   1      0      1        1 0.3088
-## Item 5 0.4424   0.4424 0.4971   0   1      0      1        1 0.4562
-##           ULI    RIT    RIR itemCritCor  valInd    rel relDrop
-## Item 1 0.4194 0.4019 0.2884     0.11734 0.05383 0.1844 0.13231
-## Item 2 0.3041 0.3320 0.2206     0.12655 0.05460 0.1432 0.09518
-## Item 3 0.3272 0.4352 0.3500     0.15412 0.05534 0.1563 0.12570
-## Item 4 0.3088 0.3023 0.1730     0.08321 0.04083 0.1484 0.08488
-## Item 5 0.4562 0.4005 0.2768     0.12739 0.06327 0.1989 0.13747
-##        alphaDrop missedPerc notReachPerc
-## Item 1    0.7042          0            0
-## Item 2    0.7099          0            0
-## Item 3    0.7007          0            0
-## Item 4    0.7151          0            0
-## Item 5    0.7054          0            0
+
+# #--------------
+# # ALL INDICES
+# ItemAnalysis(Data = HCI[, 1:20], criterion = HCI$major)[1:5, ]
+# ## Difficulty   Mean     SD Prop.max.score Min.score Max.score
+# ## Item 1     0.6989 0.6989 0.4591         0.6989         0         1
+# ## Item 2     0.7527 0.7527 0.4318         0.7527         0         1
+# ## Item 3     0.8479 0.8479 0.3594         0.8479         0         1
+# ## Item 4     0.4040 0.4040 0.4911         0.4040         0         1
+# ## Item 5     0.4424 0.4424 0.4971         0.4424         0         1
+# ## Obs.min Obs.max   gULI    ULI    RIT    RIR Corr.criterion
+# ## Item 1       0       1 0.4194 0.4194 0.4019 0.2884        0.11734
+# ## Item 2       0       1 0.3041 0.3041 0.3320 0.2206        0.12655
+# ## Item 3       0       1 0.3272 0.3272 0.4352 0.3500        0.15412
+# ## Item 4       0       1 0.3088 0.3088 0.3023 0.1730        0.08321
+# ## Item 5       0       1 0.4562 0.4562 0.4005 0.2768        0.12739
+# ## Index.val Index.rel Index.rel.drop Alpha.drop Perc.miss
+# ## Item 1   0.05383    0.1844        0.13231     0.7042         0
+# ## Item 2   0.05460    0.1432        0.09518     0.7099         0
+# ## Item 3   0.05534    0.1563        0.12570     0.7007         0
+# ## Item 4   0.04083    0.1484        0.08488     0.7151         0
+# ## Item 5   0.06327    0.1989        0.13747     0.7054         0
+# ## Perc.nr
+# ## Item 1       0
+# ## Item 2       0
+# ## Item 3       0
+# ## Item 4       0
+# ## Item 5       0
+# #--------------
 
 #-----------------------------------------------------------------
 # 5.7. ShinyItemAnalysis interactive application
