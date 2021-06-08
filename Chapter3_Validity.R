@@ -52,7 +52,7 @@ Z^2
 
 #--------------
 prop.test(x = 34, n = 37, alternative = "greater", correct = FALSE)
-##         1-sample proportions test with continuity correction
+##         1-sample proportions test without continuity correction
 ##
 ## data:  34 out of 37, null probability 0.5
 ## X-squared = 25.973, df = 1, p-value = 1.731e-07
@@ -249,7 +249,7 @@ ggplot(data.frame(
 #--------------
 
 #--------------
-# differences between post and pretest
+# differences between post-test and pre-test
 (dif <- HCIprepost$score.post - HCIprepost$score.pre)
 ## [1]  7  2  0  2  4  1  0  5  3  1  5 -2  4  8  1 -4
 # mean difference
@@ -259,7 +259,8 @@ ggplot(data.frame(
 (s <- sd(dif))
 ## [1] 3.1563
 # number of observations
-n <- length(dif)
+(n <- length(dif))
+## [1] 16
 # t-value
 (t <- M / (s / sqrt(n)))
 ## [1] 2.9306
@@ -454,7 +455,9 @@ qqline(lmMS$residuals, lty = "dotted")
 #--------------
 
 #--------------
-plot(lmMS)
+plot(lmMS, which = 1)
+plot(lmMS, which = 2)
+plot(lmMS, which = 3)
 #--------------
 
 #--------------
@@ -462,6 +465,7 @@ MSclinical$EDSS - predict(lmMS)
 ##      2       6      10      14      18      22      25      30 ...
 ## 1.0285 -0.3169 -0.8415  0.1354  1.0877  0.8970 -0.2287  0.0646 ...
 lmMS$residuals
+residuals(lmMS)
 #      2       6      10      14      18      22      25      30 ...
 # 1.0285 -0.3169 -0.8415  0.1354  1.0877  0.8970 -0.2287  0.0646 ...
 summary(lmMS$residuals)
