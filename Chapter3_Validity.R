@@ -455,9 +455,11 @@ qqline(lmMS$residuals, lty = "dotted")
 #--------------
 
 #--------------
+#plot(lmMS)
 plot(lmMS, which = 1)
 plot(lmMS, which = 2)
 plot(lmMS, which = 3)
+plot(lmMS, which = 4)
 #--------------
 
 #--------------
