@@ -268,7 +268,7 @@ ggplot(data.frame(
 2 * pt(-abs(t), df = n - 1)
 ## [1] 0.0103
 # confidence interval
-M + qt(0.05 / 2, df = n - 1) * s / sqrt(n)
+M - qt(1 - 0.05 / 2, df = n - 1) * s / sqrt(n)
 ## [1] 0.6306
 M + qt(1 - 0.05 / 2, df = n - 1) * s / sqrt(n)
 ## [1] 3.9944
@@ -923,12 +923,12 @@ lavaan::parTable(fit_EN)
 ## 2   2   E =~  i6    1     1     1    1     NA   0         .p2. 0.813 ...
 ## ...
 ## 51 51   E ~~   N    0     1     1   49     NA   0        .p51. 0.000 ...
-summary(fit_EN)
-summary(fit_EN, fit.measures = TRUE, standardized = TRUE)
+lavaan::summary(fit_EN)
+lavaan::summary(fit_EN, fit.measures = TRUE, standardized = TRUE)
 #--------------
 
 #--------------
-parameterEstimates(fit_EN)
+lavaan::parameterEstimates(fit_EN)
 ##    lhs op rhs    est    se       z pvalue ci.lower ci.upper
 ## 1    E =~  i1  1.000 0.000      NA     NA    1.000    1.000
 ## 2    E =~  i6  0.969 0.041  23.611      0    0.889    1.049
@@ -943,7 +943,7 @@ parameterEstimates(fit_EN)
 ## 50   N ~~   N  0.587 0.039  15.191      0    0.512    0.663
 ## 51   E ~~   N -0.196 0.017 -11.514      0   -0.229   -0.162
 
-parameterEstimates(fit_EN, ci = FALSE, standardized = TRUE)
+lavaan::parameterEstimates(fit_EN, ci = FALSE, standardized = TRUE)
 ##    lhs op rhs    est    se       z pvalue std.lv std.all std.nox
 ## 1    E =~  i1  1.000 0.000      NA     NA  0.699   0.665   0.665
 ## 2    E =~  i6  0.969 0.041  23.611      0  0.678   0.644   0.644
@@ -979,7 +979,7 @@ model_ENs <- 'E =~ NA*i1 + i6 + i11 + i16 + i21 + i26 +
               E ~~ 1*E
               N ~~ 1*N'
 fit_ENs <- lavaan::cfa(model_ENs, data = BFI2)
-parameterEstimates(fit_ENs, ci = FALSE, standardized = TRUE)
+lavaan::parameterEstimates(fit_ENs, ci = FALSE, standardized = TRUE)
 ##    lhs op rhs    est    se       z pvalue std.lv std.all std.nox
 ## 1    E =~  i1  0.699 0.024  29.740      0  0.699   0.665   0.665
 ## 2    E =~  i6  0.678 0.024  28.552      0  0.678   0.644   0.644
@@ -1018,7 +1018,7 @@ semPlot::semPaths(fit_ENs, what = "est", rotation = 4)
 #--------------
 
 #--------------
-FS <- predict(fit_EN)
+FS <- lavaan::predict(fit_EN)
 head(FS, n = 3)
 ##            E       N
 ## [1,]  0.5944  0.2344
@@ -1043,14 +1043,14 @@ fit_EN_hier <- lavaan::cfa(model_EN_hier, data = BFI2)
 #--------------
 
 #--------------
-summary(fit_EN_hier, fit.measures = TRUE, standardized = TRUE)
+lavaan::summary(fit_EN_hier, fit.measures = TRUE, standardized = TRUE)
 lavaan::parTable(fit_EN_hier)
 lavaan::parameterEstimates(fit_EN_hier)
 semPlot::semPaths(fit_EN_hier, what = "std.est", rotation = 4)
 #--------------
 
 #--------------
-FSh <- predict(fit_EN_hier)
+FSh <- lavaan::predict(fit_EN_hier)
 head(FSh, n = 3)
 ##         Escb    Easr    Eenl    Nanx    Ndep    Nemt       E       N
 ## [1,]  0.4401  0.6603  0.5546 -0.1261 -0.1289  0.8747  0.5131  0.0041
@@ -1059,10 +1059,10 @@ head(FSh, n = 3)
 #--------------
 
 #--------------
-fitMeasures(fit_EN, c("cfi", "tli", "rmsea", "bic"))
+lavaan::fitMeasures(fit_EN, c("cfi", "tli", "rmsea", "bic"))
 ##   cfi        tli      rmsea        bic 
 ## 0.778      0.756      0.092 114975.452 
-fitMeasures(fit_EN_hier, c("cfi", "tli", "rmsea", "bic"))
+lavaan::fitMeasures(fit_EN_hier, c("cfi", "tli", "rmsea", "bic"))
 ##   cfi        tli      rmsea        bic 
 ## 0.880      0.865      0.069 113303.631 
 #--------------
