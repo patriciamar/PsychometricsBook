@@ -442,7 +442,7 @@ plot(fit_3PL_mirt, type = "infoSE")
 
 #--------------
 # latent abilities (factor scores)
-fs.se <- as.vector(fscores(fit_3PL_mirt))
+fs <- as.vector(fscores(fit_3PL_mirt))
 summary(fs)
 #--------------
 
@@ -462,7 +462,8 @@ coef(fit_3PL_ltm)
 #-----------------------------------------------------------------
 
 #--------------
-fit_4PL_mirt <- mirt(HCI[, 1:20], model = 1, itemtype = "4PL", SE = TRUE)
+fit_4PL_mirt <- mirt(HCI[, 1:20], model = 1, itemtype = "4PL", 
+                     SE = TRUE)
 summary(fit_4PL_mirt)
 coef(fit_4PL_mirt)
 ## $`Item 1`
@@ -473,8 +474,9 @@ coef(fit_4PL_mirt)
 ## MEAN_1 COV_11
 ## par      0      1
 
-# Warning message:
-# Could not invert information matrix; model likely is not empirically identified.
+## Warning message:
+## Could not invert information matrix; model likely is not 
+## empirically identified.
 #--------------
 
 #--------------
