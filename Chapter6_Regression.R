@@ -644,7 +644,22 @@ coef(fit_glm2PL)
 #--------------
 
 #--------------
-anova(fit1, fit2, test = "Chisq")
-BIC(fit1, fit2)
-AIC(fit1, fit2)
+anova(fit_glm1PL, fit_glm2PL, test = "Chisq")
+## Analysis of Deviance Table
+##
+## Model 1: rating ~ -1 + item
+## Model 2: rating ~ -1 + item + zscore:item
+##   Resid. Df Resid. Dev Df Deviance  Pr(>Chi)    
+## 1     13000      15956                          
+## 2     12980      13632 20   2323.4 < 2.2e-16 ***
+  
+BIC(fit_glm1PL, fit_glm2PL)
+##            df      BIC
+## fit_glm1PL 20 16145.37
+## fit_glm2PL 40 14011.40
+
+AIC(fit_glm1PL, fit_glm2PL)
+##            df      AIC
+## fit_glm1PL 20 15995.88
+## fit_glm2PL 40 13712.43
 #--------------
