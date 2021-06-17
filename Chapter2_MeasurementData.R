@@ -72,6 +72,7 @@ table(HCI$"Item 1")
 #--------------
 
 #--------------
+proportions(table(HCI$"Item 1"))
 prop.table(table(HCI$"Item 1"))
 ##      0      1
 ## 0.3011 0.6989
@@ -121,11 +122,8 @@ table(HCItest$"Item 1")
 ##  A   B   C   D 
 ## 27  59 110 455
 
-prop.table(table(HCItest$"Item 1"))
-##      A      B      C      D 
-## 0.0415 0.0906 0.1690 0.6989 
-
 proportions(table(HCItest$"Item 1"))
+prop.table(table(HCItest$"Item 1"))
 ##      A      B      C      D 
 ## 0.0415 0.0906 0.1690 0.6989 
 #--------------
