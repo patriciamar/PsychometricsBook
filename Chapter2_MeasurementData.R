@@ -124,6 +124,10 @@ table(HCItest$"Item 1")
 prop.table(table(HCItest$"Item 1"))
 ##      A      B      C      D 
 ## 0.0415 0.0906 0.1690 0.6989 
+
+proportions(table(HCItest$"Item 1"))
+##      A      B      C      D 
+## 0.0415 0.0906 0.1690 0.6989 
 #--------------
 
 #--------------
@@ -282,6 +286,7 @@ table(HCI$"Item 1", HCI$major)
 #--------------
 
 #--------------
+proportions(table(HCI$"Item 1", HCI$major), margin = 2)
 prop.table(table(HCI$"Item 1", HCI$major), margin = 2)
 ##        0      1
 ## 0 0.3660 0.2565
@@ -303,6 +308,7 @@ table(HCItest$gender, HCItest$"Item 1")
 ## 0  16  34  65 290
 ## 1  11  25  45 165
 
+proportions(table(HCItest$gender, HCItest$"Item 1"), margin = 1)
 prop.table(table(HCItest$gender, HCItest$"Item 1"), margin = 1)
 ##        A      B      C      D
 ## 0 0.0395 0.0840 0.1605 0.7160
@@ -444,4 +450,33 @@ qnorm(0.975)
 ## [1] 1.9600
 qnorm(0.025)
 ## [1] -1.9600
+#--------------
+
+#-------------
+# Histogram with an estimated normal density
+ggplot(data = HCI, aes(score)) +
+  geom_histogram(aes(y = ..density..), binwidth = 1,
+                 col = "black", fill = "gold") +
+  stat_function(fun = dnorm, colour = "red",
+                args = list(mean = mean(HCI$score),
+                            sd = sd(HCI$score)), size = 0.8) +
+  xlab("Total score") + ylab("Density") +
+  theme_fig()
+#--------------
+
+#--------------
+# QQ plot in base 
+qqnorm(HCI$score)
+qqline(HCI$score)
+#--------------
+
+#--------------
+# QQ plot in ggplot 
+ggplot(HCI, aes(sample = score)) +
+  stat_qq(size = 2,
+          shape = 1) +
+  stat_qq_line() + 
+  theme_fig() +
+  ylab("Sample Quantiles") + 
+  xlab("Theoretical Quantiles") 
 #--------------
