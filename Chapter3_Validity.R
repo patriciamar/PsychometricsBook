@@ -341,7 +341,6 @@ df <- data.frame(
 #--------------
 
 #--------------
-set.seed(978)
 ggplot(df, aes(x = group, y = score, fill = group)) +
   geom_boxplot() +
   xlab("") + ylab("Total score") +
