@@ -344,7 +344,17 @@ df <- data.frame(
 set.seed(978)
 ggplot(df, aes(x = group, y = score, fill = group)) +
   geom_boxplot() +
-  #geom_jitter(height = 0, width = 0.25) +
+  xlab("") + ylab("Total score") +
+  theme_fig() +
+  theme(legend.position = "none")
+#--------------
+
+#--------------
+# the same figure with jittered points of observed values included
+set.seed(978)
+ggplot(df, aes(x = group, y = score, fill = group)) +
+  geom_boxplot() +
+  geom_jitter(height = 0, width = 0.25) +
   xlab("") + ylab("Total score") +
   theme_fig() +
   theme(legend.position = "none")
@@ -697,7 +707,6 @@ names(FA1b)
 #-----------------------------------------------------------------
 
 #--------------
-load("datasets/TestAnxietyCor.rda")
 data(TestAnxietyCor, package = "ShinyItemAnalysis")
 #--------------
 
