@@ -458,6 +458,12 @@ sqrt(varDeltaAbs)
 #--------------
 
 #--------------
+# dependability coefficient
+varP / (varP + varDeltaAbs)
+## [1] 0.6874
+#--------------
+
+#--------------
 # relative error variance
 (varDeltaRel <- vare / m)
 ## [1] 0.0094
@@ -471,7 +477,7 @@ sqrt(varDeltaRel)
 
 #--------------
 # generalizability coefficient
-(varP / (varP + varDeltaRel))
+varP / (varP + varDeltaRel)
 ## [1] 0.7155
 #--------------
 
