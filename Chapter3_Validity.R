@@ -130,11 +130,12 @@ cor.test(score, HCI$major)
 
 barX0 <- mean(score[HCI$major == 0])
 barX1 <- mean(score[HCI$major == 1])
-sn <- sd(score)
+n <- length(score)
 n0 <- length(score[HCI$major == 0])
 n1 <- length(score[HCI$major == 1])
+sn <- sd(score)*sqrt((n - 1)/n)
 (barX1 - barX0) / sn * sqrt(n0 * n1 / (n0 + n1)^2)
-## [1] 0.2175
+## [1] 0.2177
 #--------------
 
 #--------------
