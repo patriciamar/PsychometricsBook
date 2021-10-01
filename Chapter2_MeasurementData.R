@@ -346,6 +346,16 @@ head(HCI.long, n = 3)
 # HCI.long$item <- as.factor(HCI.long$item)
 #--------------
 
+# tidyverse approach
+library(tidyverse)
+
+HCI.long <- pivot_longer(
+  data = HCI,
+  cols = starts_with("Item"),
+  names_to = "item", values_to = "rating"
+)
+
+
 #--------------
 HCI.wide <- reshape(
   data = HCI.long,
@@ -361,6 +371,10 @@ head(HCI.wide, n = 3)
 ## 3      1     1    17      3 1.3155        1        1 
 ## ...
 #--------------
+
+# tidyverse approach
+HCI.wide <- pivot_wider(data = HCI.long, names_from = item, values_from = rating)
+
 
 #-----------------------------------------------------------------
 # 2.6 Random variables
