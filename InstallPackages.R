@@ -4,6 +4,7 @@
 # P. Martinkova & A. Hladka
 #-----------------------------------------------------------------
 
+install.packages("remotes")
 install.packages("bayestestR")
 install.packages("brms")
 install.packages("cowplot")
@@ -11,7 +12,7 @@ install.packages("eRm")
 install.packages("ggforce")
 install.packages("ggplot2")
 install.packages("gtheory")
-devtools::install_github("cddesja/hemp")
+remotes::install_github("cddesja/hemp")
 install.packages("hemp")
 install.packages("moments")
 install.packages("lavaan")
@@ -23,15 +24,15 @@ install.packages("plotrix")
 install.packages("psych")
 install.packages("psychometric")
 install.packages("semPlot")
-install.packages("ShinyItemAnalysis")
-devtools::install_github("patriciamar/ShinyItemAnalysis") # newest GitHub version
+install.packages("ShinyItemAnalysis", dependencies = TRUE)
+#remotes::install_github("patriciamar/ShinyItemAnalysis") # newest GitHub version
 install.packages("tidyverse")
 install.packages("VGAM")
 
 # further data packages
-install.packages("EstCRM")
-install.packages("lordif")
-install.packages("sirt")
+install.packages("EstCRM") # data EPIA
+install.packages("lordif") # data anxiety
+install.packages("sirt") # data rating
 
 # figure saving packages
 install.packages("Cairo")
