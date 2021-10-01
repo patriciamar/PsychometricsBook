@@ -4,39 +4,6 @@
 # P. Martinkova & A. Hladka
 #-----------------------------------------------------------------
 
-#-----------------------------------------------------------------
-# Packages
-#-----------------------------------------------------------------
-
-library(ggplot2)
-library(moments)
-library(mirt)
-library(psych)
-library(ShinyItemAnalysis)
-library(tidyverse)
-
-library(Cairo)
-library(psycho)
-
-#-----------------------------------------------------------------
-# Plot settings
-#-----------------------------------------------------------------
-
-theme_fig <- function(base_size = 17, base_family = "") {
-  theme_bw(base_size = base_size, base_family = base_family) +
-    theme(
-      legend.key = element_rect(fill = "white", colour = NA),
-      axis.line = element_line(colour = "black"),
-      panel.grid.major = element_blank(),
-      panel.grid.minor = element_blank(),
-      panel.background = element_blank(),
-      plot.title = element_blank(),
-      legend.background = element_blank()
-    )
-}
-
-par(mgp = c(2.1, 0.7, 0), mar = c(3.4, 3.4, 1.3, 0.9), cex.axis = 1.2,
-    cex.lab = 1.2, ann = FALSE, lwd = 0.6)
 
 #-----------------------------------------------------------------
 # 1.4.1 Obtaining and running R and RStudio
@@ -93,7 +60,7 @@ help(sqrt)
 #       packages at the top. For this reason, this code is commented below.
 
 #--------------
-# library(ShinyItemAnalysis)
+library(ShinyItemAnalysis)
 #--------------
 
 #-----------------------------------------------------------------
@@ -102,7 +69,8 @@ help(sqrt)
 
 #--------------
 # loading data
-data(HCI, package = "ShinyItemAnalysis")
+data(HCI)
+data(GMAT, package = "difNLR")
 #--------------
 
 #--------------
@@ -189,7 +157,7 @@ head(HCI_long, n = 3)
 
 #--------------
 HCI_wide <- reshape(
-  data = HCI.long,
+  data = HCI_long,
   v.names = "rating", timevar = "item", idvar = c("person"),
   direction = "wide"
 )
@@ -204,6 +172,8 @@ head(HCI_wide, n = 3)
 
 #--------------
 # tidyverse approach
+
+library(tidyverse)
 HCI_long_tidy <- pivot_longer(
   data = HCI,
   cols = starts_with("Item"),
@@ -220,7 +190,7 @@ head(HCI_long_tidy, n = 3)
 
 #--------------
 # tidyverse approach
-HCI_wide_tidy <- pivot_wider(data = HCI.long, names_from = item, 
+HCI_wide_tidy <- pivot_wider(data = HCI_long, names_from = item, 
                              values_from = rating)
 head(HCI_wide, n = 3)
 ##   gender major person score rating.1 rating.2 rating.3 rating.4 
