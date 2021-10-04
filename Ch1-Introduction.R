@@ -37,7 +37,7 @@ v * 3
 
 #--------------
 help(sqrt)
-?mean
+?install.packages
 #--------------
 
 #-----------------------------------------------------------------
@@ -70,7 +70,8 @@ library(ShinyItemAnalysis)
 #--------------
 # loading data
 data(HCI)
-data(GMAT, package = "difNLR")
+data(HCI, package = "ShinyItemAnalysis")
+?HCI
 #--------------
 
 #--------------
@@ -110,6 +111,7 @@ str(HCI)
 ##  $ Item 1 : num  1 1 1 1 1 1 1 0 1 1 ...
 ##  $ Item 2 : num  1 1 1 1 1 1 1 1 1 1 ...
 ##  ...
+##  $ id     : int  1 2 3 4 5 6 7 8 9 10 ...
 #--------------
 
 #--------------
@@ -135,45 +137,46 @@ str(HCI$person)
 ## Factor w/ 651 levels "1","2","3","4",..: 1 2 3 4 5 6 7 8 9 10 ...
 #--------------
 
-#-----------------------------------------------------------------
-# Wide and long data format
-#-----------------------------------------------------------------
-
 #--------------
-# converting data to the long format
+# Reshape data to the long format
 HCI_long <- reshape(
   data = HCI,
-  varying = list(paste("Item", 1:20)), timevar = "item", v.names = "rating",
-  idvar = c("person"),
+  varying = list(paste("Item", 1:20)), timevar = "item", 
+  v.names = "rating", idvar = c("person"),
   direction = "long", new.row.names = 1:13020
 )
 
 head(HCI_long, n = 3)
-##   gender major person score item rating
-## 1      0     1      1    16    1      1
-## 2      0     1      2    19    1      1
-## 3      1     1      3    17    1      1
+##   gender major person item rating
+## 1      0     1      1    1      1
+## 2      0     1      2    1      1
+## 3      1     1      3    1      1
 #--------------
 
 #--------------
+# Reshape back to wide format
 HCI_wide <- reshape(
-  data = HCI_long,
-  v.names = "rating", timevar = "item", idvar = c("person"),
-  direction = "wide"
+  data = HCI_long, v.names = "rating", timevar = "item", 
+  idvar = c("person"), direction = "wide"
 )
 
 head(HCI_wide, n = 3)
-##   gender major person score rating.1 rating.2 rating.3 ... 
-## 1      0     1      1    16        1        1        1 ...
-## 2      0     1      2    19        1        1        1 ...
-## 3      1     1      3    17        1        1        1 ...
+##   gender major person rating.1 rating.2 rating.3 ... 
+## 1      0     1      1        1        1        1 ...
+## 2      0     1      2        1        1        1 ...
+## 3      1     1      3        1        1        1 ...
 ## ...
 #--------------
 
 #--------------
 # tidyverse approach
-
 library(tidyverse)
+data(HCI, package = "ShinyItemAnalysis")
+HCI <- mutate(HCI, id = row_number())    # add variable with row number
+head(HCI)
+#--------------
+
+#--------------
 HCI_long_tidy <- pivot_longer(
   data = HCI,
   cols = starts_with("Item"),
@@ -181,21 +184,106 @@ HCI_long_tidy <- pivot_longer(
 )
 head(HCI_long_tidy, n = 3)
 ## # A tibble: 3 x 6
-##    gender major person score item   rating
-##    <int> <int> <fct>  <dbl> <chr>   <dbl>
-## 1      0     1 1         16 Item 1      1
-## 2      0     1 1         16 Item 2      1
-## 3      0     1 1         16 Item 3      1
+##   gender major    id  item   rating
+##    <int> <int> <int>  <chr>   <dbl>
+## 1      0     1     1  Item 1      1
+## 2      0     1     1  Item 2      1
+## 3      0     1     1  Item 3      1
 #--------------
 
 #--------------
-# tidyverse approach
-HCI_wide_tidy <- pivot_wider(data = HCI_long, names_from = item, 
-                             values_from = rating)
-head(HCI_wide, n = 3)
-##   gender major person score rating.1 rating.2 rating.3 rating.4 
-## 1      0     1      1    16        1        1        1        1 
-## 2      0     1      2    19        1        1        1        1 
-## 3      1     1      3    17        1        1        1        1 
+# tidyverse approach: all in once
+HCI_long_tidy <- HCI %>%         # take HCI dataset, then
+  mutate(id = row_number()) %>%  # add variable with row number, then
+  pivot_longer(starts_with("Item"),   # pivot to long form
+               names_to = "item", values_to = "rating")
+head(HCI_long_tidy, n = 3)
+#--------------
 
+#--------------
+# tidyverse pivot back to wide
+HCI_long_tidy %>% pivot_wider(names_from = item, values_from = rating)
+ # A tibble: 651 x 23
+##   gender major    id `Item 1` `Item 2` `Item 3` `Item 4` ...
+##    <int> <int> <int>    <dbl>    <dbl>    <dbl>    <dbl> ...
+## 1      0     1     1        1        1        1        1 ...
+## 2      0     1     2        1        1        1        1 ...
+## 3      1     1     3        1        1        1        1 ...
+##  ...
+#--------------
+
+#-----------------------------------------------------------------
+# 1.4.4. Graphics
+#-----------------------------------------------------------------
+
+#--------------
+HCI$score <- rowSums(HCI[, 1:20])
+#--------------
+
+#--------------
+# histogram
+hist(HCI$score)
+hist(HCI$score, breaks = seq(3, 20, 1), col = "gold",
+     main = "", xlab = "Total score", ylab = "Number of respondents")
+#--------------
+
+#--------------
+qplot(score, data = HCI)
+ggplot(data = HCI, aes(score)) +
+  geom_histogram(binwidth = 1, fill = "gold", col = "black")
+#--------------
+
+#--------------
+# define theme
+theme_fig <- function(base_size = 17, base_family = "") {
+  theme_bw(base_size = base_size, base_family = base_family) +
+    theme(
+      legend.key = element_rect(fill = "white", colour = NA),
+      axis.line = element_line(colour = "black"),
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank(),
+      panel.background = element_blank(),
+      plot.title = element_blank(),
+      legend.background = element_blank()
+    )
+}
+#--------------
+
+#--------------
+ggplot(data = HCI, aes(score)) +
+  geom_histogram(binwidth = 1, fill = "gold", col = "black") +
+  xlab("Total score") + ylab("Number of respondents") + 
+  scale_y_continuous(breaks = seq(0, 70, 10)) + 
+  theme_fig()
+#--------------
+
+#-----------------------------------------------------------------
+# 1.4.5. Interactive psychometrics with shiny
+#-----------------------------------------------------------------
+
+#--------------
+# simple shiny app
+library(shiny)
+# Define global variables
+n <- 100
+
+# Define the UI
+ui <- bootstrapPage(
+  numericInput('n', 'Number of obs', n),
+  plotOutput('plot')
+)
+
+# Define the server code
+server <- function(input, output) {
+  output$plot <- renderPlot({
+    hist(rnorm(input$n))
+  })
+}
+
+# Return a Shiny app object
+shinyApp(ui = ui, server = server)
+#--------------
+
+#--------------
+ShinyItemAnalysis::run_app()
 #--------------
