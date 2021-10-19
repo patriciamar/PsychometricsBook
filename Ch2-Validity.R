@@ -571,3 +571,90 @@ ShinyItemAnalysis::plot_corr(HCI[, 1:20], cor = "poly",
                              clust_method = "ward.D2")
 #--------------
 
+#-----------------------------------------------------------------
+# 2.5.1  Correction for range restriction
+#-----------------------------------------------------------------
+
+#--------------
+set.seed(987)
+x <- rnorm(1500); e <- rnorm(1500); r <- 0.729
+b1 <- r / sqrt(1 - r^2)
+y <- b1 * x + e
+cor(x, y)
+## [1] 0.723
+
+xvar <- x * 10 + 50
+yvar <- y * 2.3 + 20
+cor(xvar, yvar)
+## [1] 0.723
+plot(x, y)
+#-------------- 
+
+#-------------- 
+df <- data.frame(xvar, yvar)
+
+# Plot 1: All observations, r = 0.72
+(scatter_all <- ggplot(df) + 
+    geom_point(aes(x = xvar, y = yvar),
+               size = 1.8, alpha = 0.5, shape = 19) +
+    theme_fig() + xlab("X") + ylab("Y") +
+    scale_x_continuous(limits = c(25, 75)) +
+    scale_y_continuous(limits = c(5, 31))
+)
+#-------------- 
+
+#--------------
+# Only admitted students with X > 58
+admitted <- subset(df, xvar > 58)
+cor(admitted$xvar, admitted$yvar)
+## [1] 0.363
+#--------------
+
+#--------------
+psych::rangeCorrection(r = cor(admitted$xvar, admitted$yvar),
+                       sdu = sd(xvar),
+                       sdr = sd(admitted$xvar))
+## [1] 0.6547
+#--------------
+
+#--------------
+(scatter_admitted <- ggplot(admitted) +
+   geom_point(aes(x = xvar, y = yvar),
+              size = 1.8,
+              alpha = 0.5,
+              shape = 19
+   ) +
+   theme_fig() +
+   xlab("X") +
+   ylab("Y") +
+   scale_x_continuous(limits = c(25, 75)) +
+   scale_y_continuous(limits = c(5, 31))
+)
+#--------------
+
+#-------------- 
+# Only those above 58 or bellow 43 admitted
+admitted2 <- subset(df, xvar > 58 | xvar < 43)
+cor(admitted2$xvar, admitted2$yvar)
+## [1] 0.813
+
+psych::rangeCorrection(r = cor(admitted2$xvar, admitted2$yvar),
+                       sdu = sd(xvar),
+                       sdr = sd(admitted2$xvar))
+## [1] 0.7097
+#-------------- 
+
+#-------------- 
+(scatter_second <- ggplot(second_attempt) +
+   geom_point(aes(x = xvar, y = yvar),
+              size = 1.8,
+              alpha = 0.5,
+              shape = 19
+   ) +
+   theme_fig() +
+   xlab("X") +
+   ylab("Y") +
+   scale_x_continuous(limits = c(25, 75)) +
+   scale_y_continuous(limits = c(5, 31))
+)
+#-------------- 
