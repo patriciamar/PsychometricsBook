@@ -211,8 +211,7 @@ ggplot(data.frame(
                  levels = c("Pre", "Post"))),
   aes(x = group, y = score, fill = group)) +
   geom_boxplot() + ylab("Total score") + xlab("") +
-  theme_fig() +
-  theme(legend.position = "none")
+  theme_fig() + theme(legend.position = "none")
 #--------------
 
 #--------------
@@ -286,7 +285,9 @@ t.test(HCIprepost$score.post, HCIprepost$score.pre, paired = TRUE)
 data(HCIgrads, package = "ShinyItemAnalysis")
 score_grads <- rowSums(HCIgrads[, paste0("QR", 1:20)])
 score_undergrads <- rowSums(HCI[, 1:20])
+#--------------
 
+#--------------
 # two sample t-test
 t.test(score_grads, score_undergrads, alternative = "greater")
 ##         Welch Two Sample t-test
@@ -299,7 +300,9 @@ t.test(score_grads, score_undergrads, alternative = "greater")
 ## sample estimates:
 ## mean of x mean of y
 ## 14.50     12.21
+#--------------
 
+#--------------
 mean(score_grads)
 ## [1] 14.5000
 sd(score_grads)
@@ -358,18 +361,13 @@ ggplot(HCIdata, aes(x = typeSCH, y = total, fill = typeSCH)) +
 #--------------
 # density plot
 ggplot(HCIdata, aes(total, fill = typeSCH)) +
-  geom_density(aes(y = ..density..,
-                   color = typeSCH,
+  geom_density(aes(y = ..density.., color = typeSCH,
                    linetype = typeSCH),
-               position = "identity",
-               alpha = 0.5,
-               size = 1) +
-  xlab("Total score on HCI") +
-  ylab("Density") +
+               position = "identity", alpha = 0.5, size = 1) +
+  xlab("Total score on HCI") + ylab("Density") +
   scale_y_continuous(expand = c(0, 0), limits = c(0, 0.16)) +
-  theme_fig() +
-  theme(legend.position = c(0.15, 0.8),
-        legend.title = element_blank())
+  theme_fig() + theme(legend.position = c(0.15, 0.8),
+                      legend.title = element_blank())
 #--------------
 
 #--------------
@@ -441,23 +439,6 @@ ggplot(MSclinical, aes(x = MI, y = EDSS)) + geom_point() +
 #--------------
 
 #--------------
-# diagnostic plots
-plot(lmMS$residuals ~ predict(lmMS), ylab = "Residuals")
-abline(h = 0, lty = "dotted")
-
-qqnorm(lmMS$residuals)
-qqline(lmMS$residuals, lty = "dotted")
-#--------------
-
-#--------------
-#plot(lmMS)
-plot(lmMS, which = 1)
-plot(lmMS, which = 2)
-plot(lmMS, which = 3)
-plot(lmMS, which = 4)
-#--------------
-
-#--------------
 lmMS$residuals
 ##      2       6      10      14      18      22      25      30 ...
 ## 1.0285 -0.3169 -0.8415  0.1354  1.0877  0.8970 -0.2287  0.0646 ...
@@ -473,12 +454,30 @@ summary(lmMS$residuals)
 #--------------
 
 #--------------
-# R2
-sum((predict(lmMS) - mean(MSclinical$EDSS))^2) / 
-  sum((MSclinical$EDSS - mean(MSclinical$EDSS))^2)
+# R2 = SSR/SST
+SSR = sum((predict(lmMS) - mean(MSclinical$EDSS))^2)
+SST = sum((MSclinical$EDSS - mean(MSclinical$EDSS))^2)
+SSR / SST
 ## [1] 0.2136
 cor(MSclinical$EDSS, MSclinical$MI)^2
 ## [1] 0.2136
+#--------------
+
+#--------------
+# diagnostic plots
+plot(lmMS$residuals ~ predict(lmMS), ylab = "Residuals")
+abline(h = 0, lty = "dotted")
+
+qqnorm(lmMS$residuals)
+qqline(lmMS$residuals, lty = "dotted")
+#--------------
+
+#--------------
+#plot(lmMS)
+plot(lmMS, which = 1)
+plot(lmMS, which = 2)
+plot(lmMS, which = 3)
+plot(lmMS, which = 4)
 #--------------
 
 
