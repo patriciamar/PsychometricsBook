@@ -543,9 +543,17 @@ psych::describe(HCI$score, type = 1)
 #--------------
 zscore <- scale(HCI$score) # Z-score
 tscore <- 10 * zscore + 50 # T-score
-centiles <- 100 * round(ecdf(HCI$score)(HCI$score), 2) # percentiles
 success_rate <- 100 * (HCI$score / max(HCI$score)) # success rate
+#--------------
 
+#--------------
+plot(ecdf(HCI$score), xlab = "HCI score", ylab= "percentile")
+ecdf(HCI$score)(HCI$score)
+## [1] 0.8725 0.9923 0.9401 1.0000 0.9923 1.0000 1.0000 ...
+centiles <- round(100 * ecdf(HCI$score)(HCI$score)) # percentiles
+#--------------
+
+#--------------
 head(data.frame(score = HCI$score, zscore, tscore,
                 centiles, success_rate), n = 4)
 ##   score zscore  tscore centiles success_rate
