@@ -1,5 +1,5 @@
 #-----------------------------------------------------------------
-# Chapter 8 - Differential item functioning
+# Chapter 7 - Differential item functioning
 # Computational aspects of psychometric methods. With R.
 # P. Martinkova & A. Hladka
 #-----------------------------------------------------------------
