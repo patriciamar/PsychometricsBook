@@ -1,5 +1,5 @@
 #-----------------------------------------------------------------
-# Chapter 9 - Further Topics
+# Chapter 9 - Computerized Adaptive Testing
 # Computational aspects of psychometric methods. With R.
 # P. Martinkova & A. Hladka
 #-----------------------------------------------------------------
