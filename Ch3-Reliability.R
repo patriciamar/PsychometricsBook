@@ -48,7 +48,7 @@ lattice.options(layout.widths = lw, layout.heights = lh)
 
 
 #-----------------------------------------------------------------
-# 4.2.5.1  Spearman-Brown prophecy formula
+# 3.2.5.1  Spearman-Brown prophecy formula
 #-----------------------------------------------------------------
 
 #--------------
@@ -64,6 +64,7 @@ m * rho.original / (1 + (m - 1) * rho.original)
 #--------------
 
 #--------------
+library(psychometric)
 SBrel(Nlength = m, rxx = rho.original)
 ## [1] 0.8182
 #--------------
@@ -100,11 +101,15 @@ ceiling(m * items.original) # new test length
 #--------------
 
 #-----------------------------------------------------------------
-# 4.3.1  Correlation coefficients
+# 3.3.1  Reliability estimation with correlation coefficients
 #-----------------------------------------------------------------
 
-data(HCItestretest, package = "ShinyItemAnalysis")
+#-----------------------------------------------------------------
+# Test-retest reliability
+#-----------------------------------------------------------------
 
+#--------------
+data(HCItestretest, package = "ShinyItemAnalysis")
 
 # divide dataset by "test"
 HCI_test    <- HCItestretest[HCItestretest$test == "test", ]
@@ -112,13 +117,8 @@ HCI_retest  <- HCItestretest[HCItestretest$test == "retest", ]
 #--------------
 
 #--------------
-ggplot(
-  data.frame(Test = HCI_test$total, Retest = HCI_retest$total),
-  aes(x = Test, y = Retest)
-) +
-  geom_point() +
-  geom_smooth(method = "lm") +
-  theme_fig()
+ggplot(data.frame(Test = HCI_test$total, Retest = HCI_retest$total),
+       aes(x = Test, y = Retest)) + geom_point() + theme_fig()
 #--------------
 
 #--------------
@@ -136,7 +136,7 @@ cor.test(HCI_test$total, HCI_retest$total)
 #--------------
 
 #-----------------------------------------------------------------
-# 4.3.2.1  Split-half coefficient
+# Split-half coefficient
 #-----------------------------------------------------------------
 
 #--------------
@@ -154,7 +154,7 @@ ts1 <- rowSums(df1)
 ts2 <- rowSums(df2)
 # correlation
 cor.x <- cor(ts1, ts2)
-# apply Spearmann-Brown formula to estimate reliability
+# apply Spearman-Brown formula to estimate reliability
 2 * cor.x / (1 + cor.x)
 ## [1] 0.6966
 #--------------
@@ -168,7 +168,7 @@ ts1 <- rowSums(df1)
 ts2 <- rowSums(df2)
 # correlation
 cor.x <- cor(ts1, ts2)
-# apply Spearmann-Brown formula to estimate reliability
+# apply Spearman-Brown formula to estimate reliability
 2 * cor.x / (1 + cor.x)
 ## [1] 0.7415
 #--------------
@@ -184,24 +184,22 @@ ts1 <- rowSums(df1)
 ts2 <- rowSums(df2)
 # correlation
 cor.x <- cor(ts1, ts2)
-# apply Spearmann-Brown formula to estimate reliability
+# apply Spearman-Brown formula to estimate reliability
 2 * cor.x / (1 + cor.x)
 ## [1] 0.7386
 #--------------
 
 #--------------
 # minimum of all possible split-halves
+library(psych)
 split <- splitHalf(data, raw = TRUE, brute = TRUE)
-items1 <- which(split$minAB[, "A"] == 1)
-items2 <- which(split$minAB[, "B"] == 1)
-df1 <- data[, items1]
-df2 <- data[, items2]
+items1 <- split$minAB$A; items2 <- split$minAB$B
+df1 <- data[, items1]; df2 <- data[, items2]
 # total score calculation
-ts1 <- rowSums(df1)
-ts2 <- rowSums(df2)
+ts1 <- rowSums(df1); ts2 <- rowSums(df2)
 # correlation
 cor.x <- cor(ts1, ts2)
-# apply Spearmann-Brown formula to estimate reliability
+# apply Spearman-Brown formula to estimate reliability
 2 * cor.x / (1 + cor.x)
 ## [1] 0.6114
 #--------------
@@ -221,7 +219,7 @@ mean(split$raw)
 #--------------
 
 #-----------------------------------------------------------------
-# 4.3.2  Cronbach's alpha
+# 3.3.2  Cronbach's alpha
 #-----------------------------------------------------------------
 
 #--------------
@@ -238,7 +236,6 @@ m / (m - 1) * (1 - (sum(item_vars)) / var(score))
 
 #--------------
 VC <- var(data) # covariance matrix of data
-# sum(diag(VC)) is trace of covariance matrix
 
 # Cronbach's alpha (3.12)
 (m / (m - 1)) * (1 - sum(diag(VC)) / sum(VC))
@@ -256,7 +253,7 @@ psychometric::alpha(data)
 #--------------
 
 #-----------------------------------------------------------------
-# 4.3.2.1  Cronbach's alpha and inter-item correlations
+# Cronbach's alpha and inter-item correlations
 #-----------------------------------------------------------------
 
 #--------------
@@ -274,7 +271,7 @@ m * c_bar / (v_bar + (m - 1) * c_bar)
 #--------------
 
 #-----------------------------------------------------------------
-# 4.3.2.2  Cronbach's alpha in ANOVA framework
+# Cronbach's alpha in ANOVA framework
 #-----------------------------------------------------------------
 
 #--------------
@@ -357,6 +354,15 @@ gamma <- 0.05 # significance level
 #--------------
 
 #--------------
+a <- psychometric::alpha(data)
+psychometric::alpha.CI(
+  a, N = nrow(data), k = ncol(data), level = 0.95
+)
+##      LCL  ALPHA    UCL
+## 1 0.6828 0.7155 0.7462
+#--------------
+
+#--------------
 a <- psych::alpha(data)$total[1]
 psych::alpha.ci(
   a, n.obs = nrow(data), n.var = ncol(data),
@@ -380,16 +386,21 @@ psych::alpha.ci(
 #--------------
 
 #--------------
-a <- psychometric::alpha(data)
-psychometric::alpha.CI(
-  a, N = nrow(data), k = ncol(data), level = 0.95
-)
-##      LCL  ALPHA    UCL
-## 1 0.6828 0.7155 0.7462
+# CI calculated as in psych package:
+# lower bound in 95% two-sided confidence interval
+1 - qf(1 - gamma / 2, n - 1, Inf) / FA
+## [1] 0.6837
+# upper bound in 95% two-sided confidence interval
+1 - qf(gamma / 2, n - 1, Inf) / FA
+## [1] 0.7456
 #--------------
 
+
 #-----------------------------------------------------------------
-# 3.3.3 Variance decomposition
+# 3.3.3 Estimation of variance components
+#-----------------------------------------------------------------
+#-----------------------------------------------------------------
+# 3.3.3.1 Model specification
 #-----------------------------------------------------------------
 
 #--------------
@@ -408,12 +419,214 @@ ICC(data)
 ## Number of subjects = 651     Number of Judges =  20
 #--------------
 
+
 #-----------------------------------------------------------------
-# 4.4. More sources of error and G-theory
+# 3.3.3.2 ANOVA method of estimation
+#-----------------------------------------------------------------
+
+#--------------
+# mean ratings
+mean.overall <- mean(data.long$rating)
+mean.persons <- tapply(data.long$rating, data.long$person, mean)
+
+m <- length(unique(data.long$item))
+n <- length(unique(data.long$person))
+#--------------
+
+#--------------
+# sum of squares persons, df = n - 1
+SSP <- m * sum((mean.persons - mean.overall)^2)
+MSP <- SSP / (n - 1)
+
+# sum of squares residual, df = (n - 1) * (m - 1)
+SSe1way <- sum((data.long$rating - rep(mean.persons, 20))^2)
+MSe1way <- SSe1way / ((m - 1) * n)
+
+# ANOVA estimates of variance components
+(sigma2E_ANOVA <- MSe1way)
+## [1] 0.2155
+(sigma2P_ANOVA <- ((MSP - MSe1way) / m))
+## [1] 0.0223
+#--------------
+
+#-----------------------------------------------------------------
+# # 3.3.3.3 Maximum likelihood
+#-----------------------------------------------------------------
+
+#--------------
+library(lme4)
+fit <- lmer(rating ~ (1 | person), data = data.long, REML = FALSE)
+as.data.frame(VarCorr(fit))
+##        grp        var1 var2   vcov  sdcor
+## 1   person (Intercept) <NA> 0.0223 0.1493
+## 2 Residual        <NA> <NA> 0.2155 0.4642
+
+#--------------
+# ML estimates of variance components
+(sigma2E_ML <- MSe1way)
+## [1] 0.2155
+(sigma2P_ML <- ((1 - 1 / n) * MSP - MSe1way) / m)
+## [1] 0.0223
+#--------------
+
+#-----------------------------------------------------------------
+# # 3.3.3.4 Restricted maximum likelihood (REML)
+#-----------------------------------------------------------------
+
+#--------------
+fit_1wayr <- lmer(rating ~ (1 | person), data = data.long)
+as.data.frame(VarCorr(fit_1wayr))
+##        grp        var1 var2   vcov  sdcor
+## 1   person (Intercept) <NA> 0.0223 0.1495
+## 2 Residual        <NA> <NA> 0.2155 0.4642
+#--------------
+
+#-----------------------------------------------------------------
+## 3.3.3.5 Bootstrap
+#-----------------------------------------------------------------
+
+#--------------
+boot <- bootMer(
+  fit_1wayr,
+  FUN = function(mm) unlist(as.data.frame(VarCorr(mm))["vcov"]),
+  nsim = 100, seed = 123
+)
+(fitVar_1wayr <- as.data.frame(VarCorr(fit_1wayr)))
+bootVars <- as.data.frame(boot$t)
+colnames(bootVars) <- fitVar_1wayr[, "grp"]
+head(bootVars, n = 2)
+##   person Residual
+## 1 0.0204   0.2132
+## 2 0.0245   0.2162
+#--------------
+
+#--------------
+bootAlphaCR <- bootVars[, "person"] /
+  (bootVars[, "person"] + bootVars[, "Residual"] / m)
+
+# median of bootstrapped samples
+median(bootAlphaCR)
+## [1] 0.673
+
+# lower bound of 95% bootstrapped confidence interval
+quantile(bootAlphaCR, 0.025)
+##      2.5%
+##    0.6245
+# upper bound of 95% bootstrapped confidence interval
+quantile(bootAlphaCR, 0.975)
+##     97.5%
+##    0.7029
+#--------------
+
+#--------------
+fit_2wayr <- lmer(rating ~ (1 | person) + (1 | item), data = data.long)
+(fitVar_2wayr <- as.data.frame(VarCorr(fit_2wayr)))
+##        grp        var1 var2   vcov  sdcor
+## 1   person (Intercept) <NA> 0.0237 0.1539
+## 2     item (Intercept) <NA> 0.0270 0.1643
+## 3 Residual        <NA> <NA> 0.1885 0.4341
+boot <- bootMer(
+  fit_2wayr,
+  FUN = function(mm) unlist(as.data.frame(VarCorr(mm))["vcov"]),
+  nsim = 100, seed = 123
+)
+bootVars <- as.data.frame(boot$t)
+colnames(bootVars) <- fitVar_2wayr[, "grp"]
+head(bootVars, n = 2)
+##    person    item Residual
+## 1 0.01990 0.02665   0.1899
+## 2 0.02637 0.04694   0.1876
+## 3 0.02410 0.02064   0.1886
+## 4 0.02286 0.02237   0.1859
+## 5 0.02496 0.01048   0.1884
+## 6 0.02413 0.04510   0.1925
+#--------------
+
+#--------------
+bootAlphaCR <- bootVars[, "person"] /
+  (bootVars[, "person"] + bootVars[, "Residual"] / m)
+
+# median of bootstrapped samples
+median(bootAlphaCR)
+## [1] 0.7162
+
+# lower bound of 95% bootstrapped confidence interval
+quantile(bootAlphaCR, 0.025)
+##      2.5%
+##    0.6864
+# upper bound of 95% bootstrapped confidence interval
+quantile(bootAlphaCR, 0.975)
+##     97.5%
+##    0.7446
+#--------------
+
+#--------------
+# histogram
+ggplot(
+  data = data.frame(alpha = bootAlphaCR),
+  aes(x = alpha)
+) +
+  geom_histogram(binwidth = 0.005, alpha = 0.5, col = "black") +
+  geom_vline(xintercept = median(bootAlphaCR), col = "red") +
+  geom_vline(xintercept = quantile(bootAlphaCR, 0.025), col = "red") +
+  geom_vline(xintercept = quantile(bootAlphaCR, 0.975), col = "red") +
+  xlab("Cronbach's alpha") + ylab("Count") +
+  theme_fig()
+#--------------
+
+#-----------------------------------------------------------------
+# # 3.3.3.6 Bayesian estimation
+#-----------------------------------------------------------------
+
+#--------------
+library(brms)
+set.seed(1234) 
+fitB <- brm(
+  rating ~ (1 | person) + (1 | item),
+  data = data.long
+)
+results <- as.data.frame(fitB)
+head(results[, 1:4], n = 3)
+##   b_Intercept sd_item__Intercept sd_person__Intercept  sigma
+## 1      0.5845             0.1810               0.1474 0.4352
+## 2      0.5730             0.1839               0.1549 0.4330
+## 3      0.5811             0.1553               0.1582 0.4322
+
+# Cronbach's alpha for each generated sample
+alphaCR <- results[, "sd_person__Intercept"]^2 /
+  (results[, "sd_person__Intercept"]^2 + results[, "sigma"]^2 / m)
+
+quantile(alphaCR, 0.5) # median of generated samples
+##    50%
+## 0.7156
+quantile(alphaCR, 0.025) # lower bound of 95% credible interval
+##   2.5%
+## 0.6814
+quantile(alphaCR, 0.975) # upper bound of 95% credible interval
+##  97.5%
+## 0.7455
+#--------------
+
+#--------------
+# histogram
+ggplot(
+  data = data.frame(alphaCR),
+  aes(x = alphaCR)
+) +
+  geom_histogram(binwidth = 0.005, alpha = 0.5, col = "black") +
+  geom_vline(xintercept = median(bootAlphaCR), col = "red") +
+  geom_vline(xintercept = quantile(bootAlphaCR, 0.025), col = "red") +
+  geom_vline(xintercept = quantile(bootAlphaCR, 0.975), col = "red") +
+  xlab("Cronbach's alpha") + ylab("Count") +
+  theme_fig()
+#--------------
+
+#-----------------------------------------------------------------
+# 3.4. More sources of error and G-theory
 #-----------------------------------------------------------------
 
 #-----------------------------------------------------------------
-# 4.4.1 A one facet study
+# 3.4.1 A one facet study
 #-----------------------------------------------------------------
 
 #--------------
@@ -702,165 +915,5 @@ dstudy_plot(
                 "rater" = c(1, 2, 3)),
   g_coef = FALSE
 )
-#--------------
-
-#-----------------------------------------------------------------
-# 4.5.1.1 ANOVA method of estimation
-#-----------------------------------------------------------------
-
-#--------------
-# mean ratings
-mean.overall <- mean(data.long$rating)
-mean.persons <- tapply(data.long$rating, data.long$person, mean)
-
-m <- length(unique(data.long$item))
-n <- length(unique(data.long$person))
-#--------------
-
-#--------------
-# sum of squares persons, df = n - 1
-SSP <- m * sum((mean.persons - mean.overall)^2)
-MSP <- SSP / (n - 1)
-
-# sum of squares residual, df = (n - 1) * (m - 1)
-SSe1way <- sum((data.long$rating - rep(mean.persons, 20))^2)
-MSe1way <- SSe1way / ((m - 1) * n)
-
-# ANOVA estimates of variance components
-(sigma2E_ANOVA <- MSe1way)
-## [1] 0.2155
-(sigma2P_ANOVA <- ((MSP - MSe1way) / m))
-## [1] 0.0223
-
-
-#-----------------------------------------------------------------
-# 4.5.1.2 Maximum likelihood
-#-----------------------------------------------------------------
-
-#--------------
-fit <- lmer(rating ~ (1 | person), data = data.long, REML = FALSE)
-as.data.frame(VarCorr(fit))
-##        grp        var1 var2   vcov  sdcor
-## 1   person (Intercept) <NA> 0.0223 0.1493
-## 2 Residual        <NA> <NA> 0.2155 0.4642
-
-#--------------
-# ML estimates of variance components
-(sigma2E_ML <- MSe1way)
-## [1] 0.2155
-(sigma2P_ML <- ((1 - 1 / n) * MSP - MSe1way) / m)
-## [1] 0.0223
-
-
-#-----------------------------------------------------------------
-# 4.5.1.3 Restricted maximum likelihood (REML)
-#-----------------------------------------------------------------
-
-#--------------
-fit_1wayr <- lmer(rating ~ (1 | person), data = data.long)
-as.data.frame(VarCorr(fit_1wayr))
-##        grp        var1 var2   vcov  sdcor
-## 1   person (Intercept) <NA> 0.0223 0.1495
-## 2 Residual        <NA> <NA> 0.2155 0.4642
-#--------------
-
-#-----------------------------------------------------------------
-# 4.5.1.4 Bootstrap
-#-----------------------------------------------------------------
-
-#--------------
-boot <- bootMer(
-  fit_2wayr,
-  FUN = function(mm) unlist(as.data.frame(VarCorr(mm))["vcov"]),
-  nsim = 100, seed = 123
-)
-bootVars <- as.data.frame(boot$t)
-colnames(bootVars) <- fitVar_2wayr[, "grp"]
-head(bootVars)
-##    person    item Residual
-## 1 0.01990 0.02665   0.1899
-## 2 0.02637 0.04694   0.1876
-## 3 0.02410 0.02064   0.1886
-## 4 0.02286 0.02237   0.1859
-## 5 0.02496 0.01048   0.1884
-## 6 0.02413 0.04510   0.1925
-#--------------
-
-#--------------
-bootAlphaCR <- bootVars[, "person"] /
-  (bootVars[, "person"] + bootVars[, "Residual"] / m)
-
-# median of bootstrapped samples
-median(bootAlphaCR)
-## [1] 0.7162
-
-# lower bound of 95% bootstrapped confidence interval
-quantile(bootAlphaCR, 0.025)
-##      2.5%
-##    0.6864
-# upper bound of 95% bootstrapped confidence interval
-quantile(bootAlphaCR, 0.975)
-##     97.5%
-##    0.7446
-#--------------
-
-#--------------
-# histogram
-ggplot(
-  data = data.frame(alpha = bootAlphaCR),
-  aes(x = alpha)
-) +
-  geom_histogram(binwidth = 0.005, alpha = 0.5, col = "black") +
-  geom_vline(xintercept = median(bootAlphaCR), col = "red") +
-  geom_vline(xintercept = quantile(bootAlphaCR, 0.025), col = "red") +
-  geom_vline(xintercept = quantile(bootAlphaCR, 0.975), col = "red") +
-  xlab("Cronbach's alpha") + ylab("Count") +
-  theme_fig()
-#--------------
-
-#-----------------------------------------------------------------
-# 4.5.1.5 Bayesian estimation
-#-----------------------------------------------------------------
-
-#--------------
-set.seed(1234) # TODO: resave results with seed
-fitB <- brm(
-  rating ~ (1 | person) + (1 | item),
-  data = data.long
-)
-results <- as.data.frame(fitB)
-head(results[, 1:4], n = 3)
-##   b_Intercept sd_item__Intercept sd_person__Intercept  sigma
-## 1      0.5845             0.1810               0.1474 0.4352
-## 2      0.5730             0.1839               0.1549 0.4330
-## 3      0.5811             0.1553               0.1582 0.4322
-
-# Cronbach's alpha for each generated sample
-alphaCR <- results[, "sd_person__Intercept"]^2 /
-  (results[, "sd_person__Intercept"]^2 + results[, "sigma"]^2 / m)
-
-quantile(alphaCR, 0.5) # median of generated samples
-##    50%
-## 0.7156
-quantile(alphaCR, 0.025) # lower bound of 95% credible interval
-##   2.5%
-## 0.6814
-quantile(alphaCR, 0.975) # upper bound of 95% credible interval
-##  97.5%
-## 0.7455
-#--------------
-
-#--------------
-# histogram
-ggplot(
-  data = data.frame(alphaCR),
-  aes(x = alphaCR)
-) +
-  geom_histogram(binwidth = 0.005, alpha = 0.5, col = "black") +
-  geom_vline(xintercept = median(bootAlphaCR), col = "red") +
-  geom_vline(xintercept = quantile(bootAlphaCR, 0.025), col = "red") +
-  geom_vline(xintercept = quantile(bootAlphaCR, 0.975), col = "red") +
-  xlab("Cronbach's alpha") + ylab("Count") +
-  theme_fig()
 #--------------
 
