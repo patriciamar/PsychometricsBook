@@ -1,5 +1,5 @@
 #-----------------------------------------------------------------
-# Chapter 4 - Reliability in complex designs
+# Chapter 3 - Reliability
 # Computational aspects of psychometric methods. With R.
 # P. Martinkova & A. Hladka
 #-----------------------------------------------------------------
@@ -8,13 +8,8 @@
 # Packages
 #-----------------------------------------------------------------
 
-library(brms)
 library(ggplot2)
-library(gtheory)
-library(hemp)
 library(lme4)
-library(psych)
-library(psychometric)
 library(ShinyItemAnalysis)
 library(sirt)
 library(plotrix)
