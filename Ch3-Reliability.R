@@ -39,6 +39,7 @@ lw$right.padding <- list(x = -0.1, units = "inches")
 lh <- list(bottom.padding = list(x = 0, units = "inches"))
 lh$top.padding <- list(x = -0.2, units = "inches")
 
+library(lattice)
 lattice.options(layout.widths = lw, layout.heights = lh)
 
 
