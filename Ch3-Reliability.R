@@ -9,13 +9,15 @@
 #-----------------------------------------------------------------
 
 library(ggplot2)
+library(gtheory)
+library(hemp)
 library(lme4)
 library(ShinyItemAnalysis)
 library(sirt)
 library(plotrix)
 library(ggforce)
+library(tidyverse)
 library(Cairo)
-
 #-----------------------------------------------------------------
 # Plot settings
 #-----------------------------------------------------------------
@@ -34,12 +36,12 @@ theme_fig <- function(base_size = 17, base_family = "") {
 }
 
 # margins for mirt plots
+library(lattice)
 lw <- list(left.padding = list(x = 0.1, units = "inches"))
 lw$right.padding <- list(x = -0.1, units = "inches")
 lh <- list(bottom.padding = list(x = 0, units = "inches"))
 lh$top.padding <- list(x = -0.2, units = "inches")
 
-library(lattice)
 lattice.options(layout.widths = lw, layout.heights = lh)
 
 
@@ -398,6 +400,28 @@ psych::alpha.ci(
 #-----------------------------------------------------------------
 # 3.3.3.1 Model specification
 #-----------------------------------------------------------------
+
+#--------------
+# AIBS data upload and summary
+data(AIBS, package = "ShinyItemAnalysis")
+head(AIBS, n = 4)
+##    ID ...  ScoreRankAdj Score  ...
+##  1 10 ...            48   2.0  ...
+##  2 10 ...            48   3.5  ...
+##  3 10 ...            48   2.0  ...
+##  4 12 ...            38   2.0  ...
+summary(AIBS[,c("ID", "Score", "ScoreAvg", "ScoreRankAdj")])
+#--------------
+
+#--------------
+# Caterpillar plot of AIBS overall scientific merit scores
+ggplot(data = AIBS, aes(x = ScoreRankAdj, y = Score, group = ID)) + 
+  geom_line(col = "gray") + geom_point(shape = 1, size = 1.5) +
+  stat_summary(fun = mean, fun.args = list(na.rm = TRUE), 
+               geom = "point", col = "blue") + 
+  labs(x = "AIBS application rank", y = "Overall score") +
+  coord_cartesian(ylim = c(1, 5)) + theme_fig()
+#--------------
 
 #--------------
 ICC(data)
@@ -912,4 +936,49 @@ dstudy_plot(
   g_coef = FALSE
 )
 #--------------
+
+#-----------------------------------------------------------------
+# 3.5.1 Correction for unreliability
+#-----------------------------------------------------------------
+
+
+#-----------------------------------------------------------------
+# 3.5.2 Issues with range restriction
+#-----------------------------------------------------------------
+
+# ------------------------------------------
+# IRR estimation in restricted samples
+# ------------------------------------------
+
+# estimate reliability with ICC for complete AIBS dataset
+library(ShinyItemAnalysis)
+ICCrestricted(Data = AIBS, case = "ID", var = "Score", 
+              rank = "ScoreRankAdj")
+
+# estimate range-restricted ICC
+ICCrestricted(Data = AIBS, case = "ID", var = "Score",
+              rank = "ScoreRankAdj", sel = 0.90, dir = "top")
+
+
+# estimate all possible top-restricted subsets
+all_top_restricted <- map_dfr(2:72,
+                              ~ ICCrestricted(Data = AIBS, case = "ID", var = "Score",
+                                              rank = "ScoreRankAdj", sel = .x, nsim = 10))
+all_top_restricted
+
+# plot
+all_top_restricted %>%
+  ggplot(aes(prop_sel, ICC1, ymin = ICC1_LCI, ymax = ICC1_UCI)) +
+  geom_pointrange() + scale_x_continuous(labels = scales::percent) +
+  labs(x = ("Proportion of top ratees"), y = "Reliability") +
+  coord_cartesian(ylim = c(0, 1), xlim = c(0, 1)) +
+  theme_app()
+
+# ------------------------------------------
+
+
+#-----------------------------------------------------------------
+# 3.5.4 Heterogeneity in reliability
+#-----------------------------------------------------------------
+
 
