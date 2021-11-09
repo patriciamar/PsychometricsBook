@@ -33,14 +33,16 @@ theme_fig <- function(base_size = 17, base_family = "") {
 }
 
 #-----------------------------------------------------------------
-# 5.2.1  Item difficulty in binary items
+# 4.2.1  Item difficulty
+#-----------------------------------------------------------------
+# Difficulty in binary items 
 #-----------------------------------------------------------------
 
 #--------------
 # loading data
 data(HCI, package = "ShinyItemAnalysis")
 
-# item difficulty / average score
+# item difficulty (average item score)
 sapply(HCI[, 1:20], mean)
 ## Item 1  Item 2  Item 3  Item 4  Item 5  Item 6  Item 7  Item 8
 ## 0.6989  0.7527  0.8479  0.4040  0.4424  0.3625  0.5469  0.7051
@@ -60,7 +62,7 @@ sapply(HCI[, 1:20], sd)
 #--------------
 
 #-----------------------------------------------------------------
-# 5.2.2  Item difficulty in ordinal items
+# Difficulty in ordinal items
 #-----------------------------------------------------------------
 
 #--------------
@@ -73,43 +75,87 @@ mean(dataMedicalgraded[, 1])
 # standard deviation of item 1
 sd(dataMedicalgraded[, 1])
 ## [1] 0.9905
+#--------------
 
-# binarizing item 1
-bin_item1 <- as.numeric(dataMedicalgraded[, 1] == 4)
-# difficulty of binarized item 1
-mean(bin_item1)
-## [1] 0.3181
-
-# calculation of difficulty for item 1
-# minimum possible score was 0, maximum was 4 points
+#--------------
+# accounting for minimum item score of 0, maximum score of 4 points
 (mean(dataMedicalgraded[, 1]) - 0) / (4 - 0)
 ## [1] 0.6647
+ItemAnalysis(Data = dataMedicalgraded[,1:100])
+##       Difficulty  Mean     SD Prop.max.score Min.score Max.score Obs.min
+## X2001     0.6647 2.659 0.9905         0.3181         0         4       0
+## X2002     0.5348 2.139 0.9911         0.0874         0         4       0
+## X2003     0.7477 2.991 1.0298         0.3880         0         4       0
+## ...
+#--------------
+
+#--------------
+ItemAnalysis(Data = dataMedicalgraded[,1:100], 
+             maxscore = 4, minscore = 0, cutscore = 2, bin = TRUE)
+##       Difficulty  Mean     SD SD.bin Prop.max.score Min.score Max.score Obs.min Obs.max Cut.score
+## X2001     0.6647 2.659 0.9905 0.4964         0.3181         0         4       0       4         4
+## ... 
+#--------------
+
+#--------------
+# difficulty of item 1 under different binarizations
+mean(dataMedicalgraded[, 1] >= 4)
+# [1] 0.3181
+mean(dataMedicalgraded[, 1] >= 3)
+## [1] 0.3934
+mean(dataMedicalgraded[, 1] >= 2)
+## [1] 0.9544
+mean(dataMedicalgraded[, 1] >= 1)
+## [1] 0.9929
+#--------------
+
+#--------------
+ItemAnalysis(Data = dataMedicalgraded[,1:100], 
+             maxscore = 4, minscore = 0, cutscore = 2, bin = TRUE)
+##       Difficulty  Mean     SD SD.bin Prop.max.score Min.score Max.score Obs.min Obs.max Cut.score
+## X2001     0.6647 2.659 0.9905 0.4964         0.3181         0         4       0       4         2
+## ... 
+#--------------
+
+
+#-----------------------------------------------------------------
+# 4.2.2  Item discrimination
+#-----------------------------------------------------------------
+
+#-----------------------------------------------------------------
+# Correlation between item and total score (RIT)
+#-----------------------------------------------------------------
+
+#--------------
+# RIT index with ItemAnalysis() function
+ItemAnalysis(HCI[,1:20])$RIT
+## [1] 0.4019 0.3320 0.4352 0.3023 0.4005 0.4560 0.2355 0.4350 ...
+
+# RIT index by hand
+total_score <- rowSums(HCI[, 1:20])
+sapply(HCI[, 1:20], function(i) cor(i, total_score))
+## Item 1  Item 2  Item 3  Item 4  Item 5  Item 6  Item 7  Item 8  ...
+## 0.4019  0.3320  0.4352  0.3023  0.4005  0.4560  0.2355  0.4350  ...
 #--------------
 
 #-----------------------------------------------------------------
-# 5.3  Item discrimination
-#-----------------------------------------------------------------
-# 5.3.1 Correlation between item and total score
+# Correlation between item and total score (RIR)
 #-----------------------------------------------------------------
 
 #--------------
-# calculation of total scores
-total_score <- rowSums(dataMedicalgraded[, 1:100])
+# RIR index with ItemAnalysis() function
+ItemAnalysis(HCI[,1:20])$RIR
+## [1] 0.2884 0.2206 0.3500 0.1730 0.2768 0.3419 0.1009 0.3252 ...
 
-# RIT
-sapply(dataMedicalgraded[, 1:5], function(i) cor(i, total_score))
-##  X2001  X2002  X2003  X2004  X2005
-## 0.1769 0.3012 0.5481 0.3230 0.2854
-
-# RIR
-dataR <- total_score - dataMedicalgraded[, 1:5]
-diag(cor(dataMedicalgraded[, 1:5], dataR))
-## X2001  X2002  X2003  X2004  X2005
-## 0.1528 0.2784 0.5297 0.2979 0.2616
+# RIR index by hand
+dataR <- total_score - HCI[, 1:20]
+diag(cor(HCI[, 1:20], dataR))
+## Item 1  Item 2  Item 3  Item 4  Item 5  Item 6  Item 7  Item 8  ...
+## 0.2884  0.2206  0.3500  0.1730  0.2768  0.3419  0.1009  0.3252  ...
 #--------------
 
 #-----------------------------------------------------------------
-# 5.3.2 Upper-lower index
+# Upper-lower index (ULI)
 #-----------------------------------------------------------------
 
 #--------------
@@ -142,18 +188,7 @@ gDiscrim(Data = HCI[, 1:20], k = 5, l = 4, u = 5)
 #--------------
 
 #--------------
-DDplot(Data = HCI[, 1:20], discrim = "ULI")
-#--------------
-
-#--------------
-DDplot(
-  Data = HCI[, 1:20], discrim = "ULI", k = 5, l = 4, u = 5,
-  thr = 0.1
-)
-#--------------
-
-#--------------
-# complex item analysis
+# ItemAnalysis() with all above indices
 ItemAnalysis(Data = HCI[, 1:20], k = 5, l = 4, u = 5)[
   , c("Difficulty", "SD", "ULI", "gULI", "RIT", "RIR")
 ]
@@ -181,8 +216,48 @@ ItemAnalysis(Data = HCI[, 1:20], k = 5, l = 4, u = 5)[
 ## Item 20 0.7220 0.4484 0.4562 0.08462 0.4463 0.3396
 #--------------
 
+#--------------
+DDplot(Data = HCI[, 1:20], discrim = "ULI")
+#--------------
+
+#--------------
+DDplot(
+  Data = HCI[, 1:20], discrim = "ULI", k = 5, l = 4, u = 5,
+  thr = 0.1
+)
+#--------------
+
 #-----------------------------------------------------------------
-# 5.5 Distractor analysis
+# 4.2.3 Item characteristic curve
+#-----------------------------------------------------------------
+
+#--------------# illustrative plot
+totalscore <- (0:10)
+item1 <- c(0.00, 0.05, 0.12, 0.30, 0.50, 0.70, 0.90, 1.00, 1.00, 1.00, 1.00)
+item2 <- c(0.00, 0.02, 0.05, 0.12, 0.30, 0.50, 0.70, 0.90, 1.00, 1.00, 1.00)
+item3 <- rep(0.5, 11)
+item4 <- 1 - item2
+item5 <- c(rep(0, 5), rep(1, 6))
+
+df <- data.frame(
+  x = totalscore,
+  icc = c(item1, item2, item3, item4, item5),
+  Item = as.factor(rep(paste("Item", 1:5), each = 11))
+)
+
+ggplot(df, aes(x = x, y = icc, col = Item, shape = Item)) +
+  geom_point(size = 1.8) +
+  geom_line(size = 0.8) +
+  xlab("Total score") +
+  ylab("Proportion of correct answer") +
+  theme_fig() + 
+  theme(legend.title = element_blank(),
+        legend.position = c(0.84, 0.28),
+        legend.margin = margin(0, 0, 0, 0))
+#--------------
+
+#-----------------------------------------------------------------
+# 4.2.4 Distractor analysis
 #-----------------------------------------------------------------
 
 #--------------
@@ -216,9 +291,7 @@ plotDistractorAnalysis(
 #--------------
 
 #-----------------------------------------------------------------
-# 5.5 Further issues
-#-----------------------------------------------------------------
-# 5.6.1 Item reliability
+# 4.2.5 Item reliability
 #-----------------------------------------------------------------
 
 #--------------
@@ -235,35 +308,25 @@ psych::alpha(x = HCI[, 1:20])$alpha.drop[, 1]
 #--------------
 
 #--------------
-ItemAnalysis(Data = HCI[, 1:20], criterion = HCI$major)[, "Index.rel"]
-## [1]  0.1844 0.1432 0.1563 0.1484 0.1989 0.2192 0.1172 0.1984 0.1690
-## [10] 0.1835 0.1611 0.2154 0.2319 0.1885 0.2098 0.2413 0.0769 0.2036
-## [19] 0.1899 0.1999
-#--------------
+ItemAnalysis(Data = HCI[, 1:20])$Alpha.drop
+## [1] 0.7042 0.7099 0.7007 0.7151 0.7054 0.6991 0.7220 0.7009 0.7114
+## [10] 0.7064 0.7047 0.7016 0.6972 0.7001 0.7030 0.6952 0.7253 0.6943
+## [19] 0.6981 0.6997
+#--------------             
 
 #-----------------------------------------------------------------
-# 5.6.2 Item validity
+# 4.2.6 Item validity
 #-----------------------------------------------------------------
 
 #--------------
-ItemAnalysis(Data = HCI[, 1:20], criterion = HCI$major)[, "Corr.criterion"]
+ItemAnalysis(Data = HCI[, 1:20], criterion = HCI$major)$Corr.criterion
 ## [1]  0.1173  0.1265  0.1541  0.0832  0.1274  0.0980 -0.0194  0.0949
 ## [9]  0.0681  0.0968  0.0782  0.0938  0.0909  0.0664  0.0859  0.0499
 ## [17] 0.0312  0.1187  0.1295  0.0650
 #--------------
 
 #--------------
-ItemAnalysis(Data = HCI[, 1:20], criterion = HCI$major)[, "Index.val"]
-## [1]  0.0538  0.0546  0.0553  0.0408  0.0633  0.0471 -0.0096  0.0433
-## [9]  0.0337  0.0462  0.0325  0.0464  0.0444  0.0284  0.0427  0.0244
-## [17] 0.0143  0.0477  0.0532  0.0291
-#--------------
-
-#--------------
-DDplot(
-  Data = HCI[, 1:20], criterion = HCI$major, thr = NULL,
-  val_type = "simple"
-)
+DDplot(Data = HCI[, 1:20], criterion = HCI$major, thr = NULL)
 #--------------
 
 #--------------
@@ -275,7 +338,7 @@ plotDistractorAnalysis(
 #--------------
 
 #-----------------------------------------------------------------
-# 5.6.3 Missed items
+# 4.2.7 Missed items
 #-----------------------------------------------------------------
 
 #--------------
@@ -294,7 +357,7 @@ for (i in 1:150) {
     NA # missed with random location
 }
 # visualize missingness
-# naniar::vis_miss(HCImissed)
+naniar::vis_miss(HCImissed)
 
 #--------------
 # number of missed answers in item 1
@@ -353,7 +416,13 @@ ItemAnalysis(Data = HCImissed[, 1:20])$"Perc.nr"
 
 
 #-----------------------------------------------------------------
-# 6.3.1  Linear regression
+# 4.3.  Regression models for item description
+#-----------------------------------------------------------------
+#-----------------------------------------------------------------
+# 4.3.2  Models for continuous items
+#-----------------------------------------------------------------
+#-----------------------------------------------------------------
+# 4.3.2.1  Linear regression
 #-----------------------------------------------------------------
 
 #--------------
@@ -459,7 +528,10 @@ ggplot(data = EPIA, aes(x = `zscore`, y = `Item 1`)) +
 #--------------
 
 #-----------------------------------------------------------------
-# 6.4.1  Logistic regression
+# 4.3.3  Models for binary items
+#-----------------------------------------------------------------
+#-----------------------------------------------------------------
+# 4.3.3.1  Logistic regression
 #-----------------------------------------------------------------
 
 #--------------
@@ -497,6 +569,9 @@ exp(coef(fit1)[1] + coef(fit1)[2]) / (1 + exp(coef(fit1)[1] + coef(fit1)[2]))
 ##      0.8504
 #--------------
 
+#-----------------------------------------------------------------
+# 4.3.3.2  Other link functions, probit regression model
+#-----------------------------------------------------------------
 #--------------
 # probit link
 fit2 <- glm(HCI[, 13] ~ zscore, family = binomial(link = "probit"))
@@ -586,6 +661,10 @@ ggplot(df, aes(x = x, y = y)) +
   theme_fig()
 #--------------
 
+#-----------------------------------------------------------------
+# 4.3.3.3  IRT parametrization
+#-----------------------------------------------------------------
+
 #--------------
 # coefficients in IRT parametrization
 IRTpars13 <- c(coef(fit1)[2], -coef(fit1)[1] / coef(fit1)[2])
@@ -622,7 +701,7 @@ sqrt(diag(new.covar))
 #--------------
 
 #-----------------------------------------------------------------
-# 6.4.2  Nonlinear regression models
+# 4.3.3.4  Nonlinear regression models
 #-----------------------------------------------------------------
 
 #--------------
@@ -983,3 +1062,9 @@ AIC(fit_glm1PL, fit_glm2PL)
 ## fit_glm1PL 20 15995.88
 ## fit_glm2PL 40 13712.43
 #--------------
+
+#-----------------------------------------------------------------
+# 5.7. ShinyItemAnalysis interactive application
+#-----------------------------------------------------------------
+
+startShinyItemAnalysis()
