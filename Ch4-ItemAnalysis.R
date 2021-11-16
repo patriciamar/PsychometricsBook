@@ -700,6 +700,7 @@ sqrt(diag(new.covar))
 ## [1] 0.1084 0.0823
 #--------------
 
+
 #-----------------------------------------------------------------
 # 4.3.3.4  Nonlinear regression models
 #-----------------------------------------------------------------
@@ -710,13 +711,9 @@ mod_3PL <- function(x, a, b, c) {
   c + (1 - c) * exp(a * (x - b)) / (1 + exp(a * (x - b)))
 }
 
-fit3 <- nls(
-  HCI[, 13] ~ mod_3PL(zscore, a, b, c),
-  algorithm = "port",
-  start = c(a = 0.7, b = -0.9, c = 0),
-  lower = c(-Inf, -Inf, 0),
-  upper = c(Inf, Inf, 1)
-)
+fit3 <- nls(HCI[, 13] ~ mod_3PL(zscore, a, b, c),
+            algorithm = "port", start = c(a = 0.7, b = -0.9, c = 0),
+            lower = c(-Inf, -Inf, 0), upper = c(Inf, Inf, 1))
 
 # coefficients
 coef(fit3)
@@ -756,13 +753,9 @@ mod_4PL <- function(x, a, b, c, d) {
   c + (d - c) * exp(a * (x - b)) / (1 + exp(a * (x - b)))
 }
 
-fit4 <- nls(
-  HCI[, 13] ~ mod_4PL(zscore, a, b, c, d),
-  algorithm = "port",
-  start = c(a = 0.7, b = -0.9, c = 0, d = 1),
-  lower = c(-Inf, -Inf, 0, 0),
-  upper = c(Inf, Inf, 1, 1)
-)
+fit4 <- nls(HCI[, 13] ~ mod_4PL(zscore, a, b, c, d),
+            algorithm = "port", start = c(a = 0.7, b = -0.9, c = 0, d = 1),
+            lower = c(-Inf, -Inf, 0, 0), upper = c(Inf, Inf, 1, 1))
 
 # coefficients
 coef(fit4)
@@ -771,46 +764,28 @@ coef(fit4)
 #--------------
 
 #-----------------------------------------------------------------
-# 6.4.2.2  Model selection and model fit
+# 4.3.4  Models for polytomous items
 #-----------------------------------------------------------------
-
-#--------------
-# AIC
-AIC(fit1, fit2, fit3, fit4)
-##      df      AIC
-## fit1  2 715.1369
-## fit2  2 713.7691
-## fit3  4 740.8746
-## fit4  5 742.4880
-
-# BIC
-BIC(fit1, fit2, fit3, fit4)
-##      df      BIC
-## fit1  2 724.0939
-## fit2  2 722.7261
-## fit3  4 758.7886
-## fit4  5 764.8806
-#--------------
-
 #-----------------------------------------------------------------
-# 6.5.1  Ordinal regression models
+# 4.3.4.1  Ordinal regression models
 #-----------------------------------------------------------------
 
 #--------------
 data("Anxiety", package = "lordif")
 data <- Anxiety[, paste0("R", 1:29)] - 1
-
 zscore <- scale(rowSums(data)) # Z-scores
 maxval <- max(data[, 18]) # maximal number of points for item 18
 # reordering item 18
 data[, 18] <- ordered(factor(data[, 18], levels = 0:maxval))
+#--------------
 
+#--------------
 # cumulative logit model for item 18
-fit.cum <- vglm(
-  data[, 18] ~ zscore,
-  family = cumulative(reverse = TRUE, parallel = TRUE)
-)
+fit.cum <- vglm(data[, 18] ~ zscore,
+                family = cumulative(reverse = TRUE, parallel = TRUE))
+#--------------
 
+#--------------
 # coefficients for item 18
 coef(fit.cum)
 ## (Intercept):1 (Intercept):2 (Intercept):3 (Intercept):4    zscore
@@ -819,7 +794,9 @@ coef(fit.cum)
 sqrt(diag(vcov(fit.cum)))
 ## (Intercept):1 (Intercept):2 (Intercept):3 (Intercept):4    zscore
 ##        0.0865        0.1031        0.1825        0.2880    0.0955
+#--------------
 
+#--------------
 # IRT parametrization
 c(-coef(fit.cum)[1:4] / coef(fit.cum)[5], coef(fit.cum)[5])
 ## (Intercept):1 (Intercept):2 (Intercept):3 (Intercept):4    zscore
@@ -835,6 +812,7 @@ msm::deltamethod(
 
 #--------------
 # plotting cumulative probabilities
+plotCumulative(fit.cum, type = "cumulative")
 plotCumulative(
   fit.cum,
   type = "cumulative", matching.name = "Z-score"
@@ -849,6 +827,7 @@ plotCumulative(
 
 #--------------
 # plotting category probabilities
+plotCumulative(fit.cum, type = "category")
 plotCumulative(
   fit.cum,
   type = "category", matching.name = "Z-score"
@@ -864,10 +843,8 @@ plotCumulative(
 
 #--------------
 # adjacent category logit model for item 18
-fit.adj <- vglm(
-  data[, 18] ~ zscore,
-  family = acat(reverse = FALSE, parallel = TRUE)
-)
+fit.adj <- vglm(data[, 18] ~ zscore,
+                family = acat(reverse = FALSE, parallel = TRUE))
 
 # coefficients for item 18
 coef(fit.adj)
@@ -887,14 +864,13 @@ c(-coef(fit.adj)[1:4] / coef(fit.adj)[5], coef(fit.adj)[5])
 # SE using delta method
 msm::deltamethod(
   list(~ -x1 / x5, ~ -x2 / x5, ~ -x3 / x5, ~ -x4 / x5, ~x5),
-  mean = coef(fit.adj),
-  cov = vcov(fit.adj)
-)
+  mean = coef(fit.adj), cov = vcov(fit.adj))
 ## [1] 0.1035 0.1163 0.1874 0.2769 0.0722
 #--------------
 
 #--------------
 # plotting category probabilities
+plotAdjacent(fit.adj, matching.name = "Z-score")
 plotAdjacent(fit.adj, matching.name = "Z-score")   +
   theme_fig() + 
   scale_size_continuous(breaks = c(5, 10, 30, 50)) + 
@@ -905,7 +881,7 @@ plotAdjacent(fit.adj, matching.name = "Z-score")   +
 #--------------
 
 #-----------------------------------------------------------------
-# 6.5.2  Nominal response models
+# 4.3.4.2  Nominal response models
 #-----------------------------------------------------------------
 
 #--------------
@@ -932,13 +908,18 @@ matrix(sqrt(diag(vcov(fit.mult))), ncol = 2, byrow = TRUE)
 ## [1,] 0.1976 0.1860
 ## [2,] 0.1410 0.1458
 ## [3,] 0.1187 0.1289
+#--------------
 
+#--------------
 # IRT parametrization - difficulties
 cbind(-coef(fit.mult)[, 1] / coef(fit.mult)[, 2], coef(fit.mult)[, 2])
 ##      [,1]    [,2]
 ## B -1.6484 -1.4234
 ## C -1.3253 -1.2354
 ## D -1.2052 -1.0560
+#--------------
+
+#--------------
 # SE using delta method
 subst_vcov <- function(vcov, cat) {
   ind <- grep(cat, colnames(vcov))
@@ -948,11 +929,10 @@ t(sapply(
   rownames(coef(fit.mult)),
   function(.x) {
     vcov_subset <- subst_vcov(vcov(fit.mult), .x)
-    msm::deltamethod(
-      list(~ -x1 / x2, ~x2),
-      mean = coef(fit.mult)[.x, ],
-      cov = vcov_subset,
-      ses = TRUE
+    msm::deltamethod(list(~ -x1 / x2, ~x2),
+                     mean = coef(fit.mult)[.x, ],
+                     cov = vcov_subset,
+                     ses = TRUE
     )
   }
 ))
@@ -963,9 +943,10 @@ t(sapply(
 #--------------
 
 #--------------
+plotMultinomial(fit.mult, matching = zscore)
 plotMultinomial(
   fit.mult,
-  matching = zscore, matching.name = "Standardized total score"
+  matching = zscore, matching.name = "Z-score"
 )  +
   theme_fig() + 
   scale_size_continuous(breaks = c(5, 10, 30, 50)) + 
@@ -976,7 +957,29 @@ plotMultinomial(
 #--------------
 
 #-----------------------------------------------------------------
-# 6.6.1  Joint model
+# 4.3.6  Model selection and model fit
+#-----------------------------------------------------------------
+
+#--------------
+# AIC
+AIC(fit1, fit2, fit3, fit4)
+##      df      AIC
+## fit1  2 715.1369
+## fit2  2 713.7691
+## fit3  4 740.8746
+## fit4  5 742.4880
+
+# BIC
+BIC(fit1, fit2, fit3, fit4)
+##      df      BIC
+## fit1  2 724.0939
+## fit2  2 722.7261
+## fit3  4 758.7886
+## fit4  5 764.8806
+#--------------
+
+#-----------------------------------------------------------------
+# 4.3.7  Joint model
 #-----------------------------------------------------------------
 
 #--------------
@@ -1063,8 +1066,15 @@ AIC(fit_glm1PL, fit_glm2PL)
 ## fit_glm2PL 40 13712.43
 #--------------
 
+#--------------
+HCI.long$predict2pl <- predict(fit_glm2PL)
+plot(HCI.long$zscore, HCI.long$predict2pl,
+     xlim = c(-4, 4), ylim = c(-4, 4),
+     xlab = "Z-score", ylab = "2PL predicted")
+#--------------
+
 #-----------------------------------------------------------------
-# 5.7. ShinyItemAnalysis interactive application
+# 4.4. ShinyItemAnalysis interactive application
 #-----------------------------------------------------------------
 
 startShinyItemAnalysis()
