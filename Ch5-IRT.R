@@ -15,10 +15,8 @@ library(ltm)
 library(mirt)
 library(TAM)
 library(brms)
-library(lavaan)
 library(reshape)
 library(ShinyItemAnalysis)
-library(cowplot)
 library(Cairo)
 
 #-----------------------------------------------------------------
@@ -38,16 +36,8 @@ theme_fig <- function(base_size = 17, base_family = "") {
     )
 }
 
-# margins for mirt plots
-lw <- list(left.padding = list(x = 0.1, units = "inches"))
-lw$right.padding <- list(x = -0.1, units = "inches")
-lh <- list(bottom.padding = list(x = 0, units = "inches"))
-lh$top.padding <- list(x = -0.2, units = "inches")
-
-lattice.options(layout.widths = lw, layout.heights = lh)
-
 #-----------------------------------------------------------------
-# 7.3.1  Rasch model and 1PL IRT model
+# 5.3.1  Rasch model and 1PL IRT model
 #-----------------------------------------------------------------
 
 #--------------
@@ -188,6 +178,7 @@ coef(fit_1PL_ltm)
 ##  Item 20 -1.3314659 0.8178688
 #--------------
 
+
 #--------------
 # eRm package
 # Rasch model with sum-0 beta restriction
@@ -280,7 +271,7 @@ head(HCI.long)
 #--------------
 
 #--------------
-# fit Rasch model with lme4 (TAKES FEW MINUTES! COMMENTED FOR NOW)
+# fit Rasch model with lme4 (TAKES FEW MINUTES!)
 HCI.long$item <- as.factor(HCI.long$item)
 fit_rasch_glmer <- lme4::glmer(rating ~ -1 + item + (1 | person),
                                data = HCI.long, family = binomial)
@@ -294,17 +285,17 @@ coef(fit_rasch_glmer)$person[1, -1]
 #--------------
 
 #--------------
-# brms package (Bayesian 1PL IRT)
+# brms package (Bayesian 1PL IRT, TAKES FEW MINUTES!)
 formula_1PL <- bf(rating ~ 1 + (1 | item) + (1 | person))
 #formula_1PL <- bf(rating ~ 0 + item + (1 | person))
 prior_1PL <- prior("normal(0, 3)", class = "sd", group = "person") +
-             prior("normal(0, 3)", class = "sd", group = "item")
+  prior("normal(0, 3)", class = "sd", group = "item")
 #prior_1PL <- prior("normal(0, 3)", class = "sd", group = "person")
 
 
 fit_1PL_brms <- brm(formula = formula_1PL,
-  data = HCI.long, family = brmsfamily("bernoulli", "logit"),
-  prior = prior_1PL)
+                    data = HCI.long, family = brmsfamily("bernoulli", "logit"),
+                    prior = prior_1PL, seed = 123)
 coef(fit_1PL_brms)$item[, , "Intercept"]
 ##     Estimate Est.Error     Q2.5    Q97.5
 ##  1    0.9602   0.09574  0.76907  1.15350
@@ -333,7 +324,7 @@ plot(fit_1PL_brms)
 
 #--------------
 b_mirt = coef(fit_rasch_mirt, IRTpars = TRUE, 
-             simplify = TRUE)$items[, "b"]
+              simplify = TRUE)$items[, "b"]
 b_ltm = coef(fit_rasch_ltm)[, 1]
 b_eRm1 = -coef(fit_rasch_eRm1) - mean(as.numeric(unlist(lat_var$thetapar)))
 b_lme4 = -unlist(coef(fit_rasch_glmer)$person[1, -1])
@@ -375,7 +366,7 @@ ggWrightMap(fs_SE[, 1], b)
 #--------------
 
 #-----------------------------------------------------------------
-# 7.3.2 2PL IRT model
+# 5.3.2 2PL IRT model
 #-----------------------------------------------------------------
 
 #--------------
@@ -404,13 +395,13 @@ coef(fit_2PL_ltm)
 #--------------
 
 #-----------------------------------------------------------------
-# 7.3.3 Normal ogive model
+# 5.3.3 Normal ogive model
 #-----------------------------------------------------------------
 
 # TO BE ADDED
 
 #-----------------------------------------------------------------
-# 7.3.4 3PL IRT model
+# 5.3.4 3PL IRT model
 #-----------------------------------------------------------------
 
 #--------------
@@ -429,13 +420,13 @@ coef(fit_3PL_mirt, IRTpars = TRUE, simplify = TRUE)
 #--------------
 # test score function
 plot(fit_3PL_mirt)
- 
+
 # ICC
 plot(fit_3PL_mirt, type = "trace", facet_items = FALSE)
- 
+
 # IIC
 plot(fit_3PL_mirt, type = "infotrace", facet_items = FALSE)
- 
+
 # TIC
 plot(fit_3PL_mirt, type = "infoSE")
 #--------------
@@ -458,7 +449,7 @@ coef(fit_3PL_ltm)
 #--------------
 
 #-----------------------------------------------------------------
-# 7.3.5 4PL IRT model
+# 5.3.5 4PL IRT model
 #-----------------------------------------------------------------
 
 #--------------
@@ -482,13 +473,13 @@ coef(fit_4PL_mirt)
 #--------------
 # ICC
 plot(fit_4PL_mirt, type = "trace", facet_items = FALSE)
- 
+
 # IIC
 plot(fit_4PL_mirt, type = "infotrace", facet_items = FALSE)
- 
+
 # TIC
 plot(fit_4PL_mirt, type = "infoSE")
- 
+
 # test score function
 plot(fit_4PL_mirt)
 #--------------
@@ -506,7 +497,7 @@ summary(fs)
 #--------------
 
 #-----------------------------------------------------------------
-# 7.3.6 Item and test information
+# 5.4 Item and test information
 #-----------------------------------------------------------------
 
 #--------------
@@ -531,4 +522,3 @@ summary(fs)
 ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
 ## -2.0438 -0.6429 -0.0262  0.0000  0.6541  1.8618
 #--------------
-
