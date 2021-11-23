@@ -1,5 +1,5 @@
 #-----------------------------------------------------------------
-# Chapter 6 - More complex IRT models
+# Chapter 6 - Polytomous IRT models
 # Computational aspects of psychometric methods. With R.
 # P. Martinkova & A. Hladka
 #-----------------------------------------------------------------
@@ -8,18 +8,10 @@
 # Packages
 #-----------------------------------------------------------------
 
-library(eRm)
 library(ggplot2)
-library(lme4)
 library(ltm)
 library(mirt)
-library(TAM)
-library(brms)
-library(lavaan)
-library(reshape)
 library(ShinyItemAnalysis)
-library(cowplot)
-library(Cairo)
 
 #-----------------------------------------------------------------
 # Plot settings
@@ -38,17 +30,11 @@ theme_fig <- function(base_size = 17, base_family = "") {
     )
 }
 
-# margins for mirt plots
-lw <- list(left.padding = list(x = 0.1, units = "inches"))
-lw$right.padding <- list(x = -0.1, units = "inches")
-lh <- list(bottom.padding = list(x = 0, units = "inches"))
-lh$top.padding <- list(x = -0.2, units = "inches")
-
-lattice.options(layout.widths = lw, layout.heights = lh)
-
-
 #-----------------------------------------------------------------
-# 7.4  IRT models for polytomous items
+# 6.2  Cumulative logit
+#-----------------------------------------------------------------
+#-----------------------------------------------------------------
+# 6.2.1  Graded response model
 #-----------------------------------------------------------------
 
 #--------------
@@ -61,10 +47,6 @@ head(Anxiety_items <- Anxiety[, paste0("R", 1:29)], n = 2)
 ## 1   2   1   2   2   1   1   2   3   2   1   1   2
 ## 2   1   1   1   1   1   1   1   2   1   1   1   1
 #--------------
-
-#-----------------------------------------------------------------
-# 7.4.1  Graded response model
-#-----------------------------------------------------------------
 
 #--------------
 # GRM with the mirt package
@@ -139,7 +121,7 @@ ggplot(data = df, aes(x = fs_GRM_mirt, y = fs_GRM_ltm)) +
 #--------------
 
 #-----------------------------------------------------------------
-# 7.4.2  Graded rating scale model
+# 6.2.2  Graded ratings scale model
 #-----------------------------------------------------------------
 
 #--------------
@@ -168,7 +150,10 @@ anova(fit_GRSMirt_mirt, fit_GRM_mirt)
 #--------------
 
 #-----------------------------------------------------------------
-# 7.4.3  Generalized partial credit model
+# 6.3  Adjacent-categories logit
+#-----------------------------------------------------------------
+#-----------------------------------------------------------------
+# 6.3.1  Generalized partial credit model
 #-----------------------------------------------------------------
 
 #--------------
@@ -194,7 +179,7 @@ mirt::itemplot(fit_GPCM_mirt, item = 25, type = "infotrace")
 #--------------
 
 #-----------------------------------------------------------------
-# 7.4.4  Partial credit model
+# 6.3.2  Partial credit model
 #-----------------------------------------------------------------
 
 #--------------
@@ -225,7 +210,7 @@ anova(fit_PCM_mirt, fit_GPCM_mirt)
 #--------------
 
 #-----------------------------------------------------------------
-# 7.4.5  Rating scale model
+# 6.3.3  Rating scale model
 #-----------------------------------------------------------------
 
 #--------------
@@ -262,7 +247,10 @@ anova(fit_RSM_mirt, fit_GPCM_mirt)
 #--------------
 
 #-----------------------------------------------------------------
-# 7.4.6  Nominal response model
+# 6.4  Baseline-category logit
+#-----------------------------------------------------------------
+#-----------------------------------------------------------------
+# 6.4.1  Nominal response model
 #-----------------------------------------------------------------
 
 #--------------
