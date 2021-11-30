@@ -31,7 +31,7 @@ theme_fig <- function(base_size = 17, base_family = "") {
 }
 
 #-----------------------------------------------------------------
-# 6.2  Cumulative logit
+# 6.2  Cumulative logit IRT models
 #-----------------------------------------------------------------
 #-----------------------------------------------------------------
 # 6.2.1  Graded response model
@@ -150,7 +150,7 @@ anova(fit_GRSMirt_mirt, fit_GRM_mirt)
 #--------------
 
 #-----------------------------------------------------------------
-# 6.3  Adjacent-categories logit
+# 6.3  Adjacent-categories logit IRT models
 #-----------------------------------------------------------------
 #-----------------------------------------------------------------
 # 6.3.1  Generalized partial credit model
@@ -247,7 +247,7 @@ anova(fit_RSM_mirt, fit_GPCM_mirt)
 #--------------
 
 #-----------------------------------------------------------------
-# 6.4  Baseline-category logit
+# 6.4  Baseline-category logit IRT models
 #-----------------------------------------------------------------
 #-----------------------------------------------------------------
 # 6.4.1  Nominal response model
@@ -293,3 +293,39 @@ sts <- as.vector(scale(rowSums(HCI[, 1:20])))
 plot(fs ~ sts, xlab = "Standardized total score", ylab = "Factor score")
 cor(fs, sts)
 #--------------
+
+#-----------------------------------------------------------------
+# 6.5  Item-specific IRT models
+#-----------------------------------------------------------------
+
+#--------------
+data("CZmaturaS", package = "ShinyItemAnalysis")
+CZmathS <- CZmaturaS[,grepl("^b", names(CZmatura))]
+head(CZmathS, n = 2)
+
+maxscore <- sapply(CZmathS, max) # maximal item scores
+itemtype <- ifelse(maxscore == 1, "2PL", "gpcm")
+itemtype[17:24] <- "3PL"
+#--------------
+
+#--------------
+CZmathS.binary <- as.data.frame(mirt::key2binary(CZmathS, maxscore))
+
+fit_binary <- mirt::mirt(CZmathS.binary, model = 1, itemtype = "2PL")
+fit_mixed <- mirt::mirt(CZmathS, model = 1, itemtype = itemtype)
+#--------------
+
+#--------------
+head(df_fs_CERMAT <- data.frame(
+  fs_mixed = as.vector(mirt::fscores(fit_mixed)),
+  fs_binary = as.vector(mirt::fscores(fit_binary))
+), n = 3)
+##   fs_mixed fs_binary
+## 1  -1.5180   -1.8272
+## 2   1.3271    1.2489
+## 3   1.4002    1.3361
+
+cor(df_fs_CERMAT$fs_mixed, df_fs_CERMAT$fs_binary)
+## [1] 0.9908
+#--------------
+
