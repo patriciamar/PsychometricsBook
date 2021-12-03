@@ -301,31 +301,38 @@ cor(fs, sts)
 #--------------
 data("CZmaturaS", package = "ShinyItemAnalysis")
 CZmathS <- CZmaturaS[,grepl("^b", names(CZmatura))]
+# rescoring items 17-24 (multiple-choice, originally scored as 0 or 2 pts)
+CZmathS[, paste0("b", 17:24)] <- 
+  as.numeric(CZmathS[, paste0("b", 17:24)] == 2)
 head(CZmathS, n = 2)
-
-maxscore <- sapply(CZmathS, max) # maximal item scores
-itemtype <- ifelse(maxscore == 1, "2PL", "gpcm")
-itemtype[17:24] <- "3PL"
 #--------------
 
 #--------------
-CZmathS.binary <- as.data.frame(mirt::key2binary(CZmathS, maxscore))
+fit_gpcm <- mirt::mirt(CZmathS, model = 1, itemtype = "gpcm")
+#--------------
 
-fit_binary <- mirt::mirt(CZmathS.binary, model = 1, itemtype = "2PL")
+#--------------
+itemtype <- rep("gpcm", length(CZmathS))
+names(itemtype) <- names(CZmathS)
+# 3PL model for multiple-choice items where guessing is expected: 
+itemtype[paste0("b", 17:24)] <- "3PL"
 fit_mixed <- mirt::mirt(CZmathS, model = 1, itemtype = itemtype)
 #--------------
 
 #--------------
-head(df_fs_CERMAT <- data.frame(
-  fs_mixed = as.vector(mirt::fscores(fit_mixed)),
-  fs_binary = as.vector(mirt::fscores(fit_binary))
-), n = 3)
-##   fs_mixed fs_binary
-## 1  -1.5180   -1.8272
-## 2   1.3271    1.2489
-## 3   1.4002    1.3361
+fs_gpcm = as.vector(mirt::fscores(fit_gpcm))
+head(fs_gpcm)
+## [1]  0.3757  0.3327  0.0210 -0.1369 -0.0625 -0.7373
+fs_mixed = as.vector(mirt::fscores(fit_mixed))
+head(fs_mixed)
+## [1]  0.3937  0.3276  0.0328 -0.1248 -0.0449 -0.7749
+cor(fs_gpcm, fs_mixed)
+## [1] 0.999
+#--------------
 
-cor(df_fs_CERMAT$fs_mixed, df_fs_CERMAT$fs_binary)
-## [1] 0.9908
+#--------------
+plot(fs_gpcm, fs_mixed)
+plot(fit_gpcm, type = 'trace')
+plot(fit_mixed, type = 'trace') # guessing in items b17 - b24
 #--------------
 
