@@ -1,5 +1,5 @@
 #-----------------------------------------------------------------
-# Chapter 2 - Validity
+# Chapter 7 - Factor analytic approach and multidimensional IRT
 # Computational aspects of psychometric methods. With R.
 # P. Martinkova & A. Hladka
 #-----------------------------------------------------------------
@@ -9,13 +9,10 @@
 #-----------------------------------------------------------------
 
 library(Cairo)
-library(corrplot)
-library(ggdendro)
 library(ggplot2)
 library(GPArotation)
 library(lavaan)
-library(lme4)
-library(lmerTest)
+library(mirt)
 library(psych)
 library(semPlot)
 library(ShinyItemAnalysis)
@@ -38,642 +35,23 @@ theme_fig <- function(base_size = 17, base_family = "") {
 }
 
 #-----------------------------------------------------------------
-# 2.2.1  Inference based on ratios
+# 7.1 Exploratory factor analysis
 #-----------------------------------------------------------------
-
-#-------------- 
-Y <- c(34, 20, 34, 26, 27, 17, 22)
-n <- 37
-(Z <- (Y - n / 2) / (sqrt(n) / 2))
-## [1]  5.0964  0.4932  5.0964  2.4660  2.7948 -0.4932  1.1508
-Z^2
-## [1] 25.9730  0.2432 25.9730  6.0811  7.8108  0.2432  1.3243
-#--------------
-
-#--------------
-prop.test(x = 34, n = 37, alternative = "greater", correct = FALSE)
-##         1-sample proportions test without continuity correction
-##
-## data:  34 out of 37, null probability 0.5
-## X-squared = 25.973, df = 1, p-value = 1.731e-07
-## alternative hypothesis: true p is not equal to 0.5
-## 95 percent confidence interval:
-##  0.8136 1.0000
-## sample estimates:
-##      p
-## 0.9189
-#--------------
-
-#--------------
-proptests <- lapply(Y, prop.test, n = n, alternative = "greater", 
-                    correct = FALSE)
-# p-values
-sapply(proptests, function(x) x$p.value)
-## [1] 0.0000 0.3109 0.0000 0.0068 0.0026 0.6891 0.1249
-# confidence intervals
-sapply(proptests, function(x) x$conf.int)
-##        [,1]   [,2]   [,3]   [,4]   [,5]   [,6]   [,7]
-## [1,] 0.8136 0.4077 0.8136 0.5688 0.5971 0.3321 0.4598
-## [2,] 1.0000 1.0000 1.0000 1.0000 1.0000 1.0000 1.0000
-#--------------
-
 #-----------------------------------------------------------------
-# 2.3.1  Correlation coefficients
-#-----------------------------------------------------------------
-
-#--------------
-data("MSclinical", package = "ShinyItemAnalysis")
-head(MSclinical, n = 3)
-##   LCLA  MI  MAS   BBS    T   DD DM PRs  KH   NHPT T25FW PASAT3 EDSS
-## 1 44.0 313 19.5 51.25  4.0 6.25  3  22 5.5 20.125  5.05     59 4.75
-## 2 28.0 307 16.0 46.25  6.5 6.25  4  21 4.5 27.525  5.20     33 3.50
-## 3 35.3 274 18.0 38.75 11.0 6.75  5  35 5.0 28.125 11.10     53 3.50
-#--------------
-
-#--------------
-ggplot(MSclinical, aes(x = MI, y = EDSS)) +
-  geom_point() + geom_smooth(method = "lm") +
-  theme_fig()
-#--------------
-
-#--------------Save plot
-#ggsave("figures/chapter2/validity_scatterplot_MSclinical.png",
-#       width = 6, height = 4, dpi = 300, bg = "transparent")
-#--------------
-
-#--------------
-cor(MSclinical$MI, MSclinical$EDSS)
-## [1] -0.4622
-cor.test(MSclinical$MI, MSclinical$EDSS)
-##         Pearson's product-moment correlation
-##
-## data:  MSclinical$MI and MSclinical$EDSS
-## t = -2, df = 15, p-value = 0.06
-## alternative hypothesis: true correlation is not equal to 0
-## 95 percent confidence interval:
-## -0.7714  0.0238
-## sample estimates:
-##     cor
-## -0.4622
-#--------------
-
-#--------------
-data(HCI, package = "ShinyItemAnalysis")
-score <- rowSums(HCI[, 1:20])
-
-cor.test(score, HCI$major)
-##         Pearson's product-moment correlation
-##
-## data:  score and HCI$major
-## t = 5.7, df = 649, p-value = 2e-08
-## alternative hypothesis: true correlation is not equal to 0
-## 95 percent confidence interval:
-##   0.1432 0.2897
-## sample estimates:
-##   cor
-## 0.2177
-
-barX0 <- mean(score[HCI$major == 0])
-barX1 <- mean(score[HCI$major == 1])
-n <- length(score)
-n0 <- length(score[HCI$major == 0])
-n1 <- length(score[HCI$major == 1])
-sn <- sd(score) * sqrt((n - 1) / n)
-(barX1 - barX0) / sn * sqrt(n0 * n1 / (n0 + n1)^2)
-## [1] 0.2177
-#--------------
-
-#--------------
-# ggplot(
-#   data.frame(
-#     score = score,
-#     major = as.factor(HCI$major)
-#   ),
-#   aes(x = major, y = score)
-# ) +
-#   geom_point() +
-#   ylab("Total score") +
-#   xlab("Plan to major in science") +
-#   theme_fig()
-
-# # Save plot
-# ggsave("figures/chapter2/validity_scatterplot_HCI.png",
-#        width = 6, height = 4, dpi = 300, bg = "transparent")
-#--------------
-
-#--------------
-ggplot(MSclinical, aes(x = rank(MI), y = rank(EDSS))) +
-  geom_point() + geom_smooth(method = "lm") +
-  theme_fig()
-#--------------
-
-#-------------- Save plot
-ggsave("figures/chapter2/validity_scatterplot_ranks_MSclinical.png",
-       width = 6, height = 4, dpi = 300, bg = "transparent")
-#--------------
-
-#--------------
-cor(MSclinical$MI, MSclinical$EDSS, method = "spearman")
-## [1] -0.5996
-cor.test(MSclinical$MI, MSclinical$EDSS, method = "spearman")
-##         Spearman's rank correlation rho
-##
-## data:  MSclinical$MI and MSclinical$EDSS
-## S = 1305, p-value = 0.01
-## alternative hypothesis: true rho is not equal to 0
-## sample estimates:
-##    rho
-## -0.5996
-#--------------
-
-#--------------
-cor(MSclinical$MI, MSclinical$EDSS, method = "kendall")
-## [1] -0.4275
-cor.test(MSclinical$MI, MSclinical$EDSS, method = "kendall")
-##         Kendall's rank correlation tau
-##
-## data:  MSclinical$MI and MSclinical$EDSS
-## z = -2.3, p-value = 0.02
-## alternative hypothesis: true tau is not equal to 0
-## sample estimates:
-##     tau
-## -0.4275
-#--------------
-
-#--------------
-psych::tetrachoric(table(HCI$"Item 1", HCI$"Item 2"))
-## [1] 0.23
-##
-##  with tau of
-##     0     0
-## -0.52 -0.68
-cor(HCI$"Item 1", HCI$"Item 2")
-## [1] 0.1360
-#--------------
-
-#--------------
-data(Anxiety, package = "lordif")
-psych::polychoric(table(Anxiety$R1, Anxiety$R2))
-## $rho
-## [1] 0.8334
-##
-## $objective
-## [1] 1.5587
-##
-## $tau.row
-## 1      2      3      4
-## 0.4608 1.1583 1.8434 2.6068
-##
-## $tau.col
-## 1      2      3      4
-## 0.5236 1.2898 2.0104 3.2148
-cor(Anxiety$R1, Anxiety$R2)
-## [1] 0.7813
-#--------------
-
-#-----------------------------------------------------------------
-# 2.3.2  t-tests
-#-----------------------------------------------------------------
-
-#--------------
-# set.seed(987)
-data(HCIprepost, package = "ShinyItemAnalysis")
-ggplot(data.frame(
-  score = c(HCIprepost$score.pre, HCIprepost$score.post),
-  group = factor(rep(c("Pre", "Post"), each = 16),
-                 levels = c("Pre", "Post"))),
-  aes(x = group, y = score, fill = group)) +
-  geom_boxplot() + ylab("Total score") + xlab("") +
-  theme_fig() +
-  theme(legend.position = "none")
-#--------------
-
-#-------------- Save plot
-ggsave("figures/chapter2/validity_boxplot_HCI_prepost.png",
-       width = 6, height = 4, dpi = 300, bg = "transparent")
-#--------------
-
-#--------------
-ggplot(data.frame(
-  score = HCIprepost$score.post - HCIprepost$score.pre,
-  group = factor(rep(c("Post-Pre"), each = 16), levels = "Post-Pre")),
-  aes(x = group, y = score, fill = group)) +
-  geom_boxplot() +
-  ylab("Posttest - pretest score") + xlab("") +
-  theme_fig() +
-  theme(legend.position = "none")
-#--------------
-
-#-------------- Save plot
-ggsave("figures/chapter2/validity_boxplot_HCI_prepostDif.png",
-       width = 6, height = 4, dpi = 300, bg = "transparent")
-#--------------
-
-#--------------
-# differences between post-test and pre-test
-(dif <- HCIprepost$score.post - HCIprepost$score.pre)
-## [1]  7  2  0  2  4  1  0  5  3  1  5 -2  4  8  1 -4
-# mean difference
-(barX <- mean(dif))
-## [1] 2.3125
-# standard deviation of difference
-(s <- sd(dif))
-## [1] 3.1563
-# number of observations
-(n <- length(dif))
-## [1] 16
-# t-value
-(t <- barX / (s / sqrt(n)))
-## [1] 2.9306
-# p-value
-2 * pt(-abs(t), df = n - 1)
-## [1] 0.0103
-# confidence interval
-barX - qt(1 - 0.05 / 2, df = n - 1) * s / sqrt(n)
-## [1] 0.6306
-barX + qt(1 - 0.05 / 2, df = n - 1) * s / sqrt(n)
-## [1] 3.9944
-#--------------
-
-#--------------
-# one sample t-test
-t.test(dif, mu = 0)
-##         One Sample t-test
-##
-## data:  dif
-## t = 2.9306, df = 15, p-value = 0.0103
-## alternative hypothesis: true mean is not equal to 0
-## 95 percent confidence interval:
-##   0.6306 3.9944
-## sample estimates:
-##   mean of x
-## 2.3125
-#--------------
-
-#--------------
-# paired t-test
-t.test(HCIprepost$score.post, HCIprepost$score.pre, paired = TRUE)
-##         Paired t-test
-##
-## data:  dataPrePost$score.post and dataPrePost$score.pre
-## t = 2.9306, df = 15, p-value = 0.0103
-## alternative hypothesis: true difference in means is not equal to 0
-## 95 percent confidence interval:
-##   0.6306 3.9944
-## sample estimates:
-##   mean of the differences
-## 2.3125
-#--------------
-
-#--------------
-data(HCIgrads, package = "ShinyItemAnalysis")
-score_grads <- rowSums(HCIgrads[, paste0("QR", 1:20)])
-score_undergrads <- rowSums(HCI[, 1:20])
-
-# two sample t-test
-t.test(score_grads, score_undergrads, alternative = "greater")
-##         Welch Two Sample t-test
-##
-## data:  score_grads and score_undergrads
-## t = 2.2, df = 9.3, p-value = 0.03
-## alternative hypothesis: true difference in means is greater than 0
-## 95 percent confidence interval:
-##  0.38  Inf
-## sample estimates:
-## mean of x mean of y
-## 14.50     12.21
-
-mean(score_grads)
-## [1] 14.5000
-sd(score_grads)
-## [1] 3.2745
-mean(score_undergrads)
-## [1] 12.2120
-sd(score_undergrads)
-## [1] 3.6397
-#--------------
-
-#--------------
-df <- data.frame(
-  score = c(score_grads, score_undergrads),
-  group = as.factor(c(rep("Graduate", length(score_grads)),
-                      rep("Undergraduate", length(score_undergrads))))
-)
-#--------------
-
-#--------------
-ggplot(df, aes(x = group, y = score, fill = group)) +
-  geom_boxplot() +
-  xlab("") + ylab("Total score") +
-  theme_fig() +
-  theme(legend.position = "none")
-#--------------
-
-#--------------
-# the same figure with jittered points of observed values included
-set.seed(978)
-ggplot(df, aes(x = group, y = score, fill = group)) +
-  geom_boxplot() +
-  geom_jitter(height = 0, width = 0.25) +
-  xlab("") + ylab("Total score") +
-  theme_fig() +
-  theme(legend.position = "none")
-#--------------
-
-#-------------- Save plot
-ggsave("figures/chapter2/validity_boxplot_HCI_undergraduateVSgraduate.png",
-       width = 6, height = 4, dpi = 300, bg = "transparent")
-#--------------
-
-#-----------------------------------------------------------------
-# 2.3.3 ANOVA
-#-----------------------------------------------------------------
-
-#--------------
-data(HCIdata, package = "ShinyItemAnalysis")
-#--------------
-
-#--------------
-#set.seed(978)
-ggplot(HCIdata, aes(x = typeSCH, y = total, fill = typeSCH)) +
-  geom_boxplot() +
-  #geom_jitter(height = 0, width = 0.25) +
-  xlab("") + ylab("Total score") +
-  theme_fig() +
-  theme(legend.position = "none")
-#--------------
-
-#-------------- Save plot
-ggsave("figures/chapter2/validity_boxplots_HCI_typeSCH.png",
-       width = 6, height = 4, dpi = 300, bg = "transparent")
-#--------------
-
-#--------------
-# density plot
-ggplot(HCIdata, aes(total, fill = typeSCH)) +
-  geom_density(aes(y = ..density..,
-                   color = typeSCH,
-                   linetype = typeSCH),
-               position = "identity",
-               alpha = 0.5,
-               size = 1) +
-  xlab("Total score on HCI") +
-  ylab("Density") +
-  scale_y_continuous(expand = c(0, 0), limits = c(0, 0.16)) +
-  theme_fig() +
-  theme(legend.position = c(0.15, 0.8),
-        legend.title = element_blank())
-#--------------
-
-#-------------- Save plot
-ggsave("figures/chapter2/validity_densityplot_HCI.png",
-       width = 6, height = 4, dpi = 300, bg = "transparent")
-#--------------
-
-#--------------
-anovaHCI <- aov(total ~ typeSCH, data = HCIdata)
-summary(anovaHCI)
-##              Df Sum Sq Mean Sq F value  Pr(>F)
-## typeSCH       3    603   201.0    16.1 4.2e-10 ***
-## Residuals   665   8306    12.5
-## ---
-## Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-#--------------
-
-#--------------
-TukeyHSD(anovaHCI)
-##   Tukey multiple comparisons of means
-##     95% family-wise confidence level
-##
-## Fit: aov(formula = total ~ typeSCH, data = HCIdata)
-##
-## $typeSCH
-##             diff     lwr     upr  p adj
-## BCAS-AC  -0.6563 -1.7003  0.3877 0.3685
-## R1-AC     1.1537  0.2457  2.0617 0.0062
-## MCU-AC   -1.4024 -2.3982 -0.4065 0.0018
-## R1-BCAS   1.8100  0.7699  2.8500 0.0001
-## MCU-BCAS -0.7461 -1.8637  0.3715 0.3143
-## MCU-R1   -2.5561 -3.5478 -1.5643 0.0000
-#--------------
-
-#-----------------------------------------------------------------
-# 2.3.4  Regression models
-#-----------------------------------------------------------------
-
-# Simple linear regression
-
-#--------------
-(b1 = cov(MSclinical$MI, MSclinical$EDSS) / var(MSclinical$MI))
-## [1] -0.0159
-(b0 = mean(MSclinical$EDSS - b1 * mean(MSclinical$MI)))
-## [1] 8.6970  
-#--------------
-
-#--------------
-lmMS <- lm(EDSS ~ MI, data = MSclinical)
-summary(lmMS)
-## Call:
-## lm(formula = EDSS ~ MI, data = MSclinical)
-## 
-## Residuals:
-##      Min       1Q   Median       3Q      Max 
-## -2.04667 -0.31690  0.06461  0.89697  1.11951 
-## 
-## Coefficients:
-##              Estimate Std. Error t value Pr(>|t|)   
-## (Intercept)  8.697029   2.476136   3.512  0.00314 **
-## MI          -0.015896   0.007876  -2.018  0.06180 . 
-## ---
-##   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-## 
-## Residual standard error: 0.9437 on 15 degrees of freedom
-## Multiple R-squared:  0.2136,	Adjusted R-squared:  0.1612 
-## F-statistic: 4.074 on 1 and 15 DF,  p-value: 0.0618
-#--------------
-
-#--------------
-# diagnostic plots
-plot(lmMS$residuals ~ predict(lmMS), ylab = "Residuals")
-abline(h = 0, lty = "dotted")
-
-qqnorm(lmMS$residuals)
-qqline(lmMS$residuals, lty = "dotted")
-#--------------
-
-#--------------
-#plot(lmMS)
-plot(lmMS, which = 1)
-plot(lmMS, which = 2)
-plot(lmMS, which = 3)
-plot(lmMS, which = 4)
-#--------------
-
-#-------------- save plots
-CairoPNG(file = "figures/chapter2/validity_qqplot_MSclinical.png", width = 6, height = 4, dpi = 300, pointsize = 12, unit = "in")
-par(mgp = c(2.1, 0.7, 0), mar = c(3.4, 3.4, 1.3, 0.9), cex.axis = 1.2, cex.lab = 1.2, lwd = 0.6)
-qqnorm(lmMS$residuals)
-qqline(lmMS$residuals, lty = "dotted")
-dev.off()
-
-CairoPNG(file = "figures/chapter2/validity_residfitted_MSclinical.png", width = 6, height = 4, dpi = 300, pointsize = 12, unit = "in")
-par(mgp = c(2.1, 0.7, 0), mar = c(3.4, 3.4, 1.3, 0.9), cex.axis = 1.2, cex.lab = 1.2, lwd = 0.6)
-plot(lmMS$residuals ~ predict(lmMS), ylab = "Residuals")
-abline(h = 0, lty = "dotted")
-dev.off()
-#--------------
-
-
-#--------------
-lmMS$residuals
-##      2       6      10      14      18      22      25      30 ...
-## 1.0285 -0.3169 -0.8415  0.1354  1.0877  0.8970 -0.2287  0.0646 ...
-MSclinical$EDSS - predict(lmMS)
-##      2       6      10      14      18      22      25      30 ...
-## 1.0285 -0.3169 -0.8415  0.1354  1.0877  0.8970 -0.2287  0.0646 ...
-residuals(lmMS)
-##      2       6      10      14      18      22      25      30 ...
-## 1.0285 -0.3169 -0.8415  0.1354  1.0877  0.8970 -0.2287  0.0646 ...
-summary(lmMS$residuals)
-##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-## -2.047  -0.317   0.065   0.000   0.897   1.120 
-#--------------
-
-#--------------
-# R2
-sum((predict(lmMS) - mean(MSclinical$EDSS))^2) / 
-  sum((MSclinical$EDSS - mean(MSclinical$EDSS))^2)
-## [1] 0.2136
-cor(MSclinical$EDSS, MSclinical$MI)^2
-## [1] 0.2136
-#--------------
-
-
-# Multiple linear regression model
-#--------------
-lmMSall <- lm(EDSS ~ LCLA + MI + MAS + BBS + T + DD + DM + PRs + 
-                KH + NHPT + T25FW + PASAT3, data = MSclinical)
-summary(lmMSall)
-## Coefficients:
-##             Estimate Std. Error t value Pr(>|t|)
-## (Intercept)  6.61783    5.88387    1.12     0.46
-## LCLA         0.07964    0.04994    1.59     0.36
-## MI          -0.00735    0.01535   -0.48     0.72
-## MAS          0.02468    0.07222    0.34     0.79
-## BBS         -0.03290    0.11994   -0.27     0.83
-## T            0.27494    0.16062    1.71     0.34
-## DD          -0.54930    0.22516   -2.44     0.25
-## DM          -0.46387    0.46518   -1.00     0.50
-## PRs         -0.26211    0.05238   -5.00     0.13
-## KH           0.07203    0.31748    0.23     0.86
-## NHPT         0.15995    0.05550    2.88     0.21
-## T25FW        0.11935    0.16802    0.71     0.61
-## PASAT3       0.05426    0.02758    1.97     0.30
-## 
-## Residual standard error: 0.417 on 1 degrees of freedom
-## (3 observations deleted due to missingness)
-## Multiple R-squared:  0.987,	Adjusted R-squared:  0.829 
-## F-statistic: 6.27 on 12 and 1 DF,  p-value: 0.303
-#--------------
-
-#--------------
-lmF <- lm(total ~ gender + major + as.factor(yearc5) +
-            minority + EnglishF + typeSCH, data = HCIdata)
-anova(lmF)
-summary(lmF)
-## Call:
-## lm(formula = total ~ gender + major + as.factor(yearc5) + minority +
-##    EnglishF + typeSCH, data = HCIdata)
-##
-## Residuals:
-##    Min     1Q Median     3Q    Max
-## -8.871 -2.020  0.108  2.131  7.362
-##
-## Coefficients:
-##                      Estimate Std. Error t value Pr(>|t|)
-##   (Intercept)          10.902      0.532   20.48  < 2e-16 ***
-##   genderF              -0.809      0.260   -3.11  0.00193 **
-##   gendernone           -2.228      0.831   -2.68  0.00754 **
-##   major                 1.287      0.266    4.84  1.6e-06 ***
-##   as.factor(yearc5)2    2.042      0.510    4.00  7.0e-05 ***
-##   as.factor(yearc5)3    1.191      0.495    2.41  0.01641 *
-##   as.factor(yearc5)4    1.794      0.522    3.44  0.00063 ***
-##   as.factor(yearc5)5    3.703      0.589    6.28  6.0e-10 ***
-##   minoritymin          -1.593      0.326   -4.89  1.3e-06 ***
-##   minoritynone         -2.300      0.628   -3.66  0.00027 ***
-##   EnglishFno           -1.416      0.315   -4.50  8.1e-06 ***
-##   typeSCHBCAS           0.257      0.406    0.63  0.52583
-##   typeSCHR1             0.735      0.368    2.00  0.04619 *
-##   typeSCHRMCU          -1.303      0.420   -3.10  0.00203 **
-##   ---
-##   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-##
-## Residual standard error: 3.14 on 655 degrees of freedom
-## Multiple R-squared:  0.274,	Adjusted R-squared:  0.26
-## F-statistic:   19 on 13 and 655 DF,  p-value: <2e-16
-#--------------
-
-
-#-----------------------------------------------------------------
-# 2.4.1  Correlation structure
-#-----------------------------------------------------------------
-
-#--------------
-# polychoric correlation calculation
-corP <- psych::polychoric(HCI[, 1:20])
-# correlation matrix
-corP$rho
-##         Item 1  Item 2 Item 3  Item 4 Item 5 Item 6  Item 7
-## Item 1  1.0000  0.2338 0.2817  0.0707 0.1424 0.3370  0.0576
-## Item 2  0.2338  1.0000 0.4800  0.1272 0.2136 0.1365 -0.0240
-## Item 3  0.2817  0.4800 1.0000  0.0508 0.2843 0.2734  0.0679
-## Item 4  0.0707  0.1272 0.0508  1.0000 0.1165 0.0806  0.0118
-## ...
-# correlation plot
-ShinyItemAnalysis::plot_corr(HCI[, 1:20], cor = "polychoric")
-#--------------
-
-#-----------------------------------------------------------------
-# 2.4.2  Cluster analysis
-#-----------------------------------------------------------------
-
-#--------------
-# hierarchical clustering
-hc <- hclust(as.dist(1 - corP$rho), method = "ward.D2")
-# dendrogram
-ggdendrogram(hc)
-#--------------
-
-#-------------- Save plot
-# CairoPNG(file = "figures/chapter2/validity_dendrogram_HCI.png", width = 4, height = 4, dpi = 300, pointsize = 10, unit = "in")
-ggdendrogram(hc) +
-  theme_fig(base_size = 15) +
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1),
-        axis.title.x = element_blank(),
-        axis.title.y = element_blank())# dendrogram
-# dev.off()
-ggsave("figures/chapter2/validity_dendrogram_HCI.png",
-       width = 5, height = 4, dpi = 300, bg = "transparent")
-#--------------
-
-#--------------
-ShinyItemAnalysis::plot_corr(HCI[, 1:20], cor = "poly",
-                             clust_method = "ward.D2")
-#--------------
-
-#-------------- Save plot
-ggsave("figures/chapter2/validity_corrplot_ward_HCI.png",
-       width = 5, height = 4, dpi = 300, bg = "transparent")
-#--------------
-
-#-----------------------------------------------------------------
-# 8. Factor analytic approach
-# 8.1 Exploratory factor analysis
+# 7.2.1 Single factor model
 #-----------------------------------------------------------------
 
 #--------------
 # Single factor model
 # with fa() of the psych package
+
+#--------------
+corHCI <- tetrachoric(HCI[,1:20])$rho
+(FA1 <- psych::fa(corHCI, nfactors = 1, fm = "ml"))
+(FA1 <- psych::fa(corHCI, nfactors = 1, fm = "ml", n.obs = 651))
+#--------------
+
+#--------------
 (FA1 <- psych::fa(HCI[, 1:20], cor = "tetrachoric", nfactors = 1, 
                   fm = "ml"))
 summary(FA1)
@@ -718,7 +96,7 @@ round(FA1$communality, 3)
 
 #--------------
 FA1$loadings[1]^2
-## [1] 0.1973
+## [1] 0.1973 
 #--------------
 
 #--------------
@@ -756,30 +134,23 @@ var(HCI[,1])
 
 #--------------
 ## Residual matrix
-HCI.resid <- corP$rho - HCI.rcor
+HCI.resid <- corHCI - HCI.rcor
 round(HCI.resid, d = 2)
 #--------------
 
 #--------------
-(FA1c <- psych::fa(corP$rho, nfactors = 1, fm = "ml", n.obs = 651))
-#--------------
-
-#--------------
 # with factanal()
-(FA1b <- factanal(x = HCI[, 1:20], covmat = corP$rho, factors = 1, 
+(FA1b <- factanal(x = HCI[, 1:20], covmat = corHCI, factors = 1, 
                   rotation = "none"))
 names(FA1b)
 #--------------
 
 #-----------------------------------------------------------------
-# 8.2.2 General linear factor model
+# 7.2.2 General factor model
 #-----------------------------------------------------------------
 
 #--------------
 data(TestAnxietyCor, package = "ShinyItemAnalysis")
-#--------------
-
-#--------------
 # FA unrotated:
 (FA2_tAnxiety <- psych::fa(TestAnxietyCor, nfactors = 2, 
                            n.obs = 335, rotate = "none"))
@@ -805,13 +176,12 @@ apply(FA2_tAnxiety$loadings^2, 1, sum)
 plot(FA2_tAnxiety, xlim = c(-.5, 1), ylim = c(-.5, 1))
 
 # label unrotated axes
-# TODO: please move i2 and i1 to lower index
 text(x = 0.95, y = -0.05, expression(paste(hat(alpha), "i1")))
 text(x = -0.05, y = 0.95, expression(paste(hat(alpha), "i2")))
 #--------------
 
 #-----------------------------------------------------------------
-# Factor rotation
+# 7.2.3 Factor rotation
 #-----------------------------------------------------------------
 # FA oblimin rotation
 FA2_tAnxiety_obl <- psych::fa(TestAnxietyCor, nfactors = 2, 
@@ -825,9 +195,11 @@ print(FA2_tAnxiety_obl$loadings, cutoff = 0.4)
 ## i4   0.400     
 ## i5          0.795
 ## ...
+plot(FA2_tAnxiety_obl, xlim = c(-.5, 1), ylim = c(-.5, 1))
 #--------------
 
 #--------------
+# rotation matrix:
 FA2_tAnxiety_obl$rot.mat
 ##         [,1]   [,2]
 ## [1,]  0.7725 0.3022_obl
@@ -844,23 +216,8 @@ lines(c(0, solve(FA2_tAnxiety_obl$rot.mat)[1,1]), c(0,solve(FA2_tAnxiety_obl$rot
 lines(c(0, solve(FA2_tAnxiety_obl$rot.mat)[2,1]), c(0,solve(FA2_tAnxiety_obl$rot.mat)[2,2]), lty = 3)
 
 # label rotated axes
-# TODO: move i2r and i1r to lower index
 text(x = 0.75, y = 0.6, labels = expression(paste(hat(alpha), "i2r")))
 text(x = 0.9, y = - 0.25, labels = expression(paste(hat(alpha), "i1r")))
-#--------------
-
-#-------------- Save plot
-CairoPNG(file = "figures/chapter2/validity_EFA_tAnxiety_unrot.png", width = 4, height = 4, dpi = 300, pointsize = 10, unit = "in")
-par(mgp = c(2.1, 0.7, 0), mar = c(3.4, 3.4, 1.3, 0.9), cex.axis = 1.2,
-    cex.lab = 1.2, ann = FALSE, lwd = 0.6)
-plot(FA2_tAnxiety, xlim = c(-.5,1), ylim = c(-.5, 1))
-text(x = 0.95, y = -0.05, expression(paste(hat(alpha), "i1")))
-text(x = -0.05, y = 0.95, expression(paste(hat(alpha), "i2")))
-lines(c(0, solve(FA2_tAnxiety_obl$rot.mat)[1,1]), c(0,solve(FA2_tAnxiety_obl$rot.mat)[1,2]), lty = 3)
-lines(c(0, solve(FA2_tAnxiety_obl$rot.mat)[2,1]), c(0,solve(FA2_tAnxiety_obl$rot.mat)[2,2]), lty = 3)
-text(x = 0.75, y = 0.6, labels = expression(paste(hat(alpha), "i2r")))
-text(x = 0.9, y = - 0.25, labels = expression(paste(hat(alpha), "i1r")))
-dev.off()
 #--------------
 
 #--------------
@@ -869,17 +226,6 @@ dev.off()
 plot(FA2_tAnxiety_obl, xlim = c(-.5,1), ylim = c(-.5, 1))
 text(x = 0.95, y = -0.05, expression(paste(hat(alpha), "i1r")))
 text(x = -0.07, y = 0.95, expression(paste(hat(alpha), "i2r")))
-# TODO: move i2r and i1r to lower index
-#--------------
-
-#-------------- Save plot
-CairoPNG(file = "figures/chapter2/validity_EFA_tAnxiety_rot.png", width = 4, height = 4, dpi = 300, pointsize = 10, unit = "in")
-par(mgp = c(2.1, 0.7, 0), mar = c(3.4, 3.4, 1.3, 0.9), cex.axis = 1.2,
-    cex.lab = 1.2, ann = FALSE, lwd = 0.6)
-plot(FA2_tAnxiety_obl, xlim = c(-.5,1), ylim = c(-.5, 1))
-text(x = 0.95, y = -0.05, expression(paste(hat(alpha), "i1r")))
-text(x = -0.07, y = 0.95, expression(paste(hat(alpha), "i2r")))
-dev.off()
 #--------------
 
 #--------------
@@ -893,19 +239,19 @@ update(FA2b_tAnxiety, rotation = "oblimin")
 #--------------
 
 #-----------------------------------------------------------------
-# Factor scores
+# 7.2.4 Factor scores
 #-----------------------------------------------------------------
 
 #--------------
-# inverse matrix
-solve(corP$rho)
+# inverse matrix calculation
+solve(corHCI)
 # product of inverse and original matrix gives identity matrix as expected
-round(solve(corP$rho) %*% corP$rho, 2) 
+round(solve(corHCI) %*% corHCI, 2) 
 #------
 
 #------
 # factor score coefficients (weights)
-(fscore.coef <- solve(corP$rho) %*% FA1$loadings)
+(fscore.coef <- solve(corHCI) %*% FA1$loadings)
 ##              ML1
 ## Item 1  0.075394
 ## Item 2  0.061870
@@ -923,7 +269,7 @@ head(FSa, n = 3)
 
 #--------------
 (FS <- psych::factor.scores(HCI[,1:20], FA1, 
-                            rho = corP$rho, method = "Thurstone"))
+                            rho = corHCI, method = "Thurstone"))
 ## $scores
 ##            ML1
 ## [1,]  0.810914
@@ -951,13 +297,14 @@ plot(FS$scores ~ FA1$scores)
 
 #--------------
 hist(FS$scores)
-plot(FS$scores ~ score)
+plot(FS$scores ~ rowSums(HCI[,1:20]))
+cor(FS$scores, rowSums(HCI[,1:20]))
 mean(FS$scores)
 sd(FS$scores)
 #--------------
 
 #-----------------------------------------------------------------
-# Number of factors
+# 7.2.5 Number of factors
 #-----------------------------------------------------------------
 
 #--------------
@@ -981,24 +328,12 @@ fa.parallel(TestAnxietyCor, n.obs = 335)
 ## and the number of components =  1
 #--------------
 
-#-------------- save
-CairoPNG(file = "figures/chapter2/validity_faparallel_tAnxiety.png", width = 6, height = 6, dpi = 300, pointsize = 12, unit = "in")
-par(mgp = c(2.1, 0.7, 0), mar = c(3.4, 3.4, 1.3, 0.9), cex.axis = 1.2, cex.lab = 1.2, lwd = 0.6)
-fa.parallel(TestAnxietyCor)
-dev.off()
-#--------------
-
 #--------------
 fa_parallel(TestAnxietyCor, n_obs = 335, method = "pca")
 ## The input was recognized as a correlation matrix.
 ## Assuming 335 observations in the original data.
 ## According to the parallel analysis, the optimal number of principal components is 1. 
 ## Following the Kaiser rule, 2 components are recommended.
-#--------------
-
-#-------------- save
-ggsave("figures/chapter2/validity_fa_parallel_tAnxiety.png",
-       width = 8, height = 4, dpi = 300, bg = "transparent")
 #--------------
 
 #--------------
@@ -1015,7 +350,7 @@ VSS(TestAnxietyCor, n.obs = 335)
 #--------------
 
 #-----------------------------------------------------------------
-# 8.3. Confirmatory factor analysis
+# 7.3. Confirmatory factor analysis
 #-----------------------------------------------------------------
 
 #--------------
@@ -1133,12 +468,6 @@ semPlot::semPaths(fit_EN, what = "stdest", rotation = 4)
 semPlot::semPaths(fit_ENs, what = "est", rotation = 4)
 #--------------
 
-#-------------- Save plot
-CairoPNG(file = "figures/chapter2/validity_semPlot_cfa.png", width = 6, height = 4, dpi = 300, pointsize = 12, unit = "in")
-semPlot::semPaths(fit_ENs, what = "est", rotation = 4, edge.label.cex = 0.7)
-dev.off()
-#--------------
-
 #--------------
 FS <- lavaan::predict(fit_EN)
 head(FS, n = 3)
@@ -1149,7 +478,7 @@ head(FS, n = 3)
 #--------------
 
 #-----------------------------------------------------------------
-# Hierarchical CFA
+# 7.3.1 Hierarchical and more complex structures
 #-----------------------------------------------------------------
 
 #--------------
@@ -1171,12 +500,6 @@ lavaan::parameterEstimates(fit_EN_hier)
 semPlot::semPaths(fit_EN_hier, what = "std.est", rotation = 4)
 #--------------
 
-#-------------- Save plot
-CairoPNG(file = "figures/chapter2/validity_semPlot_cfaH.png", width = 6, height = 4, dpi = 300, pointsize = 12, unit = "in")
-semPlot::semPaths(fit_EN_hier, what = "std.est", rotation = 4, edge.label.cex = 0.7)
-dev.off()
-#--------------
-
 #--------------
 FSh <- lavaan::predict(fit_EN_hier)
 head(FSh, n = 3)
@@ -1196,143 +519,167 @@ lavaan::fitMeasures(fit_EN_hier, c("cfi", "tli", "rmsea", "bic"))
 #--------------
 
 #-----------------------------------------------------------------
-# Illustrative plots
+# 7.4 Multidimensional IRT models
+#-----------------------------------------------------------------
+#-----------------------------------------------------------------
+# 7.4.1 Multidimensional 2PL model
 #-----------------------------------------------------------------
 
 #--------------
-# Figure 3.1 - cell-cell communication proportions
-#--------------
-
-#------------------ # TO BE UPDATED, data needs to be added (after approval)
-load("datasets/CCC/dataLccc.Rda")
-summary(dataL)
-
-library(RColorBrewer)
-brewer.pal(7, "Blues")
-myPalleteBLUE <- brewer.pal(7, "Blues")[2:6]
-
-Rating <- as.factor(dataL$value)
-levels(Rating)
-
-df <- data.frame(variable = dataL$variable,
-                 rating = factor(Rating, levels = 5:1))
-df <- na.omit(df)
-
-ggplot(df, aes(x = variable, fill = rating)) +
-  geom_bar(position = position_fill(reverse = TRUE)) +
-  xlab("Item") + ylab("Proportion") +
-  scale_x_discrete(limits = levels(df$variable)) +
-  scale_fill_manual(name = "Rating", values = rev(myPalleteBLUE)) +
-  # guides(fill = guide_legend(ncol = 1)) +
-  theme_fig(base_size = 14) +
-  theme(
-    legend.key = element_rect(fill = "white", colour = NA),
-    axis.line = element_line(colour = "black"),
-    panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank(),
-    panel.background = element_blank(),
-    axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1),
-    legend.position = "bottom",
-    legend.box = "horizontal")
-
-#-------------- Save plot
-ggsave("figures/chapter2/validity_illustration_ratios_CCC.png",
-       width = 8, height = 4, dpi = 300, bg = "transparent")
+BFI2en <- BFI2[,c(1,6,11,16,21,26,31,36,41,46,51,56,
+                  4,9,14,19,24,29,34,39,44,49,54,59)]
+BFI2en01 <- 1* (BFI2en > 2)
 #--------------
 
 #--------------
-# Figure 2.9 - range restriction
+m2PL <- mirt::mirt(BFI2en01, model = 2, itemtype = "2PL")
 #--------------
 
 #--------------
-set.seed(987)
-x <- rnorm(1500)
-y <- rnorm(1500)
-r <- 0.729
-a <- r / sqrt(1 - r * r)
-z <- a * x + y
-xvar <- x * 10 + 50
-yvar <- z * 2.3 + 20
-
-cor(xvar, yvar)
-## [1] 0.723
-
-#-------------- 
-df <- data.frame(xvar, yvar)
-
-# Plot 1: All observations, r = 0.72
-(scatter_all <- ggplot(df) +
-    geom_point(aes(x = xvar, y = yvar),
-               size = 1.8,
-               alpha = 0.5,
-               shape = 19
-    ) +
-    theme_fig() +
-    xlab("X") +
-    ylab("Y") +
-    scale_x_continuous(limits = c(25, 75)) +
-    scale_y_continuous(limits = c(5, 31))
-)
-#-------------- 
-
-#-------------- Save plot
-ggsave("figures/chapter2/validity_illustrative_restricted_all.png",
-       width = 4, height = 4, dpi = 300, bg = "transparent"
-)
+coef(m2PL, simplify = TRUE)
+## $items
+##         a1     a2      d g u
+## i1  -0.037  1.854  2.312 0 1
+## i6  -0.121  1.886  2.325 0 1
+## ...
+## i4   1.531 -0.556  0.903 0 1
+## ...
+## i54  2.008 -1.219  0.150 0 1
+## i59  2.154  0.000  0.414 0 1
 #--------------
 
 #--------------
-# Plot 2: Only admitted students, r = 0.36
-admitted <- subset(df, xvar > 58)
-cor(admitted$xvar, admitted$yvar)
-## [1] 0.363
+MDIFF(m2PL)
+##       MDIFF_1
+## i1  -1.246493
+## i6  -1.230540 ...
+
+MDISC(m2PL)
+##     i1     i6    i11    i16    i21    i26    i31    i36    i41    i46    i51    i56 
+## 1.8548 1.8896 0.5401 2.3346 1.7972 0.9268 2.2508 0.8626 1.4868 2.1646 1.7246 1.2201 
+##     i4     i9    i14    i19    i24    i29    i34    i39    i44    i49    i54    i59 
+## 1.6293 1.2734 1.9687 1.3930 1.2216 2.5930 1.4385 2.3060 1.5733 1.3502 2.3491 2.1542 
 #--------------
 
 #--------------
-(scatter_admitted <- ggplot(admitted) +
-   geom_point(aes(x = xvar, y = yvar),
-              size = 1.8,
-              alpha = 0.5,
-              shape = 19
-   ) +
-   theme_fig() +
-   xlab("X") +
-   ylab("Y") +
-   scale_x_continuous(limits = c(25, 75)) +
-   scale_y_continuous(limits = c(5, 31))
-)
+itemplot(m2PL, item = 1) # item loading strongly on one factor
+itemplot(m2PL, item = 13) # item loading strongly on other factor
+#itemplot(m2PL, item = 1, rotate = "oblimin")
 #--------------
 
-#-------------- Save plot
-ggsave("figures/chapter2/validity_illustrative_restricted_admitted.png",
-       width = 4, height = 4, dpi = 300, bg = "transparent"
-)
-#-------------- 
+#--------------
+# model fit indices
+M2(m2PL)
+##         M2  df p   RMSEA RMSEA_5 RMSEA_95   SRMSR    TLI   CFI
+## stats 1660 229 0 0.06007 0.05736  0.06278 0.04468 0.9168 0.931
+#--------------
 
-#-------------- 
-# Plot 3 - Second attempt only, r = .81
-second_attempt <- subset(df, xvar > 58 | xvar < 43)
-cor(second_attempt$xvar, second_attempt$yvar)
-## [1] 0.813
-#-------------- 
+#--------------
+head(fscores(m2PL), n = 3)
+##           F1      F2
+## [1,]  0.05246  1.3830
+## [2,] -0.97199  1.2715
+## [3,]  1.19615 -2.1297
+#--------------
 
-#-------------- 
-(scatter_second <- ggplot(second_attempt) +
-   geom_point(aes(x = xvar, y = yvar),
-              size = 1.8,
-              alpha = 0.5,
-              shape = 19
-   ) +
-   theme_fig() +
-   xlab("X") +
-   ylab("Y") +
-   scale_x_continuous(limits = c(25, 75)) +
-   scale_y_continuous(limits = c(5, 31))
-)
-#-------------- 
+#-----------------------------------------------------------------
+# 7.4.2 Multidimensional Graded Response Model
+#-----------------------------------------------------------------
 
-#-------------- Save plot
-ggsave("figures/chapter2/validity_illustrative_restricted_second.png",
-       width = 4, height = 4, dpi = 300, bg = "transparent"
-)
+#--------------
+mGRM <- mirt::mirt(BFI2en, model = 2, itemtype = "graded")
+#--------------
+
+#--------------
+coef(mGRM, simplify = TRUE)
+## $items
+##         a1     a2    d1     d2     d3     d4
+## i1  -0.125  1.863 4.925  2.293  0.864 -2.174
+## i6  -0.187  1.594 4.611  2.090  0.608 -2.067
+## ...
+## i4   1.747 -0.581 3.453  0.963 -0.578 -3.228
+## ...
+## i54  1.938 -1.066 2.539  0.179 -1.261 -3.919
+## i59  1.973  0.000 3.153  0.435 -0.992 -3.636
+## 
+## $means
+## F1 F2 
+## 0  0 
+## 
+## $cov
+## F1 F2
+## F1  1  0
+## F2  0  1
+
+#--------------
+itemplot(mGRM, item = 1) # item loading strongly on one factor
+itemplot(mGRM, item = 13) # item loading strongly on other factor
+#--------------
+
+#--------------
+head(fscores(mGRM), n = 3)
+##           F1     F2
+## [1,]  0.4821  1.274
+## [2,] -1.1366  1.160
+## [3,]  3.4887 -3.497
+#--------------
+
+#-----------------------------------------------------------------
+# 7.4.3 Confirmatory multidimensional PCM
+#-----------------------------------------------------------------
+
+#--------------
+model_ENirt <- 'E = 1-12
+                N = 13-24
+                COV = E*N'
+#fit_ENirtRasch <- mirt::mirt(BFI2en, model = model_ENirt, itemtype = "Rasch")
+fit_ENirtGRM <- mirt::mirt(BFI2en, model = model_ENirt, itemtype = "graded")
+#--------------
+
+#--------------
+coef(fit_ENirtGRM, simplify = TRUE)
+## $items
+##        a1    a2    d1     d2     d3     d4
+## i1  1.815 0.000 4.847  2.264  0.855 -2.141
+## i6  1.668 0.000 4.685  2.136  0.626 -2.104
+## ...
+## i4  0.000 1.855 3.468  0.969 -0.579 -3.242
+## ...
+## i54 0.000 2.164 2.511  0.187 -1.237 -3.857
+## i59 0.000 1.679 2.900  0.405 -0.902 -3.341
+## 
+## $means
+## E N 
+## 0 0 
+## 
+## $cov
+## E      N
+## E  1.000 -0.366
+## N -0.366  1.000
+#--------------
+
+#--------------
+itemplot(fit_ENirtGRM, item = 1) # item loading on 1st factor
+itemplot(fit_ENirtGRM, item = 13) # item loading on 2nd factor
+#--------------
+
+#--------------
+MDIFF(fit_ENirtGRM)
+##     MDIFF_1   MDIFF_2  MDIFF_3 MDIFF_4
+## i1   -2.670 -1.247133 -0.47093   1.179
+## i6   -2.809 -1.280900 -0.37535   1.262
+
+MDISC(fit_ENirtGRM)
+##     i1     i6    i11    i16    i21    i26    i31    i36    i41    i46    i51    i56 
+## 1.8153 1.6678 0.6313 2.3159 1.8016 0.8033 1.9004 0.7631 1.3134 1.9334 1.6300 1.1060 
+##     i4     i9    i14    i19    i24    i29    i34    i39    i44    i49    i54    i59 
+## 1.8549 1.3335 1.6935 1.4488 1.2662 2.4583 1.4914 2.1672 1.1882 1.4682 2.1639 1.6792 
+#--------------
+
+#--------------
+head(fscores(fit_ENirtGRM), n = 3)
+##            E       N
+## [1,]  0.7727  0.2232
+## [2,]  0.7267 -0.7867
+## [3,] -2.5039  2.8328
 #--------------
