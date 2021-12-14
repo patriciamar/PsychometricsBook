@@ -8,7 +8,9 @@
 # Packages
 #-----------------------------------------------------------------
 
+library(aod)
 library(deltaPlotR)
+remotes::install_github("adelahladka/difNLR")
 library(difNLR)
 library(difR)
 library(ggplot2)
@@ -35,11 +37,25 @@ theme_fig <- function(base_size = 17, base_family = "") {
     )
 }
 
+theme_fig_title <- function(base_size = 17, base_family = "") {
+  theme_bw(base_size = base_size, base_family = base_family) +
+    theme(
+      legend.key = element_rect(fill = "white", colour = NA),
+      axis.line = element_line(colour = "black"),
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank(),
+      panel.background = element_blank(),
+      # plot.title = element_blank(),
+      legend.background = element_blank()
+    )
+}
+
 #-----------------------------------------------------------------
 # 8.3.1 Delta method
 #-----------------------------------------------------------------
 
 #--------------
+# loading data
 data(MSATB, package = "difNLR")
 head(MSATB, n = 2)
 ##   Item49 Item27 Item41 ...
@@ -50,51 +66,51 @@ head(MSATB, n = 2)
 
 #--------------
 # calculating proportions of correct answer per group
-(pi0 <- colMeans(MSATB[MSATB$gender == 0, -21]))[1:3]
-## Item49 Item27 Item41
-## 0.8161 0.2335 0.3843
-(pi1 <- colMeans(MSATB[MSATB$gender == 1, -21]))[1:3]
-## Item49 Item27 Item41
-## 0.8776 0.2470 0.3803
+(pi0 <- colMeans(MSATB[MSATB$gender == 0, -21]))
+## Item49 Item27 Item41 ...
+## 0.8161 0.2335 0.3843 ...
+(pi1 <- colMeans(MSATB[MSATB$gender == 1, -21]))
+## Item49 Item27 Item41 ...
+## 0.8776 0.2470 0.3803 ...
 #--------------
 
 #--------------
 # calculation of standard normal quantiles
-(z0 <- qnorm(1 - pi0))[1:3]
-##  Item49  Item27  Item41
-## -0.9007  0.7275  0.2942
-(z1 <- qnorm(1 - pi1))[1:3]
-## Item49  Item27  Item41
-## -1.1629  0.6839  0.3047
+(z0 <- qnorm(1 - pi0))
+##  Item49  Item27  Item41 ...
+## -0.9007  0.7275  0.2942 ...
+(z1 <- qnorm(1 - pi1))
+##  Item49  Item27  Item41 ...
+## -1.1629  0.6839  0.3047 ...
 
 # transformation into delta scores
-(delta0 <- 4 * z0 + 13)[1:3]
-## Item49  Item27  Item41
-## 9.3974 15.9099 14.1769
-(delta1 <- 4 * z1 + 13)[1:3]
-## Item49  Item27  Item41
-## 8.3482 15.7356 14.2190
+(delta0 <- 4 * z0 + 13)
+## Item49  Item27  Item41 ...
+## 9.3974 15.9099 14.1769 ...
+(delta1 <- 4 * z1 + 13)
+## Item49  Item27  Item41 ...
+## 8.3482 15.7356 14.2190 ...
 #--------------
 
 #--------------
 s0 <- sd(delta0) # SD of delta scores - males
 s1 <- sd(delta1) # SD of delta scores - females
 s01 <- cov(delta0, delta1) # covariance of delta scores
-m0 <- mean(delta0) # mean of delta scores - males
-m1 <- mean(delta1) # mean of delta scores - females
+mean_delta0 <- mean(delta0) # mean of delta scores - males
+mean_delta1 <- mean(delta1) # mean of delta scores - females
 
 # calculation of parameters a and b of major axis
 (b <- (s1^2 - s0^2 + sqrt((s1^2 - s0^2)^2 + 4 * s01^2)) / (2 * s01))
 ## [1] 0.9784
-(a <- m1 - b * m0)
+(a <- mean_delta1 - b * mean_delta0)
 ## [1] 0.3787
 #--------------
 
 #--------------
 # calculation of distances of delta scores from major axis
-(D <- (b * delta0 + a - delta1) / (sqrt(b^2 + 1)))[1:3]
-## Item49 Item27 Item41
-## 0.8753 0.1493 0.0214
+(D <- (b * delta0 + a - delta1) / (sqrt(b^2 + 1)))
+## Item49 Item27 Item41 ...
+## 0.8753 0.1493 0.0214 ...
 #--------------
 
 #--------------
@@ -137,9 +153,11 @@ m1 <- mean(delta1) # mean of delta scores - females
 #--------------
 
 #--------------
+# diagonal plots
 deltaPlotR::diagPlot(DP_fixed, thr.draw = TRUE)
 deltaPlotR::diagPlot(DP_norm, thr.draw = TRUE)
 #--------------
+
 
 #-----------------------------------------------------------------
 # 8.3.2 Mantel-Haenszel test
@@ -190,7 +208,7 @@ n_item49 <- n_item49_01 + n_item49_00 + n_item49_11 + n_item49_10
 
 # alphaMH
 (alphaMH <- sum(n_item49_01 * n_item49_10 / n_item49) /
-  sum(n_item49_00 * n_item49_11 / n_item49))
+    sum(n_item49_00 * n_item49_11 / n_item49))
 ## [1] 0.5430
 #--------------
 
@@ -208,9 +226,9 @@ n_item49_0 <- n_item49_00 + n_item49_10 # incorrect answers
 
 # MH test statistic
 (MHstat <- (abs(sum(n_item49_01 - n_item49_R * n_item49_1 / n_item49))
-- 0.5)^2 /
-  sum((n_item49_R * n_item49_F * n_item49_1 * n_item49_0) /
-    (n_item49^2 * (n_item49 - 1))))
+            - 0.5)^2 /
+    sum((n_item49_R * n_item49_F * n_item49_1 * n_item49_0) /
+          (n_item49^2 * (n_item49 - 1))))
 ## [1] 12.4456
 # critical value on 0.05 significance level
 qchisq(p = 0.95, df = 1)
@@ -315,9 +333,9 @@ lapply(1:20, function(i)
 
 #--------------
 zscore <- as.vector(scale(rowSums(MSATB[, 1:20]))) # Z-score
-fit1 <- glm(Item49 ~ zscore * gender, data = MSATB, family = binomial)
-fit0 <- glm(Item49 ~ zscore, data = MSATB, family = binomial)
-anova(fit0, fit1, test = "LRT")
+fit_alt <- glm(Item49 ~ zscore * gender, data = MSATB, family = binomial)
+fit_null <- glm(Item49 ~ zscore, data = MSATB, family = binomial)
+anova(fit_null, fit_alt, test = "LRT")
 ## Analysis of Deviance Table
 ##
 ## Model 1: Item49 ~ score
@@ -330,25 +348,33 @@ anova(fit0, fit1, test = "LRT")
 #--------------
 
 #--------------
-predict(fit1, newdata = data.frame(zscore = c(-1, 0, 1), gender = 0),
+aod::wald.test(Sigma = vcov(fit_alt), b = coef(fit_alt), Terms = c(3, 4))
+## Wald test:
+## ----------
+##   
+## Chi-squared test:
+## X2 = 14.8975, df = 2, P(> X2) = 0.0006
+#--------------
+
+#--------------
+predict(fit_alt, newdata = data.frame(zscore = c(-1, 0, 1), gender = 0),
         type = "response")
 ##      1      2      3
 ## 0.6457 0.8660 0.9582
-
-predict(fit1, newdata = data.frame(zscore = c(-1, 0, 1), gender = 1),
+predict(fit_alt, newdata = data.frame(zscore = c(-1, 0, 1), gender = 1),
         type = "response")
 ##      1      2      3
 ## 0.7819 0.9215 0.9747
 #--------------
 
 #--------------
-summary(fit0)
+summary(fit_null)
 ## ...
 ##              Estimate Std. Error z value Pr(>|z|)
 ## (Intercept)    2.2231     0.1060   20.97   <2e-16 ***
 ## zscore         1.1860     0.1026   11.56   <2e-16 ***
 ## ...
-summary(fit1)
+summary(fit_alt)
 ## ...
 ##               Estimate Std. Error z value Pr(>|z|)
 ## (Intercept)     1.8659     0.1582   11.79  < 2e-16 ***
@@ -359,24 +385,29 @@ summary(fit1)
 #--------------
 
 #--------------
-c(a = coef(fit1)[2],
-  b = -coef(fit1)[1] / coef(fit1)[2],
-  aDIF = coef(fit1)[4],
-  bDIF = (coef(fit1)[1] * coef(fit1)[4] - coef(fit1)[2] * coef(fit1)[3]) / 
-    (coef(fit1)[2] * (coef(fit1)[2] + coef(fit1)[4])))
-##      a       b    aDIF    bDIF
-## 1.2659 -1.4740 -0.0797 -0.6025
+# parameters for item 49 in IRT parametrization
+a <- coef(fit_alt)[2]
+b <- -coef(fit_alt)[1] / coef(fit_alt)[2]
+aDIF <- coef(fit_alt)[4]
+bDIF <- (coef(fit_alt)[1] * coef(fit_alt)[4] - coef(fit_alt)[2] * 
+           coef(fit_alt)[3]) / 
+  (coef(fit_alt)[2] * (coef(fit_alt)[2] + coef(fit_alt)[4]))
+setNames(c(a, b, aDIF, bDIF), c("a", "b", "aDIF", "bDIF"))
+##      a       b    aDIF    bDIF 
+## 1.2659 -1.4740 -0.0797 -0.6025 
 #--------------
 
 #--------------
+# delta method to compute standard errors of parameters for item 49
 msm::deltamethod(list(~x2, ~ -x1 / x2,
                       ~x4, ~ (x1 * x4 - x2 * x3) / (x2 * (x2 + x4))),
-                 mean = coef(fit1),
-                 cov = vcov(fit1))
+                 mean = coef(fit_alt),
+                 cov = vcov(fit_alt))
 ## [1] 0.1671 0.1584 0.2142 0.2374
 #--------------
 
 #--------------
+# DIF detection with logistic regression model
 (fit.LR <- difR::difLogistic(Data = MSATB, group = "gender", 
                              focal.name = 1, match = zscore))
 ## ... 
@@ -402,19 +433,33 @@ msm::deltamethod(list(~x2, ~ -x1 / x2,
 ##  Zumbo & Thomas (ZT): 0 'A' 0.13 'B' 0.26 'C' 1 
 ##  Jodoin & Gierl (JG): 0 'A' 0.035 'B' 0.07 'C' 1 
 ## ...
+difR::difLogistic(Data = MSATB, group = "gender", 
+                  focal.name = 1, match = zscore, criterion = "Wald")
+## ...
+##          Stat. P-value    
+## Item49 14.8975  0.0006 ***
+## Item27  1.1941  0.5504    
+## Item41  0.6420  0.7254
+## ...
 #--------------
 
 #--------------
+# parameters for item 49
 fit.LR$logitPar[1, ]
 ## (Intercept)       SCORE       GROUP SCORE:GROUP 
 ##      1.8659      1.2659      0.5973     -0.0797
 #--------------
 
 #--------------
-plot(fit.LR, plot = "itemCurve", item = 1)
+# plot of characteristic curves for item 49
+ShinyItemAnalysis::plotDIFLogistic(
+  fit.LR, item = 1, Data = MSATB[, 1:20], 
+  group = MSATB[, 21], match = zscore
+)
 #--------------
 
 #--------------
+# DIF detection with 2PL model
 (fit.NLR.2PL <- difNLR::difNLR(Data = MSATB, group = "gender", 
                                focal.name = 1, model = "2PL"))
 ## ...
@@ -426,16 +471,24 @@ plot(fit.LR, plot = "itemCurve", item = 1)
 ## Items detected as DIF items:
 ## Item49
 ## Item68
+
+# parameters for item 49
 coef(fit.NLR.2PL)$Item49
 ##      a       b    aDif    bDif
 ## 1.1203 -1.5514 -0.0928 -0.6922
 #--------------
 
 #--------------
+# plot of characteristic curves for item 49
 plot(fit.NLR.2PL, item = "Item49")
 #--------------
 
+#-----------------------------------------------------------------
+# 8.4.2. Generalized logistic regression models
+#-----------------------------------------------------------------
+
 #--------------
+# DIF detection with 3PL model with freely estimated guessing parameter
 (fit.NLR.3PL <- difNLR::difNLR(Data = MSATB, group = "gender", 
                                focal.name = 1,  model = "3PLc"))
 ## ...
@@ -457,8 +510,13 @@ coef(fit.NLR.3PL, SE = TRUE)$Item47
 ## SE       1.3838  0.1689  0.1284  1.4310  1.8441  1.3225
 
 # plot of characteristic curves for item 47
-plot(fit.NLR.3PL, item = "Item47", group.names = c("Males", "Females"))
+plot(fit.NLR.3PL, item = "Item47", group.names = c("Males", "Females"),
+     draw.CI = TRUE)
 #--------------
+
+#-----------------------------------------------------------------
+# 8.4.3. Cumulative logit model
+#-----------------------------------------------------------------
 
 #--------------
 # loading data
@@ -467,7 +525,7 @@ Anxiety_items <- Anxiety[, paste0("R", 1:29)]
 #--------------
 
 #--------------
-# DIF with cumulative logit regression model
+# DIF detection with cumulative logit regression model
 (fit.ORD1 <- difNLR::difORD(Data = Anxiety_items, group = Anxiety$gender,
                             focal.name = 1, model = "cumulative"))
 ## ...
@@ -489,7 +547,7 @@ Anxiety_items <- Anxiety[, paste0("R", 1:29)]
 ## R20
 
 #--------------
-# coefficients for item R6
+# parameters for item R6
 coef(fit.ORD1, SE = TRUE)$R6
 ##              b2     b3     b4     b5     a
 ## estimate 0.2248 1.1264 2.1714 3.2289 2.1390
@@ -500,13 +558,31 @@ coef(fit.ORD1, SE = TRUE)$R6
 #--------------
 
 #--------------
-# plot of cumulative probabilities
+# plot of cumulative probabilities for item R6
 plot(fit.ORD1, item = "R6", plot.type = "cumulative", 
      group.names = c("Males", "Females"))
-# plot of category probabilities
+# plot of category probabilities for item R6
 plot(fit.ORD1, item = "R6", plot.type = "category", 
      group.names = c("Males", "Females"))
 #--------------
+
+#--------------
+# predicted values (category probabilities) for item R6
+predict(fit.ORD1, item = "R6", match = 0, group = c(0, 1))
+##   P(Y = 1) P(Y = 2) P(Y = 3) P(Y = 4)  P(Y = 5)
+## 1   0.6179   0.2996   0.0729   0.0085    0.0010
+## 2   0.7660   0.1915   0.0378   0.0042    0.0005
+# predicted values (cumulative probabilities) for item R6
+predict(fit.ORD1, item = "R6", match = 0, group = c(0, 1), 
+        type = "cumulative")
+##   P(Y <= 1) P(Y <= 2) P(Y <= 3) P(Y <= 4) P(Y <= 5)
+## 1         1    0.3821    0.0825    0.0095    0.0010
+## 2         1    0.2340    0.0425    0.0047    0.0005
+#--------------
+
+#-----------------------------------------------------------------
+# 8.4.4. Adjacent category logit model
+#-----------------------------------------------------------------
 
 #--------------
 # DIF with adjacent category logit regression model
@@ -532,7 +608,7 @@ plot(fit.ORD1, item = "R6", plot.type = "category",
 #--------------
 
 #--------------
-# coefficients for item R6
+# parameters for item R6
 coef(fit.ORD2, SE = TRUE)$R6
 ##              b2     b3     b4     b5      a
 ## estimate 0.6395 0.9013 2.1545 3.1694 1.3925
@@ -541,14 +617,28 @@ coef(fit.ORD2, SE = TRUE)$R6
 ## estimate 0.2754 0.2677 0.2307 0.2008 0.0423
 ## SE       0.0900 0.0969 0.1745 0.2564 0.1274
 
-# plot of category probabilities
+# plot of category probabilities for item R6
 plot(fit.ORD2, item = "R6", group.names = c("Males", "Females"))
 #--------------
 
 #--------------
+# predicted values (category probabilities) for item R6
+predict(fit.ORD2, item = "R6", match = 0, group = c(0, 1))
+##   P(Y = 1) P(Y = 2) P(Y = 3) P(Y = 4)  P(Y = 5)
+## 1   0.6522   0.2677   0.0763   0.0038   0.00005
+## 2   0.7570   0.2037   0.0381   0.0012   0.00001
+#--------------
+
+#-----------------------------------------------------------------
+# 8.4.5. Multinomial regression model
+#-----------------------------------------------------------------
+
+#--------------
 # loading data
 data(HCItest, HCIkey, package = "ShinyItemAnalysis")
+#--------------
 
+#--------------
 # DDF with multinomial regression model
 (fit.DDF <- difNLR::ddfMLR(Data = HCItest[, 1:20], 
                            group = HCItest$gender, 
@@ -568,7 +658,7 @@ data(HCItest, HCIkey, package = "ShinyItemAnalysis")
 #--------------
 
 #--------------
-# estimated coefficients for item 12
+# parameters for item 12
 coef(fit.DDF, SE = TRUE)[[12]]
 ##                  b       a    bDIF    aDIF
 ## A estimate -2.0365 -1.0434  1.0564 -0.3526
@@ -580,15 +670,61 @@ coef(fit.DDF, SE = TRUE)[[12]]
 ## E estimate -0.9933 -0.8399  0.4498 -0.3577
 ## E SE        0.1953  0.1385  0.2633  0.2436
 
-# plot of ICCs for item 12
+# plot of characteristic curves for item 12
 plot(fit.DDF, item = 12, group.names = c("Males", "Females"))
 #--------------
 
 #-----------------------------------------------------------------
-# 8.3.5.1 Lord's test
+# 8.5.1 Group-specific IRT models
 #-----------------------------------------------------------------
 
 #--------------
+(fit.difR.0 <- difR::itemParEst(data = MSATB[MSATB$gender == 0, 1:20], 
+                                model = "2PL"))
+##             a       b  se(a)   se(b) cov(a,b)
+## Item49 1.0404 -1.7197 0.1918  0.2600   0.0432
+## Item27 1.1122  1.3154 0.1695  0.1812  -0.0235
+## Item41 1.4798  0.4263 0.1953  0.0953  -0.0071
+## ...
+(fit.difR.1 <- difR::itemParEst(data = MSATB[MSATB$gender == 1, 1:20], 
+                                model = "2PL"))
+##             a       b   se(a)   se(b) cov(a,b)
+## Item49 0.9978 -2.3060  0.1536  0.2872   0.0406
+## Item27 1.0585  1.2747  0.1156  0.1316  -0.0115
+## Item41 1.6971  0.4062  0.1591  0.0638  -0.0037
+## ...
+#--------------
+
+#--------------
+fit.mirt <- mirt::multipleGroup(data = MSATB[, 1:20], model = 1, 
+                                group = as.factor(MSATB$gender),
+                                SE = TRUE)
+
+coef(fit.mirt, simplify = TRUE, IRTpars = TRUE)
+## $`0`
+## $items
+##             a       b g u
+## Item49 1.0400 -1.7199 0 1
+## Item27 1.1122  1.3156 0 1
+## Item41 1.4798  0.4265 0 1
+## ...
+## 
+## $`1`
+## $items
+##             a       b g u
+## Item49 0.9983 -2.3052 0 1
+## Item27 1.0586  1.2746 0 1
+## Item41 1.6969  0.4062 0 1
+## ...
+#--------------
+
+#-----------------------------------------------------------------
+# 8.5.2 Lord's test
+#-----------------------------------------------------------------
+
+#--------------
+difR::difLord(irtParam = rbind(fit.difR.0, fit.difR.1), 
+              same.scale = FALSE)
 difR::difLord(Data = MSATB, group = "gender", focal.name = 1, 
               model = "2PL")
 ## ...
@@ -603,10 +739,7 @@ difR::difLord(Data = MSATB, group = "gender", focal.name = 1,
 #--------------
 
 #--------------
-fitMG <- mirt::multipleGroup(data = MSATB[, 1:20], model = 1, 
-                             group = as.factor(MSATB$gender),
-                             SE = TRUE)
-mirt::DIF(fitMG, which.par = c("a1", "d"), Wald = TRUE)
+mirt::DIF(fit.mirt, which.par = c("a1", "d"), Wald = TRUE)
 ##            W df     p
 ## Item49 9.334  2 0.009
 ## Item27 0.409  2 0.815
@@ -615,37 +748,16 @@ mirt::DIF(fitMG, which.par = c("a1", "d"), Wald = TRUE)
 #--------------
 
 #--------------
-coef(fitMG)
-## $`0`
-## $Item49
-##            a1     d  g  u
-## par     1.040 1.789  0  1
-## CI_2.5  0.664 1.465 NA NA
-## CI_97.5 1.416 2.113 NA NA
-## ...
-## $`1`
-## $Item49
-##            a1     d  g  u
-## par     0.998 2.301  0  1
-## CI_2.5  0.697 2.021 NA NA
-## CI_97.5 1.299 2.582 NA NA
-## ...
-#--------------
-
-#--------------
-mirt::itemplot(fitMG, item = "Item49")
+mirt::itemplot(fit.mirt, item = "Item49")
+mirt::itemplot(fit.mirt, item = "Item27")
 #--------------
 
 #-----------------------------------------------------------------
-# 8.3.5.2 Likelihood ratio test
+# 8.5.3 Likelihood ratio test
 #-----------------------------------------------------------------
 
 #--------------
-difR::difLRT(Data = MSATB, group = "gender", focal.name = 1)
-#--------------
-
-#--------------
-mirt::DIF(fitMG, which.par = c("a1", "d"), Wald = FALSE)
+mirt::DIF(fit.mirt, which.par = c("a1", "d"), Wald = FALSE)
 ##           AIC   AICc  SABIC     HQ    BIC    X2 df     p
 ## Item49 -5.288 -4.794 -1.143 -1.364  5.210 9.288  2 0.010
 ## Item27  3.585  4.079  7.730  7.509 14.083 0.415  2 0.813
@@ -654,7 +766,7 @@ mirt::DIF(fitMG, which.par = c("a1", "d"), Wald = FALSE)
 #--------------
 
 #-----------------------------------------------------------------
-# 8.3.5.3 Raju's test
+# 8.5.4 Raju's test
 #-----------------------------------------------------------------
 
 #--------------
@@ -687,7 +799,7 @@ difR::difRaju(Data = MSATB, group = "gender", focal.name = 1,
 #--------------
 
 #-----------------------------------------------------------------
-# 8.4.1 Item purification
+# 8.6.1 Item purification
 #-----------------------------------------------------------------
 
 #--------------
@@ -709,7 +821,7 @@ fit_ORD3$difPur
 #--------------
 
 #-----------------------------------------------------------------
-# 8.4.1 Corrections for multiple comparisons
+# 8.6.2 Corrections for multiple comparisons
 #-----------------------------------------------------------------
 
 #--------------
