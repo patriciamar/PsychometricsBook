@@ -1,5 +1,5 @@
 #-----------------------------------------------------------------
-# Chapter 4 - Item analysis
+# Chapter 4 - Traditional item analysis
 # Computational aspects of psychometric methods. With R.
 # P. Martinkova & A. Hladka
 #-----------------------------------------------------------------
@@ -9,11 +9,8 @@
 #-----------------------------------------------------------------
 
 library(ggplot2)
-library(msm)
 library(naniar)
-library(nnet)
 library(ShinyItemAnalysis)
-library(VGAM)
 
 #-----------------------------------------------------------------
 # Plot settings
@@ -33,9 +30,9 @@ theme_fig <- function(base_size = 17, base_family = "") {
 }
 
 #-----------------------------------------------------------------
-# 4.2.1  Item difficulty
+# 4.2   Item difficulty
 #-----------------------------------------------------------------
-# Difficulty in binary items 
+# 4.2.1 Difficulty in binary items 
 #-----------------------------------------------------------------
 
 #--------------
@@ -62,7 +59,7 @@ sapply(HCI[, 1:20], sd)
 #--------------
 
 #-----------------------------------------------------------------
-# Difficulty in ordinal items
+# 4.2.2 Difficulty in ordinal items
 #-----------------------------------------------------------------
 
 #--------------
@@ -81,7 +78,7 @@ sd(dataMedicalgraded[, 1])
 # accounting for minimum item score of 0, maximum score of 4 points
 (mean(dataMedicalgraded[, 1]) - 0) / (4 - 0)
 ## [1] 0.6647
-ItemAnalysis(Data = dataMedicalgraded[,1:100])
+ItemAnalysis(Data = dataMedicalgraded[, 1:100])
 ##       Difficulty  Mean     SD Prop.max.score Min.score Max.score Obs.min
 ## X2001     0.6647 2.659 0.9905         0.3181         0         4       0
 ## X2002     0.5348 2.139 0.9911         0.0874         0         4       0
@@ -110,7 +107,7 @@ mean(dataMedicalgraded[, 1] >= 1)
 #--------------
 
 #--------------
-ItemAnalysis(Data = dataMedicalgraded[,1:100], 
+ItemAnalysis(Data = dataMedicalgraded[, 1:100], 
              maxscore = 4, minscore = 0, cutscore = 2, bin = TRUE)
 ##       Difficulty  Mean     SD SD.bin Prop.max.score Min.score Max.score Obs.min Obs.max Cut.score
 ## X2001     0.6647 2.659 0.9905 0.4964         0.3181         0         4       0       4         2
@@ -119,16 +116,16 @@ ItemAnalysis(Data = dataMedicalgraded[,1:100],
 
 
 #-----------------------------------------------------------------
-# 4.2.2  Item discrimination
+# 4.3  Item discrimination
 #-----------------------------------------------------------------
 
 #-----------------------------------------------------------------
-# Correlation between item and total score (RIT)
+# 4.3.1 Correlation between item and total score (RIT)
 #-----------------------------------------------------------------
 
 #--------------
 # RIT index with ItemAnalysis() function
-ItemAnalysis(HCI[,1:20])$RIT
+ItemAnalysis(HCI[, 1:20])$RIT
 ## [1] 0.4019 0.3320 0.4352 0.3023 0.4005 0.4560 0.2355 0.4350 ...
 
 # RIT index by hand
@@ -144,7 +141,7 @@ sapply(HCI[, 1:20], function(i) cor(i, total_score))
 
 #--------------
 # RIR index with ItemAnalysis() function
-ItemAnalysis(HCI[,1:20])$RIR
+ItemAnalysis(HCI[, 1:20])$RIR
 ## [1] 0.2884 0.2206 0.3500 0.1730 0.2768 0.3419 0.1009 0.3252 ...
 
 # RIR index by hand
@@ -155,7 +152,7 @@ diag(cor(HCI[, 1:20], dataR))
 #--------------
 
 #-----------------------------------------------------------------
-# Upper-lower index (ULI)
+# 4.3.2 Difference between upper and lower group (ULI)
 #-----------------------------------------------------------------
 
 #--------------
@@ -228,7 +225,7 @@ DDplot(
 #--------------
 
 #-----------------------------------------------------------------
-# 4.2.3 Item characteristic curve
+# 4.4 Item characteristic curve
 #-----------------------------------------------------------------
 
 #--------------# illustrative plot
@@ -257,7 +254,7 @@ ggplot(df, aes(x = x, y = icc, col = Item, shape = Item)) +
 #--------------
 
 #-----------------------------------------------------------------
-# 4.2.4 Distractor analysis
+# 4.5 Distractor analysis
 #-----------------------------------------------------------------
 
 #--------------
@@ -291,7 +288,7 @@ plotDistractorAnalysis(
 #--------------
 
 #-----------------------------------------------------------------
-# 4.2.5 Item reliability
+# 4.6 Item reliability
 #-----------------------------------------------------------------
 
 #--------------
@@ -314,8 +311,15 @@ ItemAnalysis(Data = HCI[, 1:20])$Alpha.drop
 ## [19] 0.6981 0.6997
 #--------------             
 
+#--------------             
+#ItemAnalysis(Data = HCI[, 1:20], criterion = HCI$major)[, "Index.rel"]
+### [1]  0.1844 0.1432 0.1563 0.1484 0.1989 0.2192 0.1172 0.1984 0.1690
+### [10] 0.1835 0.1611 0.2154 0.2319 0.1885 0.2098 0.2413 0.0769 0.2036
+### [19] 0.1899 0.1999
+#--------------
+
 #-----------------------------------------------------------------
-# 4.2.6 Item validity
+# 4.7 Item validity
 #-----------------------------------------------------------------
 
 #--------------
@@ -323,6 +327,13 @@ ItemAnalysis(Data = HCI[, 1:20], criterion = HCI$major)$Corr.criterion
 ## [1]  0.1173  0.1265  0.1541  0.0832  0.1274  0.0980 -0.0194  0.0949
 ## [9]  0.0681  0.0968  0.0782  0.0938  0.0909  0.0664  0.0859  0.0499
 ## [17] 0.0312  0.1187  0.1295  0.0650
+#--------------
+
+#-------------- 
+# ItemAnalysis(Data = HCI[, 1:20], criterion = HCI$major)[, "Index.val"]
+### [1]  0.0538  0.0546  0.0553  0.0408  0.0633  0.0471 -0.0096  0.0433
+### [9]  0.0337  0.0462  0.0325  0.0464  0.0444  0.0284  0.0427  0.0244
+### [17] 0.0143  0.0477  0.0532  0.0291
 #--------------
 
 #--------------
@@ -338,7 +349,7 @@ plotDistractorAnalysis(
 #--------------
 
 #-----------------------------------------------------------------
-# 4.2.7 Missed items
+# 4.8 Missed items
 #-----------------------------------------------------------------
 
 #--------------
@@ -414,667 +425,9 @@ ItemAnalysis(Data = HCImissed[, 1:20])$"Perc.nr"
 # ## Item 5       0
 # #--------------
 
-
 #-----------------------------------------------------------------
-# 4.3.  Regression models for item description
-#-----------------------------------------------------------------
-#-----------------------------------------------------------------
-# 4.3.2  Models for continuous items
-#-----------------------------------------------------------------
-#-----------------------------------------------------------------
-# 4.3.2.1  Linear regression
-#-----------------------------------------------------------------
-
-#--------------
-data(EPIA, package = "EstCRM")
-head(EPIA, n = 2)
-##   Item 1 Item 2 Item 3 Item 4 Item 5
-## 1     96     36     80     78     79
-## 2     42      2      1      1      1
-
-EPIA$score <- rowSums(EPIA) # total scores
-#--------------
-
-#--------------
-# linear model for Item 1 on total scores
-summary(lm(`Item 1` ~ score, data = EPIA))
-## Call:
-## lm(formula = `Item 1` ~ score, data = EPIA)
-##
-## Residuals:
-##     Min      1Q  Median      3Q     Max
-## -95.461 -15.981  -0.639  17.072  69.689
-##
-## Coefficients:
-##              Estimate Std. Error t value Pr(>|t|)
-## (Intercept)   15.5293     2.1678   7.164  1.5e-12 ***
-## score          0.1878     0.0081  23.246  < 2e-16 ***
-## ---
-## Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-##
-## Residual standard error: 24.03 on 1031 degrees of freedom
-## Multiple R-squared:  0.3439,	Adjusted R-squared:  0.3433
-## F-statistic: 540.4 on 1 and 1031 DF,  p-value: < 2.2e-16
-#--------------
-
-#--------------
-# plot of estimated curve
-ggplot(data = EPIA, aes(x = `score`, y = `Item 1`)) +
-  geom_point(
-    color = "darkblue",
-    fill = "darkblue",
-    shape = 21, alpha = 0.5, size = 1.8
-  ) +
-  geom_smooth(
-    method = "lm",
-    size = 0.8, color = "darkblue"
-  ) +
-  xlab("Total score") +
-  ylab("Score of item 1") +
-  ggtitle("Item 1") + 
-  theme_fig()
-#--------------
-
-#--------------
-coef(lm(`Item 1` ~ score, data = EPIA))
-## (Intercept)   score
-##     15.5292  0.1876
-sqrt(diag(vcov(lm(`Item 1` ~ score, data = EPIA))))
-## (Intercept)    score
-##      2.1676   0.0081
-#--------------
-
-#--------------
-mean(EPIA$score) # average total score
-## [1] 251.8964
-sd(EPIA$score) # standard deviation of total score
-## [1] 92.5968
-
-EPIA$zscore <- scale(EPIA$score) # Z-scores
-
-# linear model for Item 1 on Z-scores
-coef(lm(`Item 1` ~ zscore, data = EPIA))
-## (Intercept)      zscore
-##     62.8296     17.3876
-
-sqrt(diag(vcov(lm(`Item 1` ~ zscore, data = EPIA))))
-## (Intercept)      zscore
-##   0.7476159   0.7479780
-
-# Correspondence to classical item parameters:
-mean(EPIA$`Item 1`)
-## [1] 62.8296
-
-cor(EPIA$`Item 1`, EPIA$zscore) * sd(EPIA$`Item 1`)
-## [1,] 17.3876
-#--------------
-
-#--------------
-# plot of estimated curve
-ggplot(data = EPIA, aes(x = `zscore`, y = `Item 1`)) +
-  geom_point(
-    color = "darkblue",
-    fill = "darkblue",
-    shape = 21, alpha = 0.5, size = 1.8
-  ) +
-  geom_smooth(
-    method = "lm",
-    size = 0.8, color = "darkblue"
-  ) +
-  xlab("Z-score") +
-  ylab("Score of item 1") +
-  ggtitle("Item 1") +
-  theme_fig()
-#--------------
-
-#-----------------------------------------------------------------
-# 4.3.3  Models for binary items
-#-----------------------------------------------------------------
-#-----------------------------------------------------------------
-# 4.3.3.1  Logistic regression
-#-----------------------------------------------------------------
-
-#--------------
-data(HCI, package = "ShinyItemAnalysis")
-zscore <- scale(rowSums(HCI[, 1:20])) # Z-score
-
-# logistic model for item 13
-fit1 <- glm(HCI[, 13] ~ zscore, family = binomial)
-
-# coefficients
-coef(fit1)
-## (Intercept)   zscore
-##      0.5552   1.1824 
-
-# standard errors
-sqrt(diag(vcov(fit1)))
-## (Intercept)   zscore
-##      0.0932   0.1084
-#--------------
-
-#--------------
-# probability of answering item 13 with Z-score 0
-exp(coef(fit1)[1]) / (1 + exp(coef(fit1)[1]))
-## (Intercept)
-##      0.6353
-
-# log-odds of answering item 13 correctly with Z-score 1
-coef(fit1)[1] + coef(fit1)[2]
-## (Intercept)
-##      1.7377
-
-# probability of answering item 13 with Z-score 1
-exp(coef(fit1)[1] + coef(fit1)[2]) / (1 + exp(coef(fit1)[1] + coef(fit1)[2]))
-## (Intercept)
-##      0.8504
-#--------------
-
-#-----------------------------------------------------------------
-# 4.3.3.2  Other link functions, probit regression model
-#-----------------------------------------------------------------
-#--------------
-# probit link
-fit2 <- glm(HCI[, 13] ~ zscore, family = binomial(link = "probit"))
-
-# coefficients
-coef(fit2)
-## (Intercept)   zscore
-##      0.3440   0.7122
-# standard errors
-sqrt(diag(vcov(fit2)))
-## (Intercept)   zscore
-##      0.0549   0.0608
-#--------------
-
-#--------------
-# probability of correct answer for respondent with Z-score 0
-pnorm(coef(fit2)[1])
-## (Intercept)
-##      0.6346
-
-# probability of correct answer for respondent with Z-score 1
-pnorm(coef(fit2)[1] + coef(fit2)[2])
-## (Intercept)
-##      0.8546
-#--------------
-
-#--------------
-coef(fit2)[2] * 1.7
-##  zscore
-##  1.2108
-
-coef(fit1)[2] / coef(fit2)[2]
-##  zscore
-##  1.6601
-#--------------
-
-#--------------
-# function for plot (logit)
-mod_logit <- function(x, b0, b1) {
-  exp(b0 + b1 * x) / (1 + exp(b0 + b1 * x))
-}
-
-# function for plot (probit)
-mod_probit <- function(x, b0, b1) {
-  pnorm(b0 + b1 * x)
-}
-
-df <- data.frame(
-  x = sort(unique(zscore)),
-  y = tapply(HCI[, 13], zscore, mean),
-  Count = as.numeric(table(zscore))
-)
-#--------------
-
-#--------------
-# plot of estimated curve
-ggplot(df, aes(x = x, y = y)) +
-  geom_point(aes(size = Count),
-             color = "darkblue",
-             fill = "darkblue",
-             shape = 21, alpha = 0.5
-  ) +
-  stat_function(
-    fun = mod_logit, geom = "line",
-    args = list(
-      b0 = coef(fit1)[1],
-      b1 = coef(fit1)[2]
-    ),
-    size = 0.8,
-    aes(color = "logit", linetype = "logit")
-  ) +
-  stat_function(
-    fun = mod_probit, geom = "line",
-    args = list(
-      b0 = coef(fit2)[1],
-      b1 = coef(fit2)[2]
-    ),
-    size = 0.8,
-    aes(color = "probit", linetype = "probit")
-  ) +
-  xlab("Z-score") +
-  ylab("Probability of correct answer") +
-  ylim(0, 1) +
-  scale_colour_manual("Link", values = c("darkblue", "darkgoldenrod2")) + 
-  scale_linetype_manual("Link", values = c("solid", "dashed")) + 
-  ggtitle("Item 13") + 
-  theme_fig()
-#--------------
-
-#-----------------------------------------------------------------
-# 4.3.3.3  IRT parametrization
-#-----------------------------------------------------------------
-
-#--------------
-# coefficients in IRT parametrization
-IRTpars13 <- c(coef(fit1)[2], -coef(fit1)[1] / coef(fit1)[2])
-setNames(IRTpars13, c("a", "b"))
-##      a       b
-## 1.1824 -0.4696
-
-# delta method to calculate SE (with the deltamethod() function)
-msm::deltamethod(
-  list(~x2, ~ -x1 / x2),
-  mean = coef(fit1),
-  cov = vcov(fit1)
-)
-## [1] 0.1084 0.0823
-
-# delta method to calculate SE (by hand)
-g <- list(~ beta1, ~ -beta0 / beta1) # formula
-# covariance matrix of original item parameters
-Sigma <- matrix(vcov(fit1), ncol = 2, nrow = 2,
-                dimnames = list(c("beta0", "beta1"), 
-                                c("beta0", "beta1")))
-syms <- colnames(Sigma)
-coefs_fit1 <- coef(fit1)
-for (i in 1:2) assign(syms[i], coef(fit1)[i])
-# calculation of gradient
-nabla <- t(sapply(g, function(form) {
-  as.numeric(attr(eval(deriv(form, syms)), "gradient"))
-}))
-new.covar <- nabla %*% Sigma %*% t(nabla)
-
-# new standard errors
-sqrt(diag(new.covar))
-## [1] 0.1084 0.0823
-#--------------
-
-
-#-----------------------------------------------------------------
-# 4.3.3.4  Nonlinear regression models
-#-----------------------------------------------------------------
-
-#--------------
-# NLR 3P model for item 13
-mod_3PL <- function(x, a, b, c) {
-  c + (1 - c) * exp(a * (x - b)) / (1 + exp(a * (x - b)))
-}
-
-fit3 <- nls(HCI[, 13] ~ mod_3PL(zscore, a, b, c),
-            algorithm = "port", start = c(a = 0.7, b = -0.9, c = 0),
-            lower = c(-Inf, -Inf, 0), upper = c(Inf, Inf, 1))
-
-# coefficients
-coef(fit3)
-##      a      b      c
-## 2.6692 0.2708 0.3214 
-#--------------
-
-#--------------
-# plot of estimated curve
-ggplot(df, aes(x = x, y = y)) +
-  geom_point(aes(size = Count),
-             color = "darkblue",
-             fill = "darkblue",
-             shape = 21, alpha = 0.5
-  ) +
-  stat_function(
-    fun = mod_3PL, geom = "line",
-    args = list(
-      a = coef(fit3)[1],
-      b = coef(fit3)[2],
-      c = coef(fit3)[3]
-    ),
-    size = 0.8,
-    color = "darkblue"
-  ) +
-  xlab("Z-score") +
-  ylab("Probability of correct answer") +
-  ylim(0, 1) +
-  ggtitle("Item 13")  +
-  theme_fig() + 
-  theme(legend.position = c(0.88, 0.23))
-#--------------
-
-#--------------
-# NLR 4P model for item 13
-mod_4PL <- function(x, a, b, c, d) {
-  c + (d - c) * exp(a * (x - b)) / (1 + exp(a * (x - b)))
-}
-
-fit4 <- nls(HCI[, 13] ~ mod_4PL(zscore, a, b, c, d),
-            algorithm = "port", start = c(a = 0.7, b = -0.9, c = 0, d = 1),
-            lower = c(-Inf, -Inf, 0, 0), upper = c(Inf, Inf, 1, 1))
-
-# coefficients
-coef(fit4)
-##      a      b      c      d
-## 3.3405 0.2326 0.3379 0.9569 
-#--------------
-
-#-----------------------------------------------------------------
-# 4.3.4  Models for polytomous items
-#-----------------------------------------------------------------
-#-----------------------------------------------------------------
-# 4.3.4.1  Ordinal regression models
-#-----------------------------------------------------------------
-
-#--------------
-data("Anxiety", package = "lordif")
-data <- Anxiety[, paste0("R", 1:29)] - 1
-zscore <- scale(rowSums(data)) # Z-scores
-maxval <- max(data[, 18]) # maximal number of points for item 18
-# reordering item 18
-data[, 18] <- ordered(factor(data[, 18], levels = 0:maxval))
-#--------------
-
-#--------------
-# cumulative logit model for item 18
-fit.cum <- vglm(data[, 18] ~ zscore,
-                family = cumulative(reverse = TRUE, parallel = TRUE))
-#--------------
-
-#--------------
-# coefficients for item 18
-coef(fit.cum)
-## (Intercept):1 (Intercept):2 (Intercept):3 (Intercept):4    zscore
-##        0.4155       -1.2807       -3.4374       -5.1978    1.7325
-# SE
-sqrt(diag(vcov(fit.cum)))
-## (Intercept):1 (Intercept):2 (Intercept):3 (Intercept):4    zscore
-##        0.0865        0.1031        0.1825        0.2880    0.0955
-#--------------
-
-#--------------
-# IRT parametrization
-c(-coef(fit.cum)[1:4] / coef(fit.cum)[5], coef(fit.cum)[5])
-## (Intercept):1 (Intercept):2 (Intercept):3 (Intercept):4    zscore
-##       -0.2398        0.7392        1.9841        3.0002    1.7325
-# SE using delta method
-msm::deltamethod(
-  list(~ -x1 / x5, ~ -x2 / x5, ~ -x3 / x5, ~ -x4 / x5, ~x5),
-  mean = coef(fit.cum),
-  cov = vcov(fit.cum)
-)
-## [1] 0.0486 0.0643 0.1033 0.1610 0.0955
-#--------------
-
-#--------------
-# plotting cumulative probabilities
-plotCumulative(fit.cum, type = "cumulative")
-plotCumulative(
-  fit.cum,
-  type = "cumulative", matching.name = "Z-score"
-)  +
-  theme_fig() + 
-  xlim(-1.1, 5.2) + 
-  theme(legend.position = c(0.79, 0.23),
-        legend.box = "horizontal",
-        legend.margin = margin(0, -5, 0, 0),
-        legend.background = element_blank())  
-#--------------
-
-#--------------
-# plotting category probabilities
-plotCumulative(fit.cum, type = "category")
-plotCumulative(
-  fit.cum,
-  type = "category", matching.name = "Z-score"
-)   +
-  theme_fig() + 
-  theme(legend.position = c(0.87, 0.5),
-        legend.box = "horizontal",
-        legend.margin = margin(0, -5, 0, 0),
-        legend.background = element_blank()) +
-  scale_size_continuous(breaks = c(0, 5, 10, 15)) + 
-  guides(size = FALSE)
-#--------------
-
-#--------------
-# adjacent category logit model for item 18
-fit.adj <- vglm(data[, 18] ~ zscore,
-                family = acat(reverse = FALSE, parallel = TRUE))
-
-# coefficients for item 18
-coef(fit.adj)
-## (Intercept):1 (Intercept):2 (Intercept):3 (Intercept):4    zscore
-##       -0.2322       -0.5296       -2.2146       -2.7410    1.0109
-# SE
-sqrt(diag(vcov(fit.adj)))
-## (Intercept):1 (Intercept):2 (Intercept):3 (Intercept):4    zscore
-## 0.0976        0.1183        0.2111        0.3347           0.0722
-#--------------
-
-#--------------
-# IRT parametrization
-c(-coef(fit.adj)[1:4] / coef(fit.adj)[5], coef(fit.adj)[5])
-## (Intercept):1 (Intercept):2 (Intercept):3 (Intercept):4    zscore
-##        0.2296        0.5239        2.1906        2.7113    1.0109
-# SE using delta method
-msm::deltamethod(
-  list(~ -x1 / x5, ~ -x2 / x5, ~ -x3 / x5, ~ -x4 / x5, ~x5),
-  mean = coef(fit.adj), cov = vcov(fit.adj))
-## [1] 0.1035 0.1163 0.1874 0.2769 0.0722
-#--------------
-
-#--------------
-# plotting category probabilities
-plotAdjacent(fit.adj, matching.name = "Z-score")
-plotAdjacent(fit.adj, matching.name = "Z-score")   +
-  theme_fig() + 
-  scale_size_continuous(breaks = c(5, 10, 30, 50)) + 
-  theme(legend.position = c(0.8, 0.7),
-        legend.box = "horizontal",
-        legend.margin = margin(0, 0, 0, 0),
-        legend.background = element_blank())
-#--------------
-
-#-----------------------------------------------------------------
-# 4.3.4.2  Nominal response models
-#-----------------------------------------------------------------
-
-#--------------
-# multinominal model
-data(HCItest, HCIkey, package = "ShinyItemAnalysis")
-key <- unlist(HCIkey)
-zscore <- scale(rowSums(HCI[, 1:20])) # Z-score
-
-# re-leveling item 13
-HCItest[, 13] <- relevel(HCItest[, 13], ref = paste(key[13]))
-
-# multinomial model for item 13
-fit.mult <- multinom(HCItest[, 13] ~ zscore)
-
-# coefficients for item 13
-coef(fit.mult)
-##   (Intercept)  zscore
-## B     -2.3463 -1.4044
-## C     -1.6241 -1.1924
-## D     -1.2820 -1.0514
-# SE
-matrix(sqrt(diag(vcov(fit.mult))), ncol = 2, byrow = TRUE)
-##        [,1]   [,2]
-## [1,] 0.1976 0.1860
-## [2,] 0.1410 0.1458
-## [3,] 0.1187 0.1289
-#--------------
-
-#--------------
-# IRT parametrization - difficulties
-cbind(-coef(fit.mult)[, 1] / coef(fit.mult)[, 2], coef(fit.mult)[, 2])
-##      [,1]    [,2]
-## B -1.6484 -1.4234
-## C -1.3253 -1.2354
-## D -1.2052 -1.0560
-#--------------
-
-#--------------
-# SE using delta method
-subst_vcov <- function(vcov, cat) {
-  ind <- grep(cat, colnames(vcov))
-  vcov[ind, ind]
-}
-t(sapply(
-  rownames(coef(fit.mult)),
-  function(.x) {
-    vcov_subset <- subst_vcov(vcov(fit.mult), .x)
-    msm::deltamethod(list(~ -x1 / x2, ~x2),
-                     mean = coef(fit.mult)[.x, ],
-                     cov = vcov_subset,
-                     ses = TRUE
-    )
-  }
-))
-##     [,1]   [,2]
-## B 0.1819 0.1860
-## C 0.1537 0.1458
-## D 0.1611 0.1289
-#--------------
-
-#--------------
-plotMultinomial(fit.mult, matching = zscore)
-plotMultinomial(
-  fit.mult,
-  matching = zscore, matching.name = "Z-score"
-)  +
-  theme_fig() + 
-  scale_size_continuous(breaks = c(5, 10, 30, 50)) + 
-  theme(legend.position = c(0.22, 0.75),
-        legend.box = "horizontal",
-        legend.margin = margin(0, 0, 0, 0),
-        legend.background = element_blank())
-#--------------
-
-#-----------------------------------------------------------------
-# 4.3.6  Model selection and model fit
-#-----------------------------------------------------------------
-
-#--------------
-# AIC
-AIC(fit1, fit2, fit3, fit4)
-##      df      AIC
-## fit1  2 715.1369
-## fit2  2 713.7691
-## fit3  4 740.8746
-## fit4  5 742.4880
-
-# BIC
-BIC(fit1, fit2, fit3, fit4)
-##      df      BIC
-## fit1  2 724.0939
-## fit2  2 722.7261
-## fit3  4 758.7886
-## fit4  5 764.8806
-#--------------
-
-#-----------------------------------------------------------------
-# 4.3.7  Joint model
-#-----------------------------------------------------------------
-
-#--------------
-# Joint model for all items: data preparation
-HCI$zscore <- scale(rowSums(HCI[, 1:20])) # Z-score
-HCI$person <- 1:nrow(HCI)
-
-# converting data to the long format
-HCI.long <- reshape(
-  data = HCI,
-  varying = list(paste("Item", 1:20)), timevar = "item", v.names = "rating",
-  idvar = c("person", "gender", "major", "zscore"),
-  direction = "long", new.row.names = 1:13020
-)
-
-head(HCI.long, n = 2)
-##   gender major   zscore person item rating
-## 1      0     1 1.040755      1    1      1
-## 2      0     1 1.865002      2    1      1
-
-summary(HCI.long)
-# person ID and item ID as factors:
-HCI.long$person <- as.factor(HCI.long$person)
-HCI.long$item <- as.factor(HCI.long$item)
-#--------------
-
-#--------------
-# Joint model for all items: data preparation
-# 1PL model for all items
-fit_glm1PL <- glm(rating ~ -1 + item,
-                  data = HCI.long,
-                  family = binomial
-)
-coef(fit_glm1PL)
-##   item1   item2   item3   item4   item5   item6   item7   item8
-##  0.8422  1.1130  1.7184 -0.3889 -0.2314 -0.5644  0.1880  0.8716
-##   item9  item10  item11  item12  item13  item14  item15  item16
-## -0.2689  0.6113  1.2587  0.2940  0.4402  1.1463 -0.2252  0.4337
-##  item17  item18  item19  item20
-## -0.8642  1.3691  1.2947  0.9542
-
-# 2PL model for all items
-fit_glm2PL <- glm(rating ~ -1 + item + zscore:item,
-                  data = HCI.long,
-                  family = binomial
-)
-coef(fit_glm2PL)
-##         item1         item2         item3         item4         item5
-##        1.0118        1.2723        2.3746       -0.4340       -0.2873
-##         item6         item7         item8         item9        item10
-##       -0.7498        0.1972        1.0867       -0.3114        0.7139
-##        item11        item12        item13        item14        item15
-##        1.5345        0.3508        0.5552        1.4739       -0.2879
-##        item16        item17        item18        item19        item20
-##        0.5587       -0.8941        2.0232        1.7478        1.2137
-##  item1:zscore  item2:zscore  item3:zscore  item4:zscore  item5:zscore
-##  0.9925        0.8294        1.4842        0.6751        0.9399
-##  item6:zscore  item7:zscore  item8:zscore  item9:zscore item10:zscore
-##  1.1988        0.4931        1.1130        0.7690        0.9007
-## item11:zscore item12:zscore item13:zscore item14:zscore item15:zscore
-##  1.0535        1.0329        1.1824        1.2166        1.0093
-## item16:zscore item17:zscore item18:zscore item19:zscore item20:zscore
-##  1.2543        0.3844        1.6575        1.3748        1.1766
-#--------------
-
-#--------------
-anova(fit_glm1PL, fit_glm2PL, test = "Chisq")
-## Analysis of Deviance Table
-##
-## Model 1: rating ~ -1 + item
-## Model 2: rating ~ -1 + item + zscore:item
-##   Resid. Df Resid. Dev Df Deviance  Pr(>Chi)    
-## 1     13000      15956                          
-## 2     12980      13632 20   2323.4 < 2.2e-16 ***
-
-BIC(fit_glm1PL, fit_glm2PL)
-##            df      BIC
-## fit_glm1PL 20 16145.37
-## fit_glm2PL 40 14011.40
-
-AIC(fit_glm1PL, fit_glm2PL)
-##            df      AIC
-## fit_glm1PL 20 15995.88
-## fit_glm2PL 40 13712.43
-#--------------
-
-#--------------
-HCI.long$predict2pl <- predict(fit_glm2PL)
-plot(HCI.long$zscore, HCI.long$predict2pl,
-     xlim = c(-4, 4), ylim = c(-4, 4),
-     xlab = "Z-score", ylab = "2PL predicted")
-#--------------
-
-#-----------------------------------------------------------------
-# 4.4. ShinyItemAnalysis interactive application
+# 4.9. Item analysis in interactive application
 #-----------------------------------------------------------------
 
 startShinyItemAnalysis()
+
