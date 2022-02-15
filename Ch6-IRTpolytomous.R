@@ -1,5 +1,5 @@
 #-----------------------------------------------------------------
-# Chapter 6 - Polytomous IRT models
+# Chapter 7 - More complex IRT models
 # Computational aspects of psychometric methods. With R.
 # P. Martinkova & A. Hladka
 #-----------------------------------------------------------------
@@ -12,6 +12,7 @@ library(ggplot2)
 library(ltm)
 library(mirt)
 library(ShinyItemAnalysis)
+library(Cairo)
 
 #-----------------------------------------------------------------
 # Plot settings
@@ -31,10 +32,10 @@ theme_fig <- function(base_size = 17, base_family = "") {
 }
 
 #-----------------------------------------------------------------
-# 6.2  Cumulative logit IRT models
+# 7.2  Cumulative logit IRT models
 #-----------------------------------------------------------------
 #-----------------------------------------------------------------
-# 6.2.1  Graded response model
+# 7.2.1  Graded response model
 #-----------------------------------------------------------------
 
 #--------------
@@ -50,11 +51,22 @@ head(Anxiety_items <- Anxiety[, paste0("R", 1:29)], n = 2)
 
 #--------------
 # GRM with the mirt package
-fit_GRM_mirt <- mirt::mirt(Anxiety_items, model = 1, itemtype = "graded")
+fit_GRM_mirt <- mirt::mirt(Anxiety_items, model = 1, 
+                           itemtype = "graded", SE = TRUE)
 #--------------
 
 #--------------
-# coefficients
+# estimated coefficients with CI (not displayed in the book)
+coef(fit_GRM_mirt, IRTpars = TRUE, SE = TRUE)
+## $R1
+##             a    b1    b2    b3    b4
+## par     3.449 0.494 1.251 2.031 2.814
+## CI_2.5  2.983 0.394 1.116 1.824 2.448
+## CI_97.5 3.915 0.594 1.387 2.238 3.179
+## ...
+#--------------
+
+#--------------
 coef(fit_GRM_mirt, IRTpars = TRUE, simplify = TRUE)
 ## $items
 ##         a     b1    b2    b3    b4
@@ -74,20 +86,46 @@ mirt::itemplot(fit_GRM_mirt, item = 25, type = "infotrace")
 #--------------
 
 #--------------
+# Further item plots (not displayed in the book):
+# item response curves (IRC) for item 1
+mirt::itemplot(fit_GRM_mirt, item = 1, type = "trace")
+
+# item score function for item 1
+mirt::itemplot(fit_GRM_mirt, item = 1, type = "score")
+
+# item information curve (IIC) and SE for item 1
+mirt::itemplot(fit_GRM_mirt, item = 1, type = "infoSE")
+#--------------
+
+#--------------
+# Further test plots (not displayed in the book):
 # test score curve
 plot(fit_GRM_mirt)
 # test score curve with 95% CI
-# plot(fit_GRM_mirt, MI = 200)
+plot(fit_GRM_mirt, MI = 200)
 
-# TIC
+# test information curve (TIC)
 plot(fit_GRM_mirt, type = "info") # test information
 plot(fit_GRM_mirt, type = "infoSE") # test information and SE
 #--------------
 
 #--------------
-# Factor scores vs standardized total scores
+# factor scores
 fs <- as.vector(fscores(fit_GRM_mirt))
-sts <- as.vector(scale(rowSums(Anxiety[, paste0("R", 1:29)])))
+head(fs)
+## [1] -0.14263 -1.41719 -0.12252 -0.25884 -1.70984 -0.04914
+
+fsSE <- fscores(fit_GRM_mirt, full.scores.SE = TRUE)
+head(fsSE)
+##            F1  SE_F1
+## [1,] -0.14263 0.1618
+## [2,] -1.41719 0.4356
+## ...
+#--------------
+
+#--------------
+# Factor scores vs standardized total scores (not displayed in the book)
+sts <- as.vector(scale(rowSums(Anxiety_items)))
 plot(fs ~ sts)
 #--------------
 
@@ -106,14 +144,45 @@ coef(fit_GRM_ltm)
 #--------------
 
 #--------------
-fs_GRM_mirt <- unique(sort(as.vector(mirt::fscores(fit_GRM_mirt))))
-fs_GRM_ltm <- ltm::factor.scores(fit_GRM_ltm)$score.dat[, "z1"]
+ltm::factor.scores(fit_GRM_ltm)
+## ...
+## Factor-Scores for observed response patterns:
+##    R1 ... R19 R20 R21 R22 R23 R24 R25 R26 R27 R28 R29 Obs    Exp     z1 se.z1
+## 1   1 ...   1   1   1   1   1   1   1   1   1   1   1  60 31.463 -1.693 0.516
+## 2   1 ...   1   1   1   1   1   1   1   1   1   2   1   1  1.442 -1.242 0.376
+## 3   1 ...   1   1   1   1   1   1   1   3   1   1   1   1  0.391 -1.262 0.394
+## ...
+#--------------
 
-cor(fs_GRM_mirt, fs_GRM_ltm)
-## [1] 0.9066
+#--------------
+ltm::factor.scores(fit_GRM_ltm, resp.patterns = Anxiety_items)
+## Factor-Scores for specified response patterns:
+##    R1 ... R19 R20 R21 R22 R23 R24 R25 R26 R27 R28 R29 Obs   Exp     z1 se.z1
+## 1   2 ...   1   1   2   1   2   2   1   1   2   3   2   0 0.000 -0.012 0.183
+## 2   2 ...   1   1   1   1   1   1   1   1   1   2   1   0 0.011 -0.933 0.300
+## 3   2 ...   2   1   2   1   1   1   1   1   1   3   2   0 0.000  0.025 0.186
+## ...
+#--------------
 
-df <- data.frame(fs_GRM_mirt, fs_GRM_ltm)
-ggplot(data = df, aes(x = fs_GRM_mirt, y = fs_GRM_ltm)) +
+#--------------
+ltm::factor.scores(fit_GRM_ltm, resp.patterns = t(as.matrix(rep(3, 29))))
+## Factor-Scores for specified response patterns:
+##     R1 ... R19 R20 R21 R22 R23 R24 R25 R26 R27 R28 R29 Obs Exp    z1 se.z1
+## Exp  3 ...   3   3   3   3   3   3   3   3   3   3   3   0   0 1.751 0.139
+#--------------
+
+#--------------
+# Factor scores in mirt vs. ltm package
+fs_ltm <- as.vector(ltm::factor.scores(fit_GRM_ltm, 
+                                       resp.patterns = Anxiety_items)$score.dat[, "z1"])
+head(fs_ltm) # First five factor scores from ltm
+## [1] -0.01162 -0.93264  0.02471 -0.36256 -1.18225 -0.11107
+
+cor(fs, fs_ltm)
+## [1] 0.9749
+
+df <- data.frame(fs, fs_ltm)
+ggplot(data = df, aes(x = fs, y = fs_ltm)) +
   geom_point() +
   theme_fig() +
   xlab("Factor scores by mirt") + ylab("Factor scores by ltm") + 
@@ -121,7 +190,7 @@ ggplot(data = df, aes(x = fs_GRM_mirt, y = fs_GRM_ltm)) +
 #--------------
 
 #-----------------------------------------------------------------
-# 6.2.2  Graded ratings scale model
+# 7.2.2  Graded ratings scale model
 #-----------------------------------------------------------------
 
 #--------------
@@ -150,10 +219,10 @@ anova(fit_GRSMirt_mirt, fit_GRM_mirt)
 #--------------
 
 #-----------------------------------------------------------------
-# 6.3  Adjacent-categories logit IRT models
+# 7.3  Adjacent-categories logit IRT models
 #-----------------------------------------------------------------
 #-----------------------------------------------------------------
-# 6.3.1  Generalized partial credit model
+# 7.3.1  Generalized partial credit model
 #-----------------------------------------------------------------
 
 #--------------
@@ -179,13 +248,13 @@ mirt::itemplot(fit_GPCM_mirt, item = 25, type = "infotrace")
 #--------------
 
 #-----------------------------------------------------------------
-# 6.3.2  Partial credit model
+# 7.3.2  Partial credit model
 #-----------------------------------------------------------------
 
 #--------------
 model_PCM <- "F = 1-29
-FIXED = (1-29, a1),
-START = (1-29, a1, 1)"
+              FIXED = (1-29, a1),
+              START = (1-29, a1, 1)"
 fit_PCM_mirt <- mirt::mirt(Anxiety_items, model = model_PCM, 
                            itemtype = "gpcm")
 # coefficients
@@ -210,7 +279,7 @@ anova(fit_PCM_mirt, fit_GPCM_mirt)
 #--------------
 
 #-----------------------------------------------------------------
-# 6.3.3  Rating scale model
+# 7.3.3  Rating scale model
 #-----------------------------------------------------------------
 
 #--------------
@@ -236,6 +305,17 @@ mirt::itemplot(fit_RSM_mirt, item = 25, type = "infotrace")
 #--------------
 
 #--------------
+anova(fit_RSM_mirt, fit_PCM_mirt)
+##        AIC     AICc    SABIC       HQ      BIC    logLik
+## 1 36446.99 36450.05 36495.36 36505.94 36600.15 -18190.49
+## 2 35326.84 35395.13 35539.37 35585.89 35999.81 -17518.42
+##
+## X2  df   p
+## 1      NaN NaN NaN
+## 2 1344.149 112   0
+#--------------
+
+#--------------
 anova(fit_RSM_mirt, fit_GPCM_mirt)
 ##        AIC     AICc    SABIC       HQ      BIC    logLik
 ## 1 36446.99 36450.05 36495.36 36505.94 36600.15 -18190.49
@@ -247,10 +327,10 @@ anova(fit_RSM_mirt, fit_GPCM_mirt)
 #--------------
 
 #-----------------------------------------------------------------
-# 6.4  Baseline-category logit IRT models
+# 7.4  Baseline-category logit IRT models
 #-----------------------------------------------------------------
 #-----------------------------------------------------------------
-# 6.4.1  Nominal response model
+# 7.4.1  Nominal response model
 #-----------------------------------------------------------------
 
 #--------------
@@ -295,7 +375,7 @@ cor(fs, sts)
 #--------------
 
 #-----------------------------------------------------------------
-# 6.5  Item-specific IRT models
+# 7.5  Item-specific IRT models
 #-----------------------------------------------------------------
 
 #--------------
@@ -336,3 +416,206 @@ plot(fit_gpcm, type = 'trace')
 plot(fit_mixed, type = 'trace') # guessing in items b17 - b24
 #--------------
 
+#-----------------------------------------------------------------
+# 7.6 Multidimensional IRT models
+#-----------------------------------------------------------------
+#-----------------------------------------------------------------
+# 7.6.1 Multidimensional 2PL model
+#-----------------------------------------------------------------
+
+#--------------
+BFI2en <- BFI2[, c(1, 6, 11, 16, 21, 26, 31, 36, 41, 46, 51, 56, 
+                   4, 9, 14, 19, 24, 29, 34, 39, 44, 49, 54, 59)]
+BFI2en01 <- 1 * (BFI2en > 2)
+#--------------
+
+#--------------
+m2PL <- mirt::mirt(BFI2en01, model = 2, itemtype = "2PL")
+#--------------
+
+#--------------
+coef(m2PL, simplify = TRUE)
+## $items
+##         a1     a2      d g u
+## i1  -0.037  1.854  2.312 0 1
+## i6  -0.121  1.886  2.325 0 1
+## ...
+## i4   1.531 -0.556  0.903 0 1
+## ...
+## i54  2.008 -1.219  0.150 0 1
+## i59  2.154  0.000  0.414 0 1
+#--------------
+
+#--------------
+mirt::itemplot(m2PL, item = 1) # item loading strongly on one factor
+mirt::itemplot(m2PL, item = 13) # item loading strongly on other factor
+# itemplot(m2PL, item = 1, rotate = "oblimin")
+#--------------
+
+#--------------
+mirt::MDIFF(m2PL)
+##     MDIFF_1
+## i1  -1.2465
+## i6  -1.2305 
+## ...
+
+mirt::MDISC(m2PL)
+##     i1     i6    i11    i16    i21    i26    i31    i36    i41 
+## 1.8548 1.8896 0.5401 2.3346 1.7972 0.9268 2.2508 0.8626 1.4868 
+##    i46    i51    i56     i4     i9    i14    i19    i24    i29 
+## 2.1646 1.7246 1.2201 1.6293 1.2734 1.9687 1.3930 1.2216 2.5930 
+##    i34    i39    i44    i49    i54    i59 
+## 1.4385 2.3060 1.5733 1.3502 2.3491 2.1542 
+#--------------
+
+#--------------
+# model fit indices
+mirt::M2(m2PL)
+##         M2  df p  RMSEA RMSEA_5 RMSEA_95  SRMSR    TLI    CFI
+## stats 1660 229 0 0.0601  0.0574   0.0628 0.0447 0.9170 0.9310
+#--------------
+
+#--------------
+head(mirt::fscores(m2PL), n = 3)
+##           F1      F2
+## [1,]  0.0525  1.3830
+## [2,] -0.9720  1.2715
+## [3,]  1.1962 -2.1297
+#--------------
+
+#-----------------------------------------------------------------
+# 7.6.2 Multidimensional Graded Response Model
+#-----------------------------------------------------------------
+
+#--------------
+mGRM <- mirt::mirt(BFI2en, model = 2, itemtype = "graded")
+#--------------
+
+#--------------
+coef(mGRM, simplify = TRUE)
+## $items
+##         a1     a2    d1     d2     d3     d4
+## i1  -0.125  1.863 4.925  2.293  0.864 -2.174
+## i6  -0.187  1.594 4.611  2.090  0.608 -2.067
+## ...
+## i4   1.747 -0.581 3.453  0.963 -0.578 -3.228
+## ...
+## i54  1.938 -1.066 2.539  0.179 -1.261 -3.919
+## i59  1.973  0.000 3.153  0.435 -0.992 -3.636
+## 
+## $means
+## F1 F2 
+## 0  0 
+## 
+## $cov
+## F1 F2
+## F1  1  0
+## F2  0  1
+
+#--------------
+itemplot(mGRM, item = 1) # item loading strongly on one factor
+itemplot(mGRM, item = 13) # item loading strongly on other factor
+#--------------
+
+#--------------
+mirt::MDIFF(mGRM)
+##     MDIFF_1 MDIFF_2 MDIFF_3 MDIFF_4
+## i1   -2.638  -1.228  -0.462   1.164
+## i6   -2.873  -1.302  -0.379   1.288
+
+mirt::MDISC(mGRM)
+##     i1     i6    i11    i16    i21    i26    i31    i36    i41    i46 
+## 1.8675 1.6050 0.6456 2.3866 1.7110 0.7971 1.9245 0.7359 1.5194 2.0703 
+##    i51    i56     i4     i9    i14    i19    i24    i29    i34    i39 
+## 1.5477 1.1477 1.8414 1.3404 1.7667 1.4188 1.4438 2.6689 1.4735 2.1694 
+##    i44    i49    i54    i59 
+## 1.4927 1.4560 2.2120 1.9733 
+#--------------
+
+#--------------
+# model fit indices
+mirt::M2(mGRM)
+##         M2  df p   RMSEA RMSEA_5 RMSEA_95   SRMSR    TLI   CFI
+## stats 1470 157 0 0.06948 0.06623  0.07273 0.05664 0.9491 0.9609
+#--------------
+
+#--------------
+head(mirt::fscores(mGRM), n = 3)
+##           F1     F2
+## [1,]  0.4821  1.274
+## [2,] -1.1366  1.160
+## [3,]  3.4887 -3.497
+#--------------
+
+#-----------------------------------------------------------------
+# 7.4.3 Confirmatory multidimensional PCM
+#-----------------------------------------------------------------
+
+#--------------
+model_ENirt <- 'N = 13-24
+                E = 1-12
+                COV = N*E'
+#fit_ENirtRasch <- mirt::mirt(BFI2en, model = model_ENirt, itemtype = "Rasch")
+fit_ENirtGRM <- mirt::mirt(BFI2en, model = model_ENirt, itemtype = "graded")
+#--------------
+
+#--------------
+coef(fit_ENirtGRM, simplify = TRUE)
+## $items
+##        a1    a2    d1     d2     d3     d4
+## i1  0.000 1.815 4.847  2.264  0.855 -2.141
+## i6  0.000 1.668 4.685  2.136  0.626 -2.104
+## ...
+## i4  1.855 0.000 3.468  0.969 -0.579 -3.242
+## ...
+## i54 2.164 0.000 2.511  0.187 -1.237 -3.857
+## i59 1.679 0.000 2.900  0.405 -0.902 -3.341
+## 
+## $means
+## N E 
+## 0 0 
+## 
+## $cov
+##        N      E
+## N  1.000 -0.366
+## E -0.366  1.000
+#--------------
+
+#--------------
+itemplot(fit_ENirtGRM, item = 1) # item loading on 1st factor
+itemplot(fit_ENirtGRM, item = 13) # item loading on 2nd factor
+#--------------
+
+#--------------
+MDIFF(fit_ENirtGRM)
+##     MDIFF_1   MDIFF_2  MDIFF_3 MDIFF_4
+## i1   -2.670 -1.247133 -0.47093   1.179
+## i6   -2.809 -1.280900 -0.37535   1.262
+
+MDISC(fit_ENirtGRM)
+##     i1     i6    i11    i16    i21    i26    i31    i36    i41    i46    i51    i56 
+## 1.8153 1.6678 0.6313 2.3159 1.8016 0.8033 1.9004 0.7631 1.3134 1.9334 1.6300 1.1060 
+##     i4     i9    i14    i19    i24    i29    i34    i39    i44    i49    i54    i59 
+## 1.8549 1.3335 1.6935 1.4488 1.2662 2.4583 1.4914 2.1672 1.1882 1.4682 2.1639 1.6792 
+#--------------
+
+#--------------
+# model fit indices
+M2(fit_ENirtGRM)
+##         M2  df p   RMSEA RMSEA_5 RMSEA_95   SRMSR    TLI   CFI
+## stats 2248 180 0 0.08144 0.07843  0.08444 0.08602 0.9301 0.9383
+#--------------
+
+#--------------
+head(fscores(fit_ENirtGRM), n = 3)
+##            E       N
+## [1,]  0.7727  0.2232
+## [2,]  0.7267 -0.7867
+## [3,] -2.5039  2.8328
+#--------------
+
+#-----------------------------------------------------------------
+# 7.7. More complex IRT models in interactive application
+#-----------------------------------------------------------------
+
+startShinyItemAnalysis()
