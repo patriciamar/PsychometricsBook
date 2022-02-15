@@ -18,6 +18,7 @@ library(plotrix)
 library(ggforce)
 library(tidyverse)
 library(Cairo)
+
 #-----------------------------------------------------------------
 # Plot settings
 #-----------------------------------------------------------------
@@ -397,6 +398,7 @@ psych::alpha.ci(
 #-----------------------------------------------------------------
 # 3.3.3 Estimation of variance components
 #-----------------------------------------------------------------
+
 #-----------------------------------------------------------------
 # 3.3.3.1 Model specification
 #-----------------------------------------------------------------
@@ -445,6 +447,31 @@ ICC(data)
 #-----------------------------------------------------------------
 
 #--------------
+# IRR for AIBS with ANOVA
+J = 72
+n = 3
+mean.proposals = tapply(AIBS$Score, AIBS$ID, mean)
+mean.overall = mean(AIBS$Score)
+(SSw = sum((AIBS$Score - AIBS$ScoreAvg)^2)) # Observed SSw
+## 57.64
+(SSb = 3*sum((mean.proposals - mean.overall)^2))     # Observed SSb
+## 78.74
+
+(MSb <- SSb/(J-1))
+(MSw <- SSw/(J*(3-1)))  # Estimate of residual variance
+# [1] 0.4002778
+(MSb - MSw)/3           # Proposal (true-score) variance
+# [1] 0.2362446
+
+((MSb - MSw)/3)/((MSb - MSw)/3 + MSw) # IRR
+## [1] 0.3711489
+
+# With aov()
+aov(Score ~ ID, data = AIBS)
+
+#--------------
+# ORIGINAL: HCI?
+#--------------
 # mean ratings
 mean.overall <- mean(data.long$rating)
 mean.persons <- tapply(data.long$rating, data.long$person, mean)
@@ -473,6 +500,34 @@ MSe1way <- SSe1way / ((m - 1) * n)
 # # 3.3.3.3 Maximum likelihood
 #-----------------------------------------------------------------
 
+# ------------------------
+# IRR with REML in lmer() function of the lme4 package
+?lmer # REML is the default estimation method
+model1 <- lmer(Score ~ 1 + (1|ID), data = AIBS[,c("ID", "Score")])
+summary(model1)
+as.data.frame(VarCorr(model1))
+as.numeric(VarCorr(model1))      # Proposal (true score) variance
+## [1] 0.2362446
+sigma(model1)^2                  # Residual variance
+## [1] 0.4002778
+as.numeric(VarCorr(model1))/(as.numeric(VarCorr(model1))+sigma(model1)^2) # IRR
+## [1] 0.3711489
+
+# ------------------------
+# ML forced by REML = FALSE
+model1_ML <- lmer(Score ~ 1 + (1|ID), data = AIBS[,c("ID", "Score")], REML = FALSE)
+summary(model1_ML)
+as.data.frame(VarCorr(model1_ML))
+as.numeric(VarCorr(model1_ML))      # Proposal (true score) variance
+## [1] 0.2311103
+sigma(model1_ML)^2                  # Residual variance
+## [1] 0.4002778
+as.numeric(VarCorr(model1_ML))/(as.numeric(VarCorr(model1_ML))+sigma(model1_ML)^2) # IRR
+## [1] 0.3660352
+
+
+#--------------
+# ORIGINAL: HCI?
 #--------------
 library(lme4)
 fit <- lmer(rating ~ (1 | person), data = data.long, REML = FALSE)
@@ -505,6 +560,52 @@ as.data.frame(VarCorr(fit_1wayr))
 ## 3.3.3.5 Bootstrap
 #-----------------------------------------------------------------
 
+# -------
+# Bootstrapped confidence interval
+N <- 100 
+model <- model1
+bootstrap <- bootMer(model, 
+                     function(mm) c(as.numeric(VarCorr(mm)), sigma(mm)^2), 
+                     nsim = N, seed = 1357)
+bootstrap
+
+# Saves data frame with N rows and 2 columns (each for one var component)
+bootTab <- bootstrap$t
+colnames(bootTab) <- c(names(VarCorr(model)), "Residual")
+head(bootTab, n = 3)
+bIRR <- bootTab[,"ID"]/apply(bootTab[,],1,sum) # Vector of bootstrapped IRR
+hist(bIRR)
+
+(IRRLCI <- quantile(bIRR, 0.025)) # Lower bound of 95% bootstrap confidence interval
+##      2.5% 
+## 0.2006552 
+
+(IRRUCI <- quantile(bIRR, 0.975)) # Upper bound of 95% bootstrap confidence interval
+##     97.5% 
+## 0.5104698 
+
+bIRR3 <- bootTab[,"ID"] / (bootTab[,"ID"] + bootTab[,"Residual"] / 3)
+
+# -------
+# Multiple-rater IRR (average rating from 3 raters)
+as.numeric(VarCorr(model1))/(as.numeric(VarCorr(model1))+sigma(model1)^2/3)
+## [1] 0.639068
+
+# -------
+# Bootstrapped confidence interval for IRR3
+
+(IRR3LCI <- quantile(bIRR3, 0.025)) # Lower bound of 95% bootstrap confidence interval
+##      2.5% 
+## 0.4295591 
+
+(IRR3UCI <- quantile(bIRR3, 0.975)) # Upper bound of 95% bootstrap confidence interval
+##     97.5% 
+## 0.7577547 
+
+
+
+#--------------
+# ORIGINAL: HCI 1 way
 #--------------
 boot <- bootMer(
   fit_1wayr,
@@ -598,9 +699,58 @@ ggplot(
 # # 3.3.3.6 Bayesian estimation
 #-----------------------------------------------------------------
 
+# ------------------------
+# Bayesian with brm package
+library(brms)
+set.seed(1357)
+model <- brm(Score ~ 1 + (1|ID), data = AIBS, 
+             control  = list(adapt_delta = .95), refresh = 0)
+
+brms::prior_summary(model)
+
+results <- as.matrix(model)
+dim(results)               # Dimension of results: 4000 rows (N = 1000, 4 chains)
+head(results[,1:3], n = 2) # First lines of results
+
+# Global IRR
+IRR <- (results[,"sd_ID__Intercept"])^2 / ((results[,"sd_ID__Intercept"])^2 + 
+                                             (results[,"sigma"])^2)
+# Distributon and quantiles of the IRRs
+hist(IRR, xlim = c(0,1), main = "Histogram of IRR", xlab = "full-sample IRR")
+(IRR_50 <- quantile(IRR, 0.5))      # Bayesian estimate of IRR
+##       50% 
+## 0.3696991 
+
+(IRR_025 <- quantile(IRR, 0.025))   # Lower bound of 95% credible interval
+##      2.5% 
+## 0.2230458 
+
+(IRR_975 <- quantile(IRR, 0.975))   # Upper bound of 95% credible interval
+##     97.5% 
+## 0.5158844 
+
+### Multiple-rater IRR
+# IRR3
+IRR3 <- (results[,"sd_ID__Intercept"])^2 / ((results[,"sd_ID__Intercept"])^2 + 
+                                              ((results[,"sigma"])^2)/3)
+(IRR3_50 <- quantile(IRR3, 0.5))     # Bayesian estimate of multiple-rater IRR
+##       50% 
+## 0.6376328 
+
+(IRR3_025 <- quantile(IRR3, 0.025))  # Lower bound of 95% credible interval
+##      2.5% 
+## 0.4627212 
+
+(IRR3_975 <- quantile(IRR3, 0.975))  # Upper bound of 95% credible interval
+##    97.5% 
+## 0.761727 
+
+
+#--------------
+# ORIGINAL: HCI
 #--------------
 library(brms)
-set.seed(1234) 
+set.seed(1234)
 fitB <- brm(
   rating ~ (1 | person) + (1 | item),
   data = data.long
@@ -785,12 +935,12 @@ hemp::dstudy(G_pxi, n = c("item" = 20), unit = "person")
 #--------------
 
 #--------------
-dstudy_plot(
+hemp::dstudy_plot(
   G_pxi, unit = "person",
   facets = list("Item" = seq(from = 0, to = 30, by = 5)),
   g_coef = TRUE
 )
-dstudy_plot(
+hemp::dstudy_plot(
   G_pxi, unit = "person",
   facets = list("Item" = seq(from = 0, to = 30, by = 5)),
   g_coef = FALSE
@@ -923,19 +1073,19 @@ hemp::dstudy(G_pxixr, n = c("items" = 20, "rater" = 2), unit = "idstud")
 ## The generalizability coefficient is: 0.8924222.
 ## The dependability coefficient is: 0.8482307.
 
-dstudy_plot(
+hemp::dstudy_plot(
   G_pxixr, unit = "idstud",
   facets = list("items" = seq(from = 0, to = 5),
                 "rater" = c(1, 2, 3)),
   g_coef = TRUE
 )
-dstudy_plot(
+hemp::dstudy_plot(
   G_pxixr, unit = "idstud",
   facets = list("items" = seq(from = 0, to = 5),
                 "rater" = c(1, 2, 3)),
   g_coef = FALSE
 )
-#--------------
+
 
 #-----------------------------------------------------------------
 # 3.5.1 Correction for unreliability
@@ -982,3 +1132,66 @@ all_top_restricted %>%
 #-----------------------------------------------------------------
 
 
+
+#-----------------------------------------------------------------
+# Exercises
+#-----------------------------------------------------------------
+
+#--------------
+# Exercise 1.10
+l1 <- lme4::lmer(ratings ~ (1 | items) + (1 | rater) + (1 | idstud) +
+  (1 | items:rater) + (1 | idstud:rater) +
+  (1 | idstud:items),
+data = data.long
+)
+summary(l1)
+## Linear mixed model fit by REML ['lmerMod']
+## Formula: ratings ~ (1 | items) + (1 | rater) + (1 | idstud) + (1 | items:rater) +
+## (1 | idstud:rater) + (1 | idstud:items)
+## Data: data.long
+##
+## REML criterion at convergence: 5413.7
+##
+## Scaled residuals:
+## Min      1Q  Median      3Q     Max
+## -4.9159 -0.5219 -0.0086  0.5302  4.0807
+##
+## Random effects:
+## Groups       Name        Variance Std.Dev.
+## idstud:items (Intercept) 0.10369  0.32202
+## idstud:rater (Intercept) 0.06896  0.26260
+## idstud       (Intercept) 0.36818  0.60677
+## items:rater  (Intercept) 0.01803  0.13426
+## rater        (Intercept) 0.04181  0.20447
+## items        (Intercept) 0.00287  0.05357
+## Residual                 0.18800  0.43359
+## Number of obs: 3075, groups:
+## idstud:items, 890; idstud:rater, 615; idstud, 178; items:rater, 80; rater, 16; items, 5
+##
+## Fixed effects:
+## Estimate Std. Error t value
+## (Intercept)  1.31403    0.07675   17.12
+
+matrixSD <- as.matrix(lme4::VarCorr(l1))
+Var <- data.frame(c(matrixSD, attr(matrixSD, "sc")^2))
+names(Var) <- c(
+  "idstud:items", "idstud:rater", "idstud", "items:rater",
+  "rater", "items", "Residual"
+)
+Var
+##             idstud:items idstud:rater    idstud items:rater
+## (Intercept)    0.1036941    0.0689583 0.3681753  0.01802671
+##                    rater        items  Residual
+## (Intercept)    0.0418083    0.0028701 0.1879999
+
+
+## variance ratios?
+## variance ratios of average rating?
+## var.universe?
+## generalizability?
+## relative error variance?
+## relative standard error of measurement?
+## dependability?
+## absolute error variance?
+## absolute standard error of measurement?
+#--------------
