@@ -40,7 +40,7 @@ help(sqrt)
 #--------------
 
 #-----------------------------------------------------------------
-# 1.4.2. R packages
+# 1.4.2 R packages
 #-----------------------------------------------------------------
 #
 # Note: go to file InstallPackages.R to obtain full code for installation of 
@@ -59,11 +59,15 @@ help(sqrt)
 #       packages at the top. For this reason, this code is commented below.
 
 #--------------
+library(Cairo)
+library(ggplot2)
+library(lattice)
 library(ShinyItemAnalysis)
+library(tidyverse)
 #--------------
 
 #-----------------------------------------------------------------
-# 1.4.3. Data handling
+# 1.4.3 Data handling
 #-----------------------------------------------------------------
 
 #--------------
@@ -137,7 +141,7 @@ str(HCI$person)
 #--------------
 
 #--------------
-# Reshape data to the long format
+# reshape data to the long format
 HCI_long <- reshape(
   data = HCI,
   varying = list(paste("Item", 1:20)), timevar = "item", 
@@ -153,7 +157,7 @@ head(HCI_long, n = 3)
 #--------------
 
 #--------------
-# Reshape back to wide format
+# reshape back to wide format
 HCI_wide <- reshape(
   data = HCI_long, v.names = "rating", timevar = "item", 
   idvar = c("person"), direction = "wide"
@@ -169,7 +173,6 @@ head(HCI_wide, n = 3)
 
 #--------------
 # tidyverse approach
-library(tidyverse)
 data(HCI, package = "ShinyItemAnalysis")
 HCI <- mutate(HCI, id = row_number())    # add variable with row number
 head(HCI)
@@ -212,7 +215,7 @@ HCI_long_tidy %>% pivot_wider(names_from = item, values_from = rating)
 #--------------
 
 #-----------------------------------------------------------------
-# 1.4.4. Graphics
+# 1.4.4 Graphics
 #-----------------------------------------------------------------
 
 #--------------
@@ -228,7 +231,6 @@ hist(HCIdata$total, breaks = seq(3, 20, 1), col = "gold",
 
 #--------------
 # histogram with ggplot
-library(ggplot2)
 qplot(total, data = HCIdata)
 ggplot(data = HCIdata, aes(total)) +
   geom_histogram(binwidth = 1, fill = "gold", col = "black")
@@ -260,14 +262,12 @@ ggplot(data = HCIdata, aes(total)) +
 
 #--------------
 # histograms by gender with lattice
-library(lattice)
 histogram(~ total | gender, data = HCIdata, type = "count", 
-          col = "gold", breaks = seq(3, 20, 1))
+          col = "gold", breaks = seq(3, 20, 1), xlab = "Total score")
 #--------------
 
-
 #-----------------------------------------------------------------
-# 1.4.5. Interactive psychometrics with shiny
+# 1.4.5 Interactive psychometrics with shiny
 #-----------------------------------------------------------------
 
 #--------------
@@ -300,7 +300,7 @@ ShinyItemAnalysis::run_app()
 
 
 #-----------------------------------------------------------------
-# 1.5. Exploring measurement data
+# 1.5 Exploring measurement data
 #-----------------------------------------------------------------
 
 #-----------------------------------------------------------------
@@ -447,7 +447,6 @@ summary(HCI)
 ## ...
 #--------------
 
-
 #-----------------------------------------------------------------
 # Ordinal items
 #-----------------------------------------------------------------
@@ -480,7 +479,7 @@ head(BFI2binary, n = 3)
 #--------------
 
 #-----------------------------------------------------------------
-# 2.2.4. Continuous items
+# Continuous items
 #-----------------------------------------------------------------
 
 #--------------
@@ -523,10 +522,9 @@ c(Min = min(HCI$score), Max = max(HCI$score),
 ##     Min     Max    Mean     Med     Var      SD    Skew    Kurt
 ##  3.0000 20.0000 12.2120 12.0000 13.2473  3.6397 -0.1982  2.3474
 
-kurtosis(HCI$score) - 3
+moments::kurtosis(HCI$score) - 3
 ## [1] -0.6526
 #--------------
-
 
 #--------------
 psych::describe(HCI$score, type = 1)
@@ -537,7 +535,7 @@ psych::describe(HCI$score, type = 1)
 #--------------
 
 #-----------------------------------------------------------------
-# Standardized scores
+# Standardizations and other transformations
 #-----------------------------------------------------------------
 
 #--------------
@@ -547,7 +545,7 @@ success_rate <- 100 * (HCI$score / max(HCI$score)) # success rate
 #--------------
 
 #--------------
-plot(ecdf(HCI$score), xlab = "HCI score", ylab= "percentile")
+plot(ecdf(HCI$score), xlab = "HCI score", ylab = "Percentile")
 ecdf(HCI$score)(HCI$score)
 ## [1] 0.8725 0.9923 0.9401 1.0000 0.9923 1.0000 1.0000 ...
 centiles <- round(100 * ecdf(HCI$score)(HCI$score)) # percentiles
@@ -567,10 +565,6 @@ head(data.frame(score = HCI$score, zscore, tscore,
 # 1.5.4 Covariates
 #-----------------------------------------------------------------
 
-#-----------------------------------------------------------------
-# Criterion variable
-#-----------------------------------------------------------------
-
 #--------------
 table(HCI$"Item 1", HCI$major)
 ##    0   1
@@ -585,15 +579,6 @@ prop.table(table(HCI$"Item 1", HCI$major), margin = 2)
 ## 0 0.3660 0.2565
 ## 1 0.6340 0.7435
 #--------------
-
-#-----------------------------------------------------------------
-# 2.4.2 Observed score
-#-----------------------------------------------------------------
-
-
-#-----------------------------------------------------------------
-# 2.4.3 Grouping variable
-#-----------------------------------------------------------------
 
 #--------------
 table(HCItest$gender, HCItest$"Item 1")
@@ -617,7 +602,7 @@ by(HCI$"Item 1", HCI$gender, FUN = summary)
 #--------------
 
 #-----------------------------------------------------------------
-# 1.6 Random variables
+# 1.6 Modelling measurement data
 #-----------------------------------------------------------------
 
 #-----------------------------------------------------------------
@@ -715,7 +700,6 @@ ggplot(data = HCI, aes(score)) +
   xlab("Total score") + ylab("Density") +
   theme_fig()
 #--------------
-
 
 #--------------
 # QQ plot in base 
