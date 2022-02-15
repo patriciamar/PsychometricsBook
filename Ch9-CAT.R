@@ -139,7 +139,7 @@ plot(results)
 #--------------
 # Further setting the CAT
 df <- data.frame(
-  Question = Question, Answer = Answer, Type = Type, Timer = rep(15, 100),
+  Question = Question, Answer = Answer, Type = Type, Timer = rep(15, 400),
   stringsAsFactors = FALSE) # item timer set
 design <- list(max_items = 15, min_SEM = 0.6) # stopping criterion combines 2 rules
 preCAT <- list(min_items = 3, max_items = 3, criteria = "random") # preCAT set
@@ -257,3 +257,4 @@ print(posthocSim2)
 
 plot(posthocSim2, facet_items = FALSE, auto.key = FALSE, main = FALSE)
 #--------------- 
+
