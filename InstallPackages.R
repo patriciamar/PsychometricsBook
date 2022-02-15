@@ -5,35 +5,52 @@
 #-----------------------------------------------------------------
 
 install.packages("remotes")
+
+install.packages("aod")
 install.packages("bayestestR")
 install.packages("brms")
+install.packages("Cairo")
+install.packages("corrplot")
 install.packages("cowplot")
+install.packages("deltaPlotR")
+install.packages("DFIT")
+install.packages("difNLR")
+install.packages("difR")
 install.packages("eRm")
+install.packages("EstCRM") # data EPIA
+install.packages("ggdendro")
 install.packages("ggforce")
 install.packages("ggplot2")
+install.packages("GPArotation")
 install.packages("gtheory")
-remotes::install_github("cddesja/hemp")
 install.packages("hemp")
+install.packages("mirt")
+install.packages("mirtCAT")
 install.packages("moments")
+install.packages("msm")
+install.packages("naniar")
+install.packages("nnet")
+install.packages("latice")
 install.packages("lavaan")
 install.packages("lme4")
 install.packages("lmerTest")
+install.packages("lordif")
 install.packages("ltm")
 install.packages("nnet")
 install.packages("plotrix")
 install.packages("psych")
 install.packages("psychometric")
+install.packages("RColorBrewer")
+install.packages("reshape")
 install.packages("semPlot")
 install.packages("ShinyItemAnalysis", dependencies = TRUE)
-#remotes::install_github("patriciamar/ShinyItemAnalysis") # newest GitHub version
+install.packages("sirt") # data rating
+install.packages("TAM")
 install.packages("tidyverse")
 install.packages("VGAM")
 
-# further data packages
-install.packages("EstCRM") # data EPIA
-install.packages("lordif") # data anxiety
-install.packages("sirt") # data rating
-
-# figure saving packages
-install.packages("Cairo")
-install.packages("RColorBrewer")
+# install fromHub (packages not available onRAN, or newest versions)
+remotes::install_github("adelahladka/difNLR")  # newest GitHub version
+# remotes::install_github("coolbutuseless/ggpattern")
+remotes::install_github("cddesja/hemp")
+remotes::install_github("patriciamar/ShinyItemAnalysis") # newest GitHub version
