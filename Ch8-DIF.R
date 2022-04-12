@@ -522,8 +522,7 @@ coef(fit.NLR.3PL, SE = TRUE)$Item47
 ## CI97.5   6.6684 -1.0886  0.7325  0.0077  2.5144  2.1112
 
 # plot of characteristic curves for item 47
-plot(fit.NLR.3PL, item = "Item47", group.names = c("Males", "Females"),
-     draw.CI = TRUE)
+plot(fit.NLR.3PL, item = "Item47", group.names = c("Males", "Females"))
 #--------------
 
 #-----------------------------------------------------------------
@@ -538,7 +537,7 @@ Anxiety_items <- Anxiety[, paste0("R", 1:29)]
 
 #--------------
 # DIF detection with cumulative logit regression model
-(fit.ORD1 <- difNLR::difORD(Data = Anxiety_items, group = Anxiety$education,
+(fit.ORD1 <- difNLR::difORD(Data = Anxiety_items, group = Anxiety$gender,
                             focal.name = 1, model = "cumulative"))
 ## ...
 ##     Chisq-value P-value 
@@ -561,13 +560,11 @@ Anxiety_items <- Anxiety[, paste0("R", 1:29)]
 
 #--------------
 # parameters for item R6
-coef(fit.ORD1, SE = TRUE)$R6
-##              b2     b3     b4     b5     a
-## estimate 0.2248 1.1264 2.1714 3.2289 2.1390
-## SE       0.0640 0.0899 0.1393 0.2235 0.1490
-##           bDIF2  bDIF3  bDIF4  bDIF5   aDIF
-## estimate 0.3112 0.2811 0.2462 0.2109 0.0738
-## SE       0.0821 0.1049 0.1711 0.2498 0.1791
+coef(fit.ORD1, SE = FALSE, CI = 0)$R6
+##     b1     b2     b3     b4      a
+## 0.2248 1.1264 2.1714 3.2289 2.1390
+##  bDIF1  bDIF2  bDIF3  bDIF4   aDIF
+## 0.3112 0.2811 0.2462 0.2109 0.0738
 #--------------
 
 #--------------
@@ -622,7 +619,7 @@ predict(fit.ORD1, item = "R6", match = 0, group = c(0, 1),
 
 #--------------
 # parameters for item R6
-coef(fit.ORD2, SE = TRUE)$R6
+coef(fit.ORD2, SE = TRUE, CI = 0)$R6
 ##              b2     b3     b4     b5      a
 ## estimate 0.6395 0.9013 2.1545 3.1694 1.3925
 ## SE       0.1119 0.1248 0.1905 0.3116 0.1205
@@ -655,7 +652,7 @@ data(HCItest, HCIkey, package = "ShinyItemAnalysis")
 # DDF with multinomial regression model
 (fit.DDF <- difNLR::ddfMLR(Data = HCItest[, 1:20], 
                            group = HCItest$gender, 
-                           focal.name = 1, key = unlist(HCIkey)))
+                           focal.name = 1, key = HCIkey))
 ##         Chisq-value P-value
 ## ...
 ## Item.12 18.5029      0.0178 *
@@ -672,7 +669,7 @@ data(HCItest, HCIkey, package = "ShinyItemAnalysis")
 
 #--------------
 # parameters for item 12
-coef(fit.DDF, SE = TRUE)[[12]]
+coef(fit.DDF, SE = TRUE, CI = 0)[[12]]
 ##                  b       a    bDIF    aDIF
 ## A estimate -2.0365 -1.0434  1.0564 -0.3526
 ## A SE        0.3755  0.2183  0.4323  0.3274
@@ -685,6 +682,14 @@ coef(fit.DDF, SE = TRUE)[[12]]
 
 # plot of characteristic curves for item 12
 plot(fit.DDF, item = 12, group.names = c("Males", "Females"))
+#--------------
+
+#--------------
+# predicted values (category probabilities) for item 12
+predict(fit.DDF, item = 12, match = -1, group = c(0, 1))
+##        D      A       B     C      E
+## 1 0.3863 0.1310 0.0216 0.0727 0.3885
+## 2 0.2342 0.2408 0.0356 0.0846 0.4047
 #--------------
 
 #-----------------------------------------------------------------
@@ -1121,6 +1126,36 @@ lavaan::lavTestScore(fitOgSI)
 ## 19 .p40. == .p85. 37.327  1   0.000
 ## 20 .p41. == .p86.  0.138  1   0.710
 ## 21 .p42. == .p87.  0.342  1   0.559
+#--------------
+
+#--------------
+modelO <- 'Oint =~ i10 + i25 + i40 + i55
+           Oaes =~ i5 + i20 + i35 + i50
+           Ocrt =~ i15 + i30 + i45 + i60'
+fitO <- lavaan::cfa(modelO, data = BFI2O)
+
+modelOmirt <- 'Oint = 2,5,8,11
+               Oaes = 1,4,7,10
+               Ocrt = 3,6,9,12
+               COV = Oint*Oaes*Ocrt'
+names(BFI2Og)
+fit_Omirt <- mirt::mirt(BFI2Og[,1:12], model = modelOmirt, itemtype = "grm")
+coef(fit_Omirt)
+
+fit_Og_mirt <- mirt::multipleGroup(BFI2Og[,1:12], 
+                                   model = modelOmirt, itemtype = "grm",
+                                   group = as.factor(BFI2Og$Gender),
+                                   SE = TRUE)
+coef(fit_Og_mirt)
+mirt::DIF(fit_Og_mirt, which.par = c("a1", "a2", "a3", "d1", "d2", "d3", "d4"), 
+          Wald = TRUE)
+mirt::DIF(fit_Og_mirt, which.par = c("a1", "a2", "a3", "d1", "d2", "d3", "d4"), 
+          Wald = FALSE)
+
+fit_Og_mirt <- mirt::multipleGroup(BFI2Og[,1:12], 
+                                   model = modelOmirt, itemtype = "grm",
+                                   group = as.factor(BFI2Og$Gender),
+                                   SE = TRUE)
 #--------------
 
 
