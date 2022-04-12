@@ -583,19 +583,21 @@ ShinyItemAnalysis::plot_corr(HCI[, 1:20], cor = "poly",
 #-----------------------------------------------------------------
 
 #--------------
+library(psych)
+#--------------
+
 # Single factor model
 # with fa() of the psych package
 
 #--------------
 data(HCI, package = "ShinyItemAnalysis")
 corHCI <- tetrachoric(HCI[, 1:20])$rho
-psych::fa(corHCI, nfactors = 1, fm = "ml")
-psych::fa(corHCI, nfactors = 1, fm = "ml", n.obs = 651)
+fa(corHCI, nfactors = 1, fm = "ml")
+fa(corHCI, nfactors = 1, fm = "ml", n.obs = 651)
 #--------------
 
 #--------------
-(FA1 <- psych::fa(HCI[, 1:20], cor = "tetrachoric", nfactors = 1, 
-                  fm = "ml"))
+(FA1 <- fa(HCI[, 1:20], cor = "tetrachoric", nfactors = 1, fm = "ml"))
 summary(FA1)
 print(FA1$loadings, cutoff = 0)
 ## Loadings:
@@ -695,10 +697,10 @@ FA1b$uniquenesses
 #--------------
 data(TestAnxietyCor, package = "ShinyItemAnalysis")
 # FA unrotated:
-(FA2_tAnxiety <- psych::fa(TestAnxietyCor, nfactors = 2, n.obs = 335, 
-                           rotate = "none"))
+(FA2_tAnxiety <- fa(TestAnxietyCor, nfactors = 2, n.obs = 335, 
+                    rotate = "none"))
 ## Factor Analysis using method =  minres
-## Call: psych::fa(r = TestAnxietyCor, nfactors = 2, n.obs = 335, rotate = "none")
+## Call: fa(r = TestAnxietyCor, nfactors = 2, n.obs = 335, rotate = "none")
 ## Standardized loadings (pattern matrix) based upon correlation matrix
 ##      MR1   MR2   h2   u2 com
 ## i1  0.62 -0.08 0.39 0.61 1.0
@@ -720,7 +722,6 @@ apply(FA2_tAnxiety$loadings^2, 1, sum)
 plot(FA2_tAnxiety, xlim = c(-.5, 1), ylim = c(-.5, 1))
 
 # label unrotated axes
-# TODO: please move i2 and i1 to lower index
 text(x = 0.95, y = -0.05, expression(paste(hat(alpha), "i1")))
 text(x = -0.05, y = 0.95, expression(paste(hat(alpha), "i2")))
 #--------------
@@ -729,8 +730,8 @@ text(x = -0.05, y = 0.95, expression(paste(hat(alpha), "i2")))
 # 2.4.4.2 Factor rotation
 #-----------------------------------------------------------------
 # FA oblimin rotation
-FA2_tAnxiety_obl <- psych::fa(TestAnxietyCor, nfactors = 2, 
-                              n.obs = 335, rotate = "oblimin")
+FA2_tAnxiety_obl <- fa(TestAnxietyCor, nfactors = 2, n.obs = 335, 
+                       rotate = "oblimin")
 print(FA2_tAnxiety_obl$loadings, cutoff = 0.4)
 ## Loadings:
 ##        MR1    MR2   
@@ -834,11 +835,11 @@ head(FSa, n = 3)
 #--------------
 
 #--------------
-FA1 <- psych::fa(HCI[,1:20], cor = "tet", nfactors = 1, 
-                 fm = "ml", scores = "Thurstone")
+(FA1 <- fa(HCI[,1:20], cor = "tet", nfactors = 1, 
+          fm = "ml", scores = "Thurstone"))
+FA1$scores[1:4]
 # ## [1] 1.203982 1.806541 1.331732 1.875942
 # seems to give different results?? Somewhat different setting?
-FA1$scores[1:4]
 plot(FS$scores ~ FA1$scores)
 #--------------
 
@@ -858,12 +859,12 @@ sd(FS$scores)
 # eigen values of the original cor. matrix
 eigen(TestAnxietyCor)$values
 ##  [1] 8.7790 1.3495 0.9710 0.8880 0.7744 0.7416 0.7062
-psych::scree(TestAnxietyCor)
+scree(TestAnxietyCor)
 #--------------
 
 #--------------
 # eigen values on the common factor solution
-FA1_tAnxiety <- psych::fa(TestAnxietyCor, nfactors = 1, n.obs = 335)
+FA1_tAnxiety <- fa(TestAnxietyCor, nfactors = 1, n.obs = 335)
 FA1_tAnxiety$e.values
 ## [1] 8.7790 1.3495 0.9710 0.8880 0.7744 0.7416 0.7062 
 FA1_tAnxiety$values
@@ -881,7 +882,7 @@ ShinyItemAnalysis::fa_parallel(TestAnxietyCor, n_obs = 335,
 #--------------
 
 #--------------
-psych::VSS(TestAnxietyCor, n.obs = 335)
+VSS(TestAnxietyCor, n.obs = 335)
 ## Very Simple Structure
 ## Call: vss(x = x, n = n, rotate = rotate, diagonal = diagonal, fm = fm, 
 ##           n.obs = n.obs, plot = plot, title = title, use = use, cor = cor)
@@ -898,6 +899,10 @@ psych::VSS(TestAnxietyCor, n.obs = 335)
 #-----------------------------------------------------------------
 
 #--------------
+library(lavaan)
+#--------------
+
+#--------------
 data(BFI2, package = "ShinyItemAnalysis")
 head(BFI2, n = 2)
 summary(BFI2)
@@ -908,22 +913,22 @@ model_EN <- 'E =~ i1 + i6 + i11 + i16 + i21 + i26 +
                   i31 + i36 + i41 + i46 + i51 + i56
              N =~ i4 + i9 + i14 + i19 + i24 + i29 + 
                   i34 + i39 + i44 + i49 + i54 + i59'
-fit_EN <- lavaan::cfa(model_EN, data = BFI2)
+fit_EN <- cfa(model_EN, data = BFI2)
 #--------------
 
 #--------------
-lavaan::parTable(fit_EN)
+parTable(fit_EN)
 ##    id lhs op rhs user block group free ustart exo label plabel start ...
 ## 1   1   E =~  i1    1     1     1    0      1   0         .p1. 1.000 ...
 ## 2   2   E =~  i6    1     1     1    1     NA   0         .p2. 0.813 ...
 ## ...
 ## 51 51   E ~~   N    0     1     1   49     NA   0        .p51. 0.000 ...
-lavaan::summary(fit_EN)
-lavaan::summary(fit_EN, fit.measures = TRUE, standardized = TRUE)
+summary(fit_EN)
+summary(fit_EN, fit.measures = TRUE, standardized = TRUE)
 #--------------
 
 #--------------
-lavaan::parameterEstimates(fit_EN)
+parameterEstimates(fit_EN)
 ##    lhs op rhs    est    se       z pvalue ci.lower ci.upper
 ## 1    E =~  i1  1.000 0.000      NA     NA    1.000    1.000
 ## 2    E =~  i6  0.969 0.041  23.611      0    0.889    1.049
@@ -938,7 +943,7 @@ lavaan::parameterEstimates(fit_EN)
 ## 50   N ~~   N  0.587 0.039  15.191      0    0.512    0.663
 ## 51   E ~~   N -0.196 0.017 -11.514      0   -0.229   -0.162
 
-lavaan::parameterEstimates(fit_EN, ci = FALSE, standardized = TRUE)
+parameterEstimates(fit_EN, ci = FALSE, standardized = TRUE)
 ##    lhs op rhs    est    se       z pvalue std.lv std.all std.nox
 ## 1    E =~  i1  1.000 0.000      NA     NA  0.699   0.665   0.665
 ## 2    E =~  i6  0.969 0.041  23.611      0  0.678   0.644   0.644
@@ -973,8 +978,8 @@ model_ENs <- 'E =~ NA*i1 + i6 + i11 + i16 + i21 + i26 +
                    i34 + i39 + i44 + i49 + i54 + i59
               E ~~ 1*E
               N ~~ 1*N'
-fit_ENs <- lavaan::cfa(model_ENs, data = BFI2)
-lavaan::parameterEstimates(fit_ENs, ci = FALSE, standardized = TRUE)
+fit_ENs <- cfa(model_ENs, data = BFI2)
+parameterEstimates(fit_ENs, ci = FALSE, standardized = TRUE)
 ##    lhs op rhs    est    se       z pvalue std.lv std.all std.nox
 ## 1    E =~  i1  0.699 0.024  29.740      0  0.699   0.665   0.665
 ## 2    E =~  i6  0.678 0.024  28.552      0  0.678   0.644   0.644
@@ -982,7 +987,7 @@ lavaan::parameterEstimates(fit_ENs, ci = FALSE, standardized = TRUE)
 #--------------
 
 #--------------
-lavaan::inspect(fit_EN)
+inspect(fit_EN)
 ## $lambda
 ##      E  N
 ## i1   0  0
@@ -999,11 +1004,11 @@ lavaan::inspect(fit_EN)
 ##    E  N 
 ## E 47   
 ## N 49 48
-lavaan::lavInspect(fit_EN, what = "est")$theta
-lavaan::lavInspect(fit_EN, what = "est")$lambda
-lavaan::lavInspect(fit_EN, what = "std")$lambda
-lavaan::lavInspect(fit_EN, what = "est")$psi
-lavaan::lavInspect(fit_EN, what = "std")$psi
+lavInspect(fit_EN, what = "est")$theta
+lavInspect(fit_EN, what = "est")$lambda
+lavInspect(fit_EN, what = "std")$lambda
+lavInspect(fit_EN, what = "est")$psi
+lavInspect(fit_EN, what = "std")$psi
 #--------------
 
 #--------------
@@ -1013,7 +1018,7 @@ semPlot::semPaths(fit_ENs, what = "est", rotation = 4)
 #--------------
 
 #--------------
-FS <- lavaan::predict(fit_EN)
+FS <- predict(fit_EN)
 head(FS, n = 3)
 ##            E       N
 ## [1,]  0.5944  0.2344
@@ -1034,18 +1039,18 @@ model_EN_hier <- 'Escb =~ i1 + i16 + i31 + i46
                   Nemt =~ i14 + i29 + i44 + i59
                   E =~ Escb + Easr + Eenl
                   N =~ Nanx + Ndep + Nemt'
-fit_EN_hier <- lavaan::cfa(model_EN_hier, data = BFI2)
+fit_EN_hier <- cfa(model_EN_hier, data = BFI2)
 #--------------
 
 #--------------
-lavaan::summary(fit_EN_hier, fit.measures = TRUE, standardized = TRUE)
-lavaan::parTable(fit_EN_hier)
-lavaan::parameterEstimates(fit_EN_hier)
+summary(fit_EN_hier, fit.measures = TRUE, standardized = TRUE)
+parTable(fit_EN_hier)
+parameterEstimates(fit_EN_hier)
 semPlot::semPaths(fit_EN_hier, what = "std.est", rotation = 4)
 #--------------
 
 #--------------
-FSh <- lavaan::predict(fit_EN_hier)
+FSh <- predict(fit_EN_hier)
 head(FSh, n = 3)
 ##         Escb    Easr    Eenl    Nanx    Ndep    Nemt       E       N
 ## [1,]  0.4401  0.6603  0.5546 -0.1261 -0.1289  0.8747  0.5131  0.0041
@@ -1054,10 +1059,10 @@ head(FSh, n = 3)
 #--------------
 
 #--------------
-lavaan::fitMeasures(fit_EN, c("cfi", "tli", "rmsea", "bic"))
+fitMeasures(fit_EN, c("cfi", "tli", "rmsea", "bic"))
 ##   cfi        tli      rmsea        bic 
 ## 0.778      0.756      0.092 114975.452 
-lavaan::fitMeasures(fit_EN_hier, c("cfi", "tli", "rmsea", "bic"))
+fitMeasures(fit_EN_hier, c("cfi", "tli", "rmsea", "bic"))
 ##   cfi        tli      rmsea        bic 
 ## 0.880      0.865      0.069 113303.631 
 #--------------
