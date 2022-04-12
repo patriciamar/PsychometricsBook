@@ -8,9 +8,9 @@
 # Packages
 #-----------------------------------------------------------------
 
+# library(Cairo)
+# library(cowplot)
 library(brms)
-#library(Cairo)
-#library(cowplot)
 library(eRm)
 library(ggplot2)
 library(lme4)
@@ -18,8 +18,8 @@ library(ltm)
 library(mirt)
 library(psych)
 library(reshape)
-library(ShinyItemAnalysis)
 library(TAM)
+library(ShinyItemAnalysis)
 
 #-----------------------------------------------------------------
 # Plot settings
@@ -40,18 +40,25 @@ theme_fig <- function(base_size = 17, base_family = "") {
 
 
 #-----------------------------------------------------------------
-# 6.3.1  Rasch model and 1PL IRT model
+# 6.4.1  The mirt package
 #-----------------------------------------------------------------
 
 #--------------
+library(mirt)
+?mirt
+#--------------
+
+#--------------
+# load the data
 data(HCI, package = "ShinyItemAnalysis")
 head(HCI)
 summary(HCI)
 #--------------
 
 #--------------
-fit_rasch_mirt <- mirt::mirt(data = HCI[, 1:20], model = 1, 
-                             itemtype = "Rasch", SE = TRUE)
+# Rasch model
+fit_rasch_mirt <- mirt(data = HCI[, 1:20], model = 1, 
+                       itemtype = "Rasch", SE = TRUE)
 #--------------
 
 #--------------
@@ -82,19 +89,34 @@ coef(fit_rasch_mirt, IRTpars = TRUE, simplify = TRUE)
 #--------------
 
 #--------------
+sqrt(0.669) # 0.818 is the SD of the latent trait
+0.963/sqrt(0.669) # latent trait 1.177 below average is needed
+                  # to answer Item 1 correctly with probability 0.5
+#--------------
+
+#--------------
+# TSC (test score curve)
+plot(fit_rasch_mirt)
+#--------------
+
+#--------------
 # ICC
 plot(fit_rasch_mirt, type = "trace", facet_items = FALSE)
 #--------------
 
 #--------------
-# test score curve
-plot(fit_rasch_mirt)
+# further plots (not displayed in the book)
+plot(fit_rasch_mirt, type = "trace", facet_items = TRUE) # ICC separately
+plot(fit_rasch_mirt, type = "infotrace", facet_items = FALSE) # Item information curves (IIC)
+plot(fit_rasch_mirt, type = "infotrace", facet_items = TRUE) # IICs separately
+plot(fit_rasch_mirt, type = "info", facet_items = FALSE) # Test information curve (TIC)
+plot(fit_rasch_mirt, type = "infoSE", facet_items = FALSE) # TIC and SE
 #--------------
 
 #--------------
 # latent abilities (factor scores) with SE
-fs_SE <- mirt::fscores(fit_rasch_mirt, full.scores.SE = TRUE)
-head(fs_SE, n = 3)
+fs_rasch_mirt_SE <- fscores(fit_rasch_mirt, full.scores.SE = TRUE)
+head(fs_rasch_mirt_SE, n = 3)
 ##          F1  SE_F1
 ## [1,] 0.7096 0.4609
 ## [2,] 1.4169 0.5149
@@ -102,22 +124,24 @@ head(fs_SE, n = 3)
 #--------------
 
 #--------------
-summary(fs_SE[, 1])
+# mean of ability estimates is about 0
+summary(fs_rasch_mirt_SE[, 1])
 ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
 ## -1.7051 -0.4252 -0.0680 -0.0001  0.5028  1.6951
-sd(fs_SE[, 1])
+
+# SD of ability estimates is close to 0.669 
+sd(fs_rasch_mirt_SE[, 1])
 ## [1] 0.6899
 #--------------
 
 #--------------
 # comparison with total test score
-total_score <- rowSums(HCI[, 1:20])
-cor(total_score, fs_SE[, 1])
+cor(HCI$total, fs_rasch_mirt_SE[, 1])
 # [1] 0.9985
 
 ggplot(
-  data.frame(total_score, fs = fs_SE[, 1]),
-  aes(x = total_score, y = fs)
+  data.frame(HCI$total, fs = fs_rasch_mirt_SE[, 1]),
+  aes(x = HCI$total, y = fs)
 ) +
   geom_point(size = 1.8) +
   xlab("Total score") +
@@ -127,21 +151,176 @@ ggplot(
 
 #--------------
 ggplot(
-  data.frame(fs = fs_SE[, 1]),
+  data.frame(fs = fs_rasch_mirt_SE[, 1]),
   aes(x = fs)
 ) +
-  geom_histogram(bins = length(unique(total_score)), col = "black", fill = "gold") +
+  geom_histogram(bins = length(unique(HCI$total)), col = "black", fill = "gold") +
   xlab(expression(Ability~theta)) +
   ylab("Number of respondents") + 
   theme_fig()
 #--------------
 
 #--------------
-# ltm package
+# 2PL IRT model
+fit_2PL_mirt <- mirt(HCI[, 1:20], model = 1, itemtype = "2PL")
+# coefficients
+coef(fit_2PL_mirt, IRTpars = TRUE, simplify = TRUE)
+## $items
+##             a      b g u
+## Item 1  0.851 -1.146 0 1
+## Item 2  0.717 -1.723 0 1
+## ...
+## Item 20 0.988 -1.162 0 1
+#--------------
+
+#--------------
+# ICC
+plot(fit_2PL_mirt, type = "trace", facet_items = FALSE)
+#--------------
+
+#--------------
+# IIC
+plot(fit_2PL_mirt, type = "infotrace", facet_items = FALSE)
+#--------------
+
+#--------------
+# TIC
+plot(fit_2PL_mirt, type = "infoSE")
+#--------------
+
+#--------------
+# latent abilities (factor scores)
+fs_2PL_mirt <- as.vector(fscores(fit_2PL_mirt))
+summary(fs_2PL_mirt)
+##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
+## -2.0438 -0.6429 -0.0262  0.0000  0.6541  1.8618
+#--------------
+
+#--------------
+# comparison with total test score
+cor(HCI$total, fs_2PL_mirt)
+# [1] 0.9695
+
+ggplot(
+  data.frame(HCI$total, fs = fs_2PL_mirt),
+  aes(x = HCI$total, y = fs)
+) +
+  geom_point(size = 1.8) +
+  xlab("Total score") +
+  ylab("Factor score") + 
+  theme_fig()
+#--------------
+
+#--------------
+# obtaining details on values of model parameters
+mirt(HCI[, 1:20], model = 1, itemtype = "2PL", pars = "values") # a1 parnum are 1, 5, 9,...
+##  group   item class name parnum   value lbound ubound   est prior.type prior_1 prior_2
+## 1  all Item 1  dich   a1      1  0.8510   -Inf    Inf  TRUE       none     NaN     NaN
+## 2  all Item 1  dich    d      2  1.0245   -Inf    Inf  TRUE       none     NaN     NaN
+## 3  all Item 1  dich    g      3  0.0000  0e+00      1 FALSE       none     NaN     NaN
+## 4  all Item 1  dich    u      4  1.0000  0e+00      1 FALSE       none     NaN     NaN
+## 5  all Item 2  dich   a1      5  0.8510   -Inf    Inf  TRUE       none     NaN     NaN
+## 6  all Item 2  dich    d      6  1.3422   -Inf    Inf  TRUE       none     NaN     NaN
+## ...
+#--------------
+
+#--------------
+# 1PL model fitted as 2PL with slope a1 parameters constrained to be equal
+fit_1pl_mirt <- mirt(HCI[, 1:20], model = 1, itemtype = "2PL",
+                     constrain = list((1:20) * 4 - 3))
+coef(fit_1pl_mirt, IRTpars = TRUE, simplify = TRUE)
+## $items
+##             a      b g u
+## Item 1  0.818 -1.178 0 1
+## Item 2  0.818 -1.550 0 1
+## ...
+#--------------
+
+#--------------
+# 3PL IRT model
+fit_3PL_mirt <- mirt(HCI[, 1:20], model = 1, itemtype = "3PL")
+## EM cycles terminated after 500 iterations.
+
+# 3PL IRT model with NCYCLES increased to 2000
+fit_3PL_mirt <- mirt(HCI[, 1:20], model = 1, itemtype = "3PL", 
+                     technical = list(NCYCLES = 2000))
+# coefficients
+coef(fit_3PL_mirt, IRTpars = TRUE, simplify = TRUE)
+## $items
+##             a      b     g u
+## Item 1  1.080 -0.331 0.296 1
+## Item 2  0.759 -1.353 0.135 1
+## ...
+## Item 20 0.952 -1.041 0.079 1
+#--------------
+
+#--------------
+# test score function
+plot(fit_3PL_mirt)
+# ICC
+plot(fit_3PL_mirt, type = "trace", facet_items = FALSE)
+# IIC
+plot(fit_3PL_mirt, type = "infotrace", facet_items = FALSE)
+# TIC
+plot(fit_3PL_mirt, type = "infoSE")
+#--------------
+
+#--------------
+# latent abilities (factor scores)
+fs_3PL_mirt <- as.vector(fscores(fit_3PL_mirt))
+summary(fs_3PL_mirt)
+#--------------
+
+#--------------
+# 4PL IRT model
+fit_4PL_mirt <- mirt(HCI[, 1:20], model = 1, itemtype = "4PL", 
+                     SE = TRUE)
+summary(fit_4PL_mirt)
+coef(fit_4PL_mirt)
+## $`Item 1`
+## a1     d     g     u
+## par 1.22 0.087 0.378 0.999
+## ...
+## $GroupPars
+## MEAN_1 COV_11
+## par      0      1
+
+## Warning message:
+## Could not invert information matrix; model likely is not 
+## empirically identified.
+#--------------
+
+#--------------
+# coefficients
+coef(fit_4PL_mirt, SE = TRUE) # SE not calculated
+coef(fit_4PL_mirt, IRTpars = TRUE, simplify = TRUE)
+#--------------
+
+#-----------------------------------------------------------------
+# 6.4.2  The ltm package
+#-----------------------------------------------------------------
+
+#--------------
+library(ltm)
+#--------------
+
+#--------------
+# 1PL model, discrimination not fixed
+fit_1PL_ltm <- rasch(HCI[, 1:20])
+summary(fit_1PL_ltm)
+
+# coefficients - IRT parametrization
+coef(fit_1PL_ltm)
+##           Dffclt Dscrmn
+##  Item 1  -1.1774 0.8179
+##  Item 2  -1.5490 0.8179
+## ...
+##  Item 20 -1.3314 0.8179
+#--------------
 
 #--------------
 # Rasch model, discrimination fixed at value of 1
-fit_rasch_ltm <- ltm::rasch(HCI[, 1:20], constraint = cbind(20 + 1, 1))
+fit_rasch_ltm <- rasch(HCI[, 1:20], constraint = cbind(20 + 1, 1))
 summary(fit_rasch_ltm)
 
 # coefficients - IRT parametrization
@@ -158,34 +337,67 @@ coef(fit_rasch_ltm)
 plot(fit_rasch_ltm)
 #--------------
 
+#--------------
+# 2PL IRT model in the ltm package
+fit_2PL_ltm <- ltm(HCI[, 1:20] ~ z1)
+coef(fit_2PL_ltm)
+##          Dffclt Dscrmn
+## Item 1  -1.1459 0.8511
+## Item 2  -1.7226 0.7167
+## ...
+## Item 20 -1.1617 0.9886
+#--------------
+
+#--------------
+# 3PL IRT model in ltm package
+fit_3PL_ltm <- tpm(HCI[, 1:20])
+coef(fit_3PL_ltm)
+##         Gussng  Dffclt Dscrmn
+## Item 1  0.2983 -0.3177 1.0864
+## Item 2  0.1785 -1.2092 0.7837
+## ...
+## Item 20 0.0678 -1.0653 0.9437
+#--------------
+
 #-------------- 
 # latent abilities (factor scores)
-head(factor.scores(fit_rasch_ltm)$score.dat[, c("z1", "se.z1")], n = 3)
-##        z1  se.z1
-## 1 -1.4503 0.4540
-## 2 -1.8849 0.4807
-## 3 -1.2482 0.4456
+ltm::factor.scores(fit_rasch_ltm)
+## Factor-Scores for observed response patterns:
+##    Item 1 Item 2 ... Item 18 Item 19 Item 20 Obs   Exp     z1 se.z1
+## 1       0      0 ...       1       1       0   1 0.002 -1.450 0.454
+## 2       0      0 ...       0       0       0   1 0.017 -1.885 0.481
+## 3       0      0 ...       1       1       0   1 0.000 -1.248 0.446
+#--------------
+
+#-------------- 
+ltm::factor.scores(fit_rasch_ltm, resp.patterns = HCI[, 1:20])
+## Factor-Scores for specified response patterns:
+##    Item 1 Item 2 ... Item 18 Item 19 Item 20 Obs   Exp     z1 se.z1
+## 1       1      1 ...       1       1       1   2 0.188  0.754 0.488
+## 2       1      1 ...       1       1       1   3 0.991  1.578 0.570
+## 3       1      1 ...       1       1       1   1 0.116  1.002 0.509
+#--------------
+
+#-------------- 
+ltm::factor.scores(fit_rasch_ltm, 
+                   resp.patterns = matrix(rep(c(1, 0), each = 10),
+                                          nrow = 1))
+## Factor-Scores for specified response patterns:
+##    Item 1 Item 2 ... Item 18 Item 19 Item 20 Obs Exp     z1 se.z1
+## 1       1      1 ...       0       0       0   0   0 -0.482 0.436
+#--------------
+
+#-----------------------------------------------------------------
+# 6.4.3  The eRm package
+#-----------------------------------------------------------------
+
+#--------------
+library(eRm)
 #--------------
 
 #--------------
-# ltm 1PL model, discrimination not fixed
-fit_1PL_ltm <- ltm::rasch(HCI[, 1:20])
-summary(fit_1PL_ltm)
-
-# coefficients - IRT parametrization
-coef(fit_1PL_ltm)
-##              Dffclt    Dscrmn
-##  Item 1  -1.1774477 0.8178688
-##  Item 2  -1.5489772 0.8178688
-## ...
-##  Item 20 -1.3314659 0.8178688
-#--------------
-
-
-#--------------
-# eRm package
-# Rasch model with sum-0 beta restriction
-fit_rasch_eRm1 <- eRm::RM(X = HCI[, 1:20])
+# Rasch model with sum = 0 beta restriction
+fit_rasch_eRm1 <- RM(X = HCI[, 1:20])
 fit_rasch_eRm1
 summary(fit_rasch_eRm1)
 coef(fit_rasch_eRm1)
@@ -217,8 +429,8 @@ coef(fit_rasch_eRm1) + mean(as.numeric(unlist(lat_var$thetapar)))
 #--------------
 
 #--------------
-# Rasch model with beta.1 restricted to 0
-fit_rasch_eRm2 <- eRm::RM(X = HCI[, 1:20], sum0 = FALSE)
+# Rasch model with beta.1 restricted to 0 (not shown in the book)
+fit_rasch_eRm2 <- RM(X = HCI[, 1:20], sum0 = FALSE)
 fit_rasch_eRm2
 coef(fit_rasch_eRm2)
 ## beta Item 1  beta Item 2  beta Item 3  beta Item 4  beta Item 5
@@ -231,11 +443,17 @@ coef(fit_rasch_eRm2)
 ##     -0.4640      -1.9528       0.5859       0.5042       0.1259
 #--------------
 
+#-----------------------------------------------------------------
+# 6.4.4  Other IRT packages
+#-----------------------------------------------------------------
 
 #--------------
-# TAM package
-# JML estimation
-fit_rasch_TAM1 <- TAM::tam.jml(HCI[, 1:20])
+library(TAM)
+#--------------
+
+#--------------
+# JML estimation with the TAM package
+fit_rasch_TAM1 <- tam.jml(HCI[, 1:20])
 fit_rasch_TAM1$xsi
 ##  [1] -0.9855 -1.2883 -1.9470  0.4327  0.2496  0.6366 -0.2373 -1.0186
 ##  [9]  0.2932 -0.7238 -1.4491 -0.3598 -0.5281 -1.3251  0.2424 -0.5207
@@ -243,20 +461,34 @@ fit_rasch_TAM1$xsi
 #--------------
 
 #--------------
-#MML estimation - sum-0 constraint
-fit_rasch_TAM2 <- TAM::tam.mml(HCI[, 1:20], constraint="items") 
-betas_TAM2 <- c(fit_rasch_TAM2$xsi[,1],-sum(fit_rasch_TAM2$xsi[,1]))
+# MML estimation with the TAM package - sum = 0 constraint
+fit_rasch_TAM2 <- tam.mml(HCI[, 1:20], constraint = "items") 
+betas_TAM2 <- c(fit_rasch_TAM2$xsi[, 1], -sum(fit_rasch_TAM2$xsi[, 1]))
 # latent abilities
-lat_var_TAM <- TAM::tam.wle(fit_rasch_TAM2)
+lat_var_TAM <- tam.wle(fit_rasch_TAM2)
 # item parameters shifted by mean latent ability
-betas_TAM2 - mean(lat_var_TAM[,"theta"])
+betas_TAM2 - mean(lat_var_TAM[, "theta"])
 ##  [1] -0.9660 -1.2700 -1.9365  0.4412  0.2608  0.6420 -0.2207 -0.9992
 ##  [9]  0.3038 -0.7046 -1.4321 -0.3423 -0.5095 -1.3072  0.2536 -0.5022
 ## [17]  0.9825 -1.5543 -1.4721 -1.0930
 #--------------
 
 #--------------
-# lme4 package
+# Wright map with the ShinyItemAnalysis package
+b <- coef(fit_1pl_mirt, simplify = TRUE, IRTpars = TRUE)$items[, "b"]
+fs_1PL_mirt <- as.vector(fscores(fit_1pl_mirt))
+ShinyItemAnalysis::ggWrightMap(theta = fs_1PL_mirt, b = b)
+#--------------
+
+#-----------------------------------------------------------------
+# 6.4.5  IRT models in the lme4 and nlme package
+#-----------------------------------------------------------------
+
+#--------------
+library(lme4)
+#--------------
+
+#--------------
 # data long format:
 HCI.wide <- HCI
 HCI.wide$person <- as.factor(1:nrow(HCI))
@@ -276,9 +508,9 @@ head(HCI.long)
 #--------------
 # fit Rasch model with lme4 (TAKES FEW MINUTES!)
 HCI.long$item <- as.factor(HCI.long$item)
-fit_rasch_glmer <- lme4::glmer(rating ~ -1 + item + (1 | person),
-                               data = HCI.long, family = binomial)
-coef(fit_rasch_glmer)$person[1, -1]
+fit_rasch_lme4 <- glmer(rating ~ -1 + item + (1 | person),
+                              data = HCI.long, family = binomial)
+coef(fit_rasch_lme4)$person[1, -1]
 ##    Item1 Item2 Item3   Item4   Item5  Item6  Item7  Item8   Item9
 ## 1 0.9494 1.266 1.925 -0.4515 -0.2701 -0.653 0.2068 0.9911 -0.3128
 ##   Item10 Item11 Item12 Item13 Item14  Item15 Item16  Item17 Item18
@@ -287,14 +519,17 @@ coef(fit_rasch_glmer)$person[1, -1]
 ## 1 1.4670 1.0880
 #--------------
 
+#-----------------------------------------------------------------
+# 6.4.6  Bayesian IRT with the brms package
+#-----------------------------------------------------------------
+
 #--------------
-# brms package (Bayesian 1PL IRT, TAKES FEW MINUTES!)
+# brms package (Bayesian 1PL IRT). NOTE: this analysis takes several minutes
 formula_1PL <- bf(rating ~ 1 + (1 | item) + (1 | person))
-#formula_1PL <- bf(rating ~ 0 + item + (1 | person))
+# formula_1PL <- bf(rating ~ 0 + item + (1 | person))
 prior_1PL <- prior("normal(0, 3)", class = "sd", group = "person") +
              prior("normal(0, 3)", class = "sd", group = "item")
-#prior_1PL <- prior("normal(0, 3)", class = "sd", group = "person")
-
+# prior_1PL <- prior("normal(0, 3)", class = "sd", group = "person")
 
 fit_1PL_brms <- brm(formula = formula_1PL,
   data = HCI.long, family = brmsfamily("bernoulli", "logit"),
@@ -325,249 +560,104 @@ coef(fit_1PL_brms)$item[, , "Intercept"]
 plot(fit_1PL_brms)
 #--------------
 
+#-----------------------------------------------------------------
+# 6.4.7 Comparison of R packages for IRT (not shown in the book)
+#-----------------------------------------------------------------
+
 #--------------
 b_mirt = coef(fit_rasch_mirt, IRTpars = TRUE, 
-             simplify = TRUE)$items[, "b"]
+              simplify = TRUE)$items[, "b"]
 b_ltm = coef(fit_rasch_ltm)[, 1]
 b_eRm1 = -coef(fit_rasch_eRm1) - mean(as.numeric(unlist(lat_var$thetapar)))
-b_lme4 = -unlist(coef(fit_rasch_glmer)$person[1, -1])
+b_lme4 = -unlist(coef(fit_rasch_lme4)$person[1, -1])
 b_TAMj = fit_rasch_TAM1$xsi
 b_TAMm = betas_TAM2 - mean(lat_var_TAM[,"theta"])
 b_brms = - coef(fit_1PL_brms)$item[, "Estimate", "Intercept"]
 cbind(b_mirt, b_ltm, b_eRm1, b_lme4, b_TAMj, b_TAMm, b_brms)
+rbind(b_mirt, b_ltm, b_eRm1, b_lme4, b_TAMj, b_TAMm, b_brms)
 
-##          b_mirt   b_ltm  b_eRm1  b_lme4  b_TAMj  b_TAMm  b_brms
-## Item 1  -0.9632 -0.9892 -0.9753 -0.9494 -0.9855 -0.9660 -0.9595
-## Item 2  -1.2672 -1.2996 -1.2784 -1.2662 -1.2883 -1.2700 -1.2612
-## Item 3  -1.9339 -1.9787 -1.9409 -1.9255 -1.9470 -1.9365 -1.9122
-## Item 4   0.4443  0.4531  0.4348  0.4515  0.4327  0.4412  0.4341
-## ...
-## Item 20 -1.0894 -1.1181 -1.1012 -1.0876 -1.1113 -1.0930 -1.0868
+##         Item 1 Item 2 Item 3 Item 4 Item 5 Item 6  Item 7  Item 8 Item 9
+## b_mirt -0.9632 -1.267 -1.934 0.4443 0.2638 0.6450 -0.2177 -0.9963 0.3068
+## b_ltm  -0.9892 -1.300 -1.979 0.4531 0.2680 0.6591 -0.2257 -1.0230 0.3120
+## b_eRm1 -0.9753 -1.278 -1.941 0.4348 0.2537 0.6361 -0.2294 -1.0084 0.2968
+## b_lme4 -0.9494 -1.266 -1.925 0.4515 0.2701 0.6530 -0.2068 -0.9911 0.3128
+## b_TAMj -0.9855 -1.288 -1.947 0.4327 0.2496 0.6366 -0.2373 -1.0186 0.2932
+## b_TAMm -0.9660 -1.270 -1.936 0.4412 0.2608 0.6420 -0.2208 -0.9992 0.3037
+## b_brms -0.9608 -1.261 -1.914 0.4348 0.2560 0.6357 -0.2220 -0.9906 0.2961
+## 
+##        Item 10 Item 11 Item 12 Item 13 Item 14 Item 15 Item 16 Item 17
+## b_mirt -0.7016  -1.429 -0.3392 -0.5065  -1.304  0.2567 -0.4991  0.9856
+## b_ltm  -0.7215  -1.465 -0.3504 -0.5218  -1.338  0.2607 -0.5143  1.0084
+## b_eRm1 -0.7139  -1.440 -0.3512 -0.5187  -1.315  0.2466 -0.5113  0.9775
+## b_lme4 -0.6961  -1.424 -0.3299 -0.5020  -1.299  0.2613 -0.4977  0.9936
+## b_TAMj -0.7238  -1.449 -0.3598 -0.5281  -1.325  0.2424 -0.5207  0.9830
+## b_TAMm -0.7046  -1.432 -0.3423 -0.5095  -1.307  0.2536 -0.5022  0.9825
+## b_brms -0.7013  -1.424 -0.3428 -0.5102  -1.295  0.2471 -0.5001  0.9712
+## 
+##        Item 18 Item 19 Item 20
+## b_mirt  -1.551  -1.469  -1.089
+## b_ltm   -1.589  -1.506  -1.118
+## b_eRm1  -1.561  -1.479  -1.101
+## b_lme4  -1.549  -1.467  -1.088
+## b_TAMj  -1.570  -1.489  -1.111
+## b_TAMm  -1.554  -1.472  -1.093
+## b_brms  -1.537  -1.459  -1.089
 #--------------
 
-
-# #--------------
-# # traditional difficulty estimates
+#--------------
+# traditional difficulty estimates
 (dif_trad <- colMeans(HCI[, 1:20])) # traditional difficulty estimates
-# ##  Item 1  Item 2  Item 3  Item 4  Item 5  Item 6  Item 7  Item 8  Item 9
-# ##  0.6989  0.7527  0.8479  0.4040  0.4424  0.3625  0.5469  0.7051  0.4332
-# ## Item 10 Item 11 Item 12 Item 13 Item 14 Item 15 Item 16 Item 17 Item 18
-# ##  0.6482  0.7788  0.5730  0.6083  0.7588  0.4439  0.6068  0.2965  0.7972
-# ## Item 19 Item 20
-# ##  0.7849  0.7220
-#
+##  Item 1  Item 2  Item 3  Item 4  Item 5  Item 6  Item 7  Item 8  Item 9
+##  0.6989  0.7527  0.8479  0.4040  0.4424  0.3625  0.5469  0.7051  0.4332
+## Item 10 Item 11 Item 12 Item 13 Item 14 Item 15 Item 16 Item 17 Item 18
+##  0.6482  0.7788  0.5730  0.6083  0.7588  0.4439  0.6068  0.2965  0.7972
+## Item 19 Item 20
+##  0.7849  0.7220
+
 # as.vector(scale(dif_trad))
 cor(b_mirt, dif_trad)
 ## [1] -0.998
 plot(b_mirt, dif_trad)
 #--------------
 
-#--------------
-# Wright map
-b <- coef(fit_rasch_mirt, simplify = TRUE, IRTpars = TRUE)$items[, "b"]
-ggWrightMap(fs_SE[, 1], b)
-#--------------
-
 #-----------------------------------------------------------------
-# 6.3.2 2PL IRT model
+# 6.5.1 Relationship between IRT and factor analysis
 #-----------------------------------------------------------------
 
 #--------------
-# mirt() of mirt package
-fit_2PL_mirt <- mirt::mirt(HCI[, 1:20], model = 1, itemtype = "2PL", 
-                           SE = TRUE)
-# coefficients
-coef(fit_2PL_mirt, IRTpars = TRUE, simplify = TRUE)
-## $items
-##             a      b g u
-## Item 1  0.851 -1.146 0 1
-## Item 2  0.717 -1.723 0 1
-## ...
-## Item 20 0.988 -1.162 0 1
+library(psych)
 #--------------
 
 #--------------
-# ltm package
-fit_2PL_ltm <- ltm::ltm(HCI[, 1:20] ~ z1)
-coef(fit_2PL_ltm)
-##          Dffclt Dscrmn
-## Item 1  -1.1459 0.8511
-## Item 2  -1.7226 0.7167
-## ...
-## Item 20 -1.1617 0.9886
-#--------------
-
-#-----------------------------------------------------------------
-# 6.3.3 Normal ogive model
-#-----------------------------------------------------------------
-
-# TO BE ADDED
-
-#-----------------------------------------------------------------
-# 6.3.4 3PL IRT model
-#-----------------------------------------------------------------
-
-#--------------
-fit_3PL_mirt <- mirt::mirt(HCI[, 1:20], model = 1, itemtype = "3PL", 
-                           SE = TRUE, technical = list(NCYCLES = 2000))
-# coefficients
-coef(fit_3PL_mirt, IRTpars = TRUE, simplify = TRUE)
-## $items
-##             a      b     g u
-## Item 1  1.080 -0.331 0.296 1
-## Item 2  0.759 -1.353 0.135 1
-## ...
-## Item 20 0.952 -1.041 0.079 1
-#--------------
-
-#--------------
-# test score function
-plot(fit_3PL_mirt)
- 
-# ICC
-plot(fit_3PL_mirt, type = "trace", facet_items = FALSE)
- 
-# IIC
-plot(fit_3PL_mirt, type = "infotrace", facet_items = FALSE)
- 
-# TIC
-plot(fit_3PL_mirt, type = "infoSE")
-#--------------
-
-#--------------
-# latent abilities (factor scores)
-fs <- as.vector(fscores(fit_3PL_mirt))
-summary(fs)
-#--------------
-
-#--------------
-# ltm package
-fit_3PL_ltm <- ltm::tpm(HCI[, 1:20])
-coef(fit_3PL_ltm)
-##         Gussng  Dffclt Dscrmn
-## Item 1  0.2983 -0.3177 1.0864
-## Item 2  0.1785 -1.2092 0.7837
-## ...
-## Item 20 0.0678 -1.0653 0.9437
-#--------------
-
-#-----------------------------------------------------------------
-# 6.3.5 4PL IRT model
-#-----------------------------------------------------------------
-
-#--------------
-fit_4PL_mirt <- mirt(HCI[, 1:20], model = 1, itemtype = "4PL", 
-                     SE = TRUE)
-summary(fit_4PL_mirt)
-coef(fit_4PL_mirt)
-## $`Item 1`
-## a1     d     g     u
-## par 1.22 0.087 0.378 0.999
-## ...
-## $GroupPars
-## MEAN_1 COV_11
-## par      0      1
-
-## Warning message:
-## Could not invert information matrix; model likely is not 
-## empirically identified.
-#--------------
-
-#--------------
-# ICC
-plot(fit_4PL_mirt, type = "trace", facet_items = FALSE)
- 
-# IIC
-plot(fit_4PL_mirt, type = "infotrace", facet_items = FALSE)
- 
-# TIC
-plot(fit_4PL_mirt, type = "infoSE")
- 
-# test score function
-plot(fit_4PL_mirt)
-#--------------
-
-#--------------
-# coefficients
-coef(fit_4PL_mirt, simplify = TRUE)
-coef(fit_4PL_mirt, IRTpars = TRUE, simplify = TRUE)
-#--------------
-
-#--------------
-# latent abilities (factor scores)
-fs <- as.vector(fscores(fit_4PL_mirt))
-summary(fs)
-#--------------
-
-#-----------------------------------------------------------------
-# 6.4 Item and test information
-#-----------------------------------------------------------------
-
-#--------------
-# ICC
-plot(fit_2PL_mirt, type = "trace", facet_items = FALSE)
-#--------------
-
-#--------------
-# IIC
-plot(fit_2PL_mirt, type = "infotrace", facet_items = FALSE)
-#--------------
-
-#--------------
-# TIC
-plot(fit_2PL_mirt, type = "infoSE")
-#--------------
-
-#--------------
-# latent abilities (factor scores)
-fs <- as.vector(fscores(fit_2PL_mirt))
-summary(fs)
-##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
-## -2.0438 -0.6429 -0.0262  0.0000  0.6541  1.8618
-#--------------
-
-
-#-----------------------------------------------------------------
-# 6.6 Relationship between IRT and factor analysis
-#-----------------------------------------------------------------
-
-#--------------
-corHCI <- tetrachoric(HCI[,1:20])$rho
-(tau <- tetrachoric(HCI[,1:20])$tau) # thresholds
+corHCI <- tetrachoric(HCI[, 1:20])$rho
+(tau <- tetrachoric(HCI[, 1:20])$tau) # thresholds
 ##  Item 1  Item 2  Item 3  Item 4  Item 5  Item 6  Item 7  Item 8 
 ## -0.5213 -0.6830 -1.0276  0.2430  0.1449  0.3517 -0.1177 -0.5390 
-## Item 9 Item 10 Item 11 Item 12 Item 13 Item 14 Item 15 Item 16 
-## 0.1683 -0.3806 -0.7682 -0.1839 -0.2749 -0.7026  0.1410 -0.2709 
+##  Item 9 Item 10 Item 11 Item 12 Item 13 Item 14 Item 15 Item 16 
+##  0.1683 -0.3806 -0.7682 -0.1839 -0.2749 -0.7026  0.1410 -0.2709 
 ## Item 17 Item 18 Item 19 Item 20 
 ##  0.5346 -0.8318 -0.7890 -0.5887 
 #--------------
 
 #--------------
-FA1 <- psych::fa(HCI[,1:20], nfactors = 1, fm = "mle", cor = "poly")
-(lambda <- c(FA1$loadings))
-##  [1] 0.44414 0.38628 0.61483 0.19866 0.41607 0.51332 0.15221 0.52957
-##  [9] 0.28318 0.41891 0.47625 0.44767 0.56520 0.53887 0.46019 0.55206
-## [17] 0.04476 0.69664 0.60657 0.49888
+FA1 <- fa(HCI[, 1:20], nfactors = 1, fm = "mle", cor = "poly")
+(alpha <- c(FA1$loadings)) # factor loadings
+##  [1] 0.4441 0.3863 0.6148 0.1987 0.4161 0.5133 0.1522 0.5296 0.2832
+## [10] 0.4189 0.4763 0.4477 0.5652 0.5389 0.4602 0.5521 0.0448 0.6966
+## [19] 0.6066 0.4989
 
-q <- sqrt(c(FA1$uniquenesses)) # q = sqrt(1-lambda^2), uniquenesses
+q <- sqrt(c(FA1$uniquenesses)) # q = sqrt(1 - alpha^2), uniqueness
 
 D <- 1.702 # scaling parameter
-aFA <- D*lambda/q # a
-dFA <- -D*tau/q # d
+aFA <- D * alpha / q # a
+dFA <- -D * tau / q # d
 #--------------
 
 #--------------
-fit_2PL_mirt <- mirt::mirt(HCI[, 1:20], model = 1, itemtype = "2PL", 
-                           SE = TRUE)
-coef(fit_2PL_mirt, IRTpars = FALSE, simplify = TRUE)$items
-##             a1       d g u
-## Item 1  0.8509  0.9754 0 1
-## Item 2  0.7167  1.2348 0 1
-## ...
-a <- coef(fit_2PL_mirt, simplify = TRUE)$items[,"a1"]
-d <- coef(fit_2PL_mirt, simplify = TRUE)$items[,"d"]
-b <- coef(fit_2PL_mirt, IRTpars = TRUE, simplify = TRUE)$items[,"b"]
-# b = -d/a
+fit_2PL_mirt <- mirt(HCI[, 1:20], model = 1, itemtype = "2PL")
+
+a <- coef(fit_2PL_mirt, simplify = TRUE)$items[, "a1"]
+d <- coef(fit_2PL_mirt, simplify = TRUE)$items[, "d"]
 #--------------
 
 #--------------
@@ -600,7 +690,7 @@ plot(aFA, a, xlim = c(0, 2), ylim = c(0, 2))
 abline(coef = c(0,1))
 
 cor(dFA, d)
-## 1] 0.9987
+## [1] 0.9987
 
 plot(dFA, d, xlim = c(-1, 3), ylim = c(-1, 3))
 abline(coef = c(0,1))
@@ -634,7 +724,7 @@ FA1$communalities
 #--------------
 
 #--------------
-#psych::fit_irtfa() function
+# psych::fit_irtfa() function
 fit_irtfa <- irt.fa(HCI[,1:20], nfactors = 1, fm = "ml", cor = "poly")
 fit_irtfa$tau
 b_irtfa <- c(fit_irtfa$irt$difficulty[[1]])
@@ -643,8 +733,8 @@ a_irtfa <- c(fit_irtfa$irt$discrimination)
 cor(aFA, a_irtfa) # 1
 cor(-dFA, b_irtfa) # -1
 
--D*b_irtfa # equals dFA
-D*a_irtfa # equals aFA
+-D * b_irtfa # equals dFA
+D * a_irtfa # equals aFA
 #--------------
 
 #--------------
