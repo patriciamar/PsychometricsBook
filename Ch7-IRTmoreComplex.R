@@ -4,15 +4,6 @@
 # P. Martinkova & A. Hladka
 #-----------------------------------------------------------------
 
-#-----------------------------------------------------------------
-# Packages
-#-----------------------------------------------------------------
-
-library(ggplot2)
-library(ltm)
-library(mirt)
-library(ShinyItemAnalysis)
-library(Cairo)
 
 #-----------------------------------------------------------------
 # Plot settings
@@ -58,12 +49,22 @@ fit_GRM_mirt <- mirt(anxiety_items, model = 1,
 
 #--------------
 # estimated coefficients with CI (not displayed in the book)
-coef(fit_GRM_mirt, IRTpars = TRUE, SE = TRUE)
+coef(fit_GRM_mirt, IRTpars = TRUE)
 ## $R1
 ##             a    b1    b2    b3    b4
 ## par     3.449 0.494 1.251 2.031 2.814
 ## CI_2.5  2.983 0.394 1.116 1.824 2.448
 ## CI_97.5 3.915 0.594 1.387 2.238 3.179
+## ...
+#--------------
+
+#--------------
+# estimated coefficients with SE (not displayed in the book)
+coef(fit_GRM_mirt, IRTpars = TRUE, printSE = TRUE)
+## $R1
+##         a    b1    b2    b3    b4
+## par 3.449 0.494 1.251 2.031 2.814
+## SE  0.238 0.051 0.069 0.106 0.186
 ## ...
 #--------------
 
@@ -81,11 +82,6 @@ coef(fit_GRM_mirt, IRTpars = TRUE, simplify = TRUE)
 #--------------
 plot(fit_GRM_mirt, which.items = c(1, 25), type = "trace")
 #--------------
-
-#--------------
-# itemplot(fit_GRM_mirt, item = 25, type = "infotrace")
-#--------------
-
 
 #--------------
 # Further item plots (not displayed in the book):
@@ -127,11 +123,10 @@ head(fs)
 ## [1] -0.14263 -1.41719 -0.12252 -0.25884 -1.70984 -0.04914
 
 fsSE <- fscores(fit_GRM_mirt, full.scores.SE = TRUE)
-head(fsSE)
+head(fsSE, n = 2)
 ##            F1  SE_F1
 ## [1,] -0.14263 0.1618
 ## [2,] -1.41719 0.4356
-## ...
 #--------------
 
 #--------------
@@ -143,7 +138,7 @@ plot(fs ~ sts)
 #--------------
 # GRM in the ltm package
 library(ltm)
-fit_GRM_ltm <- ltm::grm(anxiety_items)
+fit_GRM_ltm <- grm(anxiety_items)
 
 # coefficients
 coef(fit_GRM_ltm)
@@ -161,6 +156,7 @@ plot(fit_GRM_ltm, type = "ICC", items = 25)
 #--------------
 
 #--------------
+# Factor scores for all unique response patterns (Not shown in the book)
 ltm::factor.scores(fit_GRM_ltm)
 ## ...
 ## Factor-Scores for observed response patterns:
@@ -172,6 +168,7 @@ ltm::factor.scores(fit_GRM_ltm)
 #--------------
 
 #--------------
+# Factor scores for all respondents
 ltm::factor.scores(fit_GRM_ltm, resp.patterns = anxiety_items)
 ## Factor-Scores for specified response patterns:
 ##    R1 ... R19 R20 R21 R22 R23 R24 R25 R26 R27 R28 R29 Obs   Exp     z1 se.z1
@@ -201,10 +198,13 @@ cor(fs, fs_ltm)
 library(ggplot2)
 df <- data.frame(fs, fs_ltm)
 ggplot(data = df, aes(x = fs, y = fs_ltm)) +
-  geom_point() +
+  geom_point(size = 3, shape = 21) +
   theme_fig() +
   xlab("Factor scores by mirt") + ylab("Factor scores by ltm") + 
-  geom_smooth(method = "lm", se = FALSE)
+  geom_abline(intercept = 0, slope = 1, col = "red", size = 0.8) + 
+  geom_smooth(method = "lm", se = FALSE, size = 0.8) + 
+  xlim(-1.9, 4.8) + ylim(-1.9, 4.8)
+#--------------
 
 #-----------------------------------------------------------------
 # 7.2.2  Graded ratings scale model
@@ -433,11 +433,32 @@ coef(fit_NRM_mirt, IRTpars = TRUE, simplify = TRUE)
 #--------------
 # BL-IS accounting for correct option:
 library(ShinyItemAnalysis)
-fit_NRM_SIAblis <- blis(HCItest[, 1:20], HCIkey, SE = TRUE)
+fit_NRM_SIAblis <- blis(Data = HCItest[, 1:20], key = HCIkey)
 #--------------
 
 #--------------
-coef(fit_NRM_SIAblis, SE = TRUE) # intercept-slope parametrization
+coef(fit_NRM_SIAblis, IRTpars = TRUE) # IRT (difficulty - discrimination) parametrization
+## $`Item 1`
+##             a1     a2     a3 a4     b1     b2     b3 b4
+##     par -1.374 -0.407 -0.997  0 -2.413 -4.982 -1.637  0
+## ...
+#--------------
+
+#--------------
+# With parameter SE or 95% CI (not shown in the book) 
+fit_NRM_SIAblis <- blis(Data = HCItest[, 1:20], key = HCIkey, SE = TRUE)
+coef(fit_NRM_SIAblis, IRTpars = TRUE)
+## $`Item 1`
+##             a1     a2     a3 a4     b1     b2     b3 b4
+##     par -1.374 -0.407 -0.997  0 -2.413 -4.982 -1.637  0
+## CI_2.5  -1.973 -0.755 -1.313 NA -3.194 -9.204 -2.088 NA
+## CI_97.5 -0.775 -0.060 -0.682 NA -1.631 -0.761 -1.185 NA
+## ...
+#--------------
+
+#--------------
+# Intercept-slope parametrization (not shown in the book)
+coef(fit_NRM_SIAblis)
 ## $`Item 1`
 ##        ak0    ak1    ak2 ak3     d0     d1     d2 d3
 ## par -1.374 -0.407 -0.997   0 -3.315 -2.029 -1.632  0
@@ -445,12 +466,12 @@ coef(fit_NRM_SIAblis, SE = TRUE) # intercept-slope parametrization
 ## CI_97.5 -0.775 -0.060 -0.682  NA -2.688 -1.751 -1.360 NA
 ## ...
 
-coef(fit_NRM_SIAblis, IRTpars = TRUE, SE = TRUE) # IRT (difficulty - discrimination) parametrization
+coef(fit_NRM_SIAblis, printSE = TRUE) # SE instead of CI
 ## $`Item 1`
-##             a1     a2     a3 a4     b1     b2     b3 b4
-##     par -1.374 -0.407 -0.997  0 -2.413 -4.982 -1.637  0
-## CI_2.5  -1.973 -0.755 -1.313 NA -3.194 -9.204 -2.088 NA
-## CI_97.5 -0.775 -0.060 -0.682 NA -1.631 -0.761 -1.185 NA
+##        ak0    ak1    ak2 ak3     d0     d1     d2 d3
+## par -1.374 -0.407 -0.997   0 -3.315 -2.029 -1.632  0
+## CI_2.5  -1.973 -0.755 -1.313  NA -3.941 -2.306 -1.904 NA
+## CI_97.5 -0.775 -0.060 -0.682  NA -2.688 -1.751 -1.360 NA
 ## ...
 #--------------
 
@@ -511,12 +532,12 @@ fit_mixed <- mirt(CZmathS, model = 1, itemtype = itemtype)
 #--------------
 fs_gpcm = as.vector(fscores(fit_gpcm))
 head(fs_gpcm)
-## [1]  0.3757  0.3327  0.0210 -0.1369 -0.0625 -0.7373
+## [1] 0.3757  0.3327  0.0210 -0.1369 -0.0625 -0.7373
 fs_mixed = as.vector(fscores(fit_mixed))
 head(fs_mixed)
-## [1]  0.3937  0.3276  0.0328 -0.1248 -0.0449 -0.7749
+## [1] 0.3937  0.3276  0.0328 -0.1248 -0.0449 -0.7749
 cor(fs_gpcm, fs_mixed)
-## [1] 0.999
+## [1] 0.9991
 #--------------
 
 #--------------
@@ -557,8 +578,8 @@ coef(m2PL, simplify = TRUE)
 #--------------
 
 #--------------
-itemplot(m2PL, item = 1) # item loading strongly on one factor
-itemplot(m2PL, item = 13) # item loading strongly on other factor
+itemplot(m2PL, item = "i1")  # item loading strongly on 1st factor
+itemplot(m2PL, item = "i4")  # item loading strongly on 2nd factor
 # itemplot(m2PL, item = 1, rotate = "oblimin")
 #--------------
 
@@ -568,7 +589,8 @@ MDIFF(m2PL)
 ## i1  -1.2465
 ## i6  -1.2305 
 ## ...
-
+## i4  -0.5545
+## ...
 MDISC(m2PL)
 ##     i1     i6    i11    i16    i21    i26    i31    i36    i41 
 ## 1.8548 1.8896 0.5401 2.3346 1.7972 0.9268 2.2508 0.8626 1.4868 
@@ -623,8 +645,8 @@ coef(mGRM, simplify = TRUE)
 ## F2  0  1
 
 #--------------
-itemplot(mGRM, item = 1) # item loading strongly on one factor
-itemplot(mGRM, item = 13) # item loading strongly on other factor
+itemplot(mGRM, item = "i1") # item loading strongly on 1st factor
+itemplot(mGRM, item = "i4") # item loading strongly on 2nd factor
 #--------------
 
 #--------------
@@ -664,8 +686,8 @@ head(fscores(mGRM), n = 3)
 #--------------
 model_ENirt <- 'N = 13-24
                 E = 1-12
-                COV = N*E'
-#fit_ENirtRasch <- mirt(BFI2en, model = model_ENirt, itemtype = "Rasch")
+                COV = N * E'
+# fit_ENirtRasch <- mirt(BFI2en, model = model_ENirt, itemtype = "Rasch")
 fit_ENirtGRM <- mirt(BFI2en, model = model_ENirt, itemtype = "graded")
 #--------------
 
@@ -692,8 +714,8 @@ coef(fit_ENirtGRM, simplify = TRUE)
 #--------------
 
 #--------------
-itemplot(fit_ENirtGRM, item = 1) # item loading on 1st factor
-itemplot(fit_ENirtGRM, item = 13) # item loading on 2nd factor
+itemplot(fit_ENirtGRM, item = "i1") # item loading on 1st factor
+itemplot(fit_ENirtGRM, item = "i4") # item loading on 2nd factor
 #--------------
 
 #--------------
