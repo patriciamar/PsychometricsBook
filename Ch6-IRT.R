@@ -38,7 +38,6 @@ theme_fig <- function(base_size = 17, base_family = "") {
     )
 }
 
-
 #-----------------------------------------------------------------
 # 6.4.1  The mirt package
 #-----------------------------------------------------------------
@@ -62,8 +61,8 @@ fit_rasch_mirt <- mirt(data = HCI[, 1:20], model = 1,
 #--------------
 
 #--------------
-# coefficients - intercept/slope parametrization d + a1 * x with SE added
-coef(fit_rasch_mirt, SE = TRUE)
+# coefficients - intercept/slope parametrization d + a1 * x
+coef(fit_rasch_mirt)
 ## $`Item 1`
 ##         a1     d  g  u
 ## par      1 0.963  0  1
@@ -75,6 +74,16 @@ coef(fit_rasch_mirt, SE = TRUE)
 ## par          0  0.669
 ## CI_2.5      NA  0.558
 ## CI_97.5     NA  0.780
+#--------------
+
+#--------------
+# coefficients - intercept/slope parametrization, SE instead of CI (not shown in the book)
+coef(fit_rasch_mirt, printSE = TRUE)
+## $`Item 1`
+##     a1     d logit(g) logit(u)
+## par  1 0.963     -999      999
+## SE  NA 0.097       NA       NA
+##  ...
 #--------------
 
 #--------------
@@ -91,7 +100,7 @@ coef(fit_rasch_mirt, IRTpars = TRUE, simplify = TRUE)
 #--------------
 sqrt(0.669) # 0.818 is the SD of the latent trait
 0.963/sqrt(0.669) # latent trait 1.177 below average is needed
-                  # to answer Item 1 correctly with probability 0.5
+# to answer Item 1 correctly with probability 0.5
 #--------------
 
 #--------------
@@ -237,10 +246,12 @@ coef(fit_1pl_mirt, IRTpars = TRUE, simplify = TRUE)
 #--------------
 
 #--------------
-# 3PL IRT model
+# 3PL IRT model with default setting (not shown in the book)
 fit_3PL_mirt <- mirt(HCI[, 1:20], model = 1, itemtype = "3PL")
 ## EM cycles terminated after 500 iterations.
+#--------------
 
+#--------------
 # 3PL IRT model with NCYCLES increased to 2000
 fit_3PL_mirt <- mirt(HCI[, 1:20], model = 1, itemtype = "3PL", 
                      technical = list(NCYCLES = 2000))
@@ -255,7 +266,8 @@ coef(fit_3PL_mirt, IRTpars = TRUE, simplify = TRUE)
 #--------------
 
 #--------------
-# test score function
+# Plots (not shown in the book)
+# test score function 
 plot(fit_3PL_mirt)
 # ICC
 plot(fit_3PL_mirt, type = "trace", facet_items = FALSE)
@@ -266,19 +278,19 @@ plot(fit_3PL_mirt, type = "infoSE")
 #--------------
 
 #--------------
-# latent abilities (factor scores)
+# latent abilities (not shown in the book)
 fs_3PL_mirt <- as.vector(fscores(fit_3PL_mirt))
 summary(fs_3PL_mirt)
 #--------------
 
 #--------------
-# 4PL IRT model
+# 4PL IRT model (not shown in the book)
 fit_4PL_mirt <- mirt(HCI[, 1:20], model = 1, itemtype = "4PL", 
                      SE = TRUE)
 summary(fit_4PL_mirt)
 coef(fit_4PL_mirt)
 ## $`Item 1`
-## a1     d     g     u
+##       a1     d     g     u
 ## par 1.22 0.087 0.378 0.999
 ## ...
 ## $GroupPars
@@ -292,7 +304,7 @@ coef(fit_4PL_mirt)
 
 #--------------
 # coefficients
-coef(fit_4PL_mirt, SE = TRUE) # SE not calculated
+coef(fit_4PL_mirt, printSE = TRUE) # SE not calculated, thus not printed
 coef(fit_4PL_mirt, IRTpars = TRUE, simplify = TRUE)
 #--------------
 
@@ -509,7 +521,7 @@ head(HCI.long)
 # fit Rasch model with lme4 (TAKES FEW MINUTES!)
 HCI.long$item <- as.factor(HCI.long$item)
 fit_rasch_lme4 <- glmer(rating ~ -1 + item + (1 | person),
-                              data = HCI.long, family = binomial)
+                        data = HCI.long, family = binomial)
 coef(fit_rasch_lme4)$person[1, -1]
 ##    Item1 Item2 Item3   Item4   Item5  Item6  Item7  Item8   Item9
 ## 1 0.9494 1.266 1.925 -0.4515 -0.2701 -0.653 0.2068 0.9911 -0.3128
@@ -528,12 +540,12 @@ coef(fit_rasch_lme4)$person[1, -1]
 formula_1PL <- bf(rating ~ 1 + (1 | item) + (1 | person))
 # formula_1PL <- bf(rating ~ 0 + item + (1 | person))
 prior_1PL <- prior("normal(0, 3)", class = "sd", group = "person") +
-             prior("normal(0, 3)", class = "sd", group = "item")
+  prior("normal(0, 3)", class = "sd", group = "item")
 # prior_1PL <- prior("normal(0, 3)", class = "sd", group = "person")
 
 fit_1PL_brms <- brm(formula = formula_1PL,
-  data = HCI.long, family = brmsfamily("bernoulli", "logit"),
-  prior = prior_1PL, seed = 123)
+                    data = HCI.long, family = brmsfamily("bernoulli", "logit"),
+                    prior = prior_1PL, seed = 123)
 coef(fit_1PL_brms)$item[, , "Intercept"]
 ##     Estimate Est.Error     Q2.5    Q97.5
 ##  1    0.9602   0.09574  0.76907  1.15350
@@ -649,51 +661,35 @@ FA1 <- fa(HCI[, 1:20], nfactors = 1, fm = "mle", cor = "poly")
 q <- sqrt(c(FA1$uniquenesses)) # q = sqrt(1 - alpha^2), uniqueness
 
 D <- 1.702 # scaling parameter
-aFA <- D * alpha / q # a
-dFA <- -D * tau / q # d
+beta1FA <- D * alpha / q # slope
+beta0FA <- -D * tau / q  # intercept
 #--------------
 
 #--------------
-fit_2PL_mirt <- mirt(HCI[, 1:20], model = 1, itemtype = "2PL")
-
-a <- coef(fit_2PL_mirt, simplify = TRUE)$items[, "a1"]
-d <- coef(fit_2PL_mirt, simplify = TRUE)$items[, "d"]
+# fit_2PL_mirt <- mirt(HCI[, 1:20], model = 1, itemtype = "2PL")
+beta1IRT <- coef(fit_2PL_mirt, simplify = TRUE)$items[, "a1"]
+beta0IRT <- coef(fit_2PL_mirt, simplify = TRUE)$items[, "d"]
 #--------------
 
 #--------------
-rbind(aFA, a)
-##     Item 1 Item 2 Item 3 Item 4 Item 5 Item 6 Item 7 Item 8
-## aFA 0.8427 0.7119  1.325 0.3446 0.7778  1.017 0.2618  1.061
-## a   0.8509 0.7167  1.574 0.3467 0.7275  1.012 0.2257  1.048
-##     Item 9 Item 10 Item 11 Item 12 Item 13 Item 14 Item 15
-## aFA 0.5019  0.7843  0.9208  0.8511   1.165   1.087  0.8812
-## a   0.4540  0.8243  0.9803  0.8797   1.193   1.190  0.8769
-##     Item 16 Item 17 Item 18 Item 19 Item 20
-## aFA   1.126 0.07617   1.651   1.297  0.9786
-## a     1.134 0.10485   1.835   1.396  0.9880
+rbind(beta1FA, beta1IRT)
+##          Item 1 Item 2 Item 3 Item 4 Item 5 Item 6 Item 7 ...
+## beta1FA  0.8437 0.7128 1.3269 0.3450 0.7788 1.0180 0.2621 ...
+## beta1IRT 0.8509 0.7167 1.5745 0.3467 0.7275 1.0115 0.2257 ...
+rbind(beta0FA, beta0IRT)
+##          Item 1 Item 2 Item 3  Item 4  Item 5  Item 6 Item 7 ...
+## beta0FA  0.9903 1.2602 2.2176 -0.4220 -0.2712 -0.6976 0.2027 ...
+## beta0IRT 0.9754 1.2348 2.4033 -0.3995 -0.2545 -0.6761 0.1905 ...
 
-rbind(dFA, d)
-##     Item 1 Item 2 Item 3  Item 4  Item 5  Item 6 Item 7
-## dFA 0.9891  1.259  2.215 -0.4215 -0.2709 -0.6967 0.2025
-## d   0.9754  1.235  2.403 -0.3995 -0.2545 -0.6761 0.1905
-##     Item 8  Item 9 Item 10 Item 11 Item 12 Item 13 Item 14
-## dFA  1.080 -0.2983  0.7125   1.485  0.3497  0.5664   1.418
-## d    1.072 -0.2808  0.7066   1.498  0.3510  0.5806   1.460
-##     Item 15 Item 16 Item 17 Item 18 Item 19 Item 20
-## dFA -0.2700  0.5523 -0.9097   1.971   1.687   1.155
-## d   -0.2556  0.5604 -0.8664   2.115   1.749   1.148
-
-cor(aFA, a)
+cor(beta1FA, beta1IRT)
 ## [1] 0.9908
-
-plot(aFA, a, xlim = c(0, 2), ylim = c(0, 2))
-abline(coef = c(0,1))
-
-cor(dFA, d)
+cor(beta0FA, beta0IRT)
 ## [1] 0.9987
 
-plot(dFA, d, xlim = c(-1, 3), ylim = c(-1, 3))
-abline(coef = c(0,1))
+plot(beta1FA, beta1IRT, xlim = c(0, 2), ylim = c(0, 2))
+abline(coef = c(0, 1))
+plot(beta0FA, beta0IRT, xlim = c(-1, 3), ylim = c(-1, 3))
+abline(coef = c(0, 1))
 #--------------
 
 #--------------
