@@ -55,15 +55,8 @@ help(sqrt)
 # remotes::install_github("patriciamar/ShinyItemAnalysis")
 #--------------
 
-# Note: In supplementary code for each chapter, we provide code for uploading
-#       packages at the top. For this reason, this code is commented below.
-
 #--------------
-library(Cairo)
-library(ggplot2)
-library(lattice)
 library(ShinyItemAnalysis)
-library(tidyverse)
 #--------------
 
 #-----------------------------------------------------------------
@@ -135,8 +128,8 @@ HCI[1, 1]
 
 #--------------
 # add new variable: person ID
-HCI$person <- as.factor(1:nrow(HCI))
-str(HCI$person)
+HCI$id <- as.factor(1:nrow(HCI))
+str(HCI$id)
 ## Factor w/ 651 levels "1","2","3","4",..: 1 2 3 4 5 6 7 8 9 10 ...
 #--------------
 
@@ -145,34 +138,35 @@ str(HCI$person)
 HCI_long <- reshape(
   data = HCI,
   varying = list(paste("Item", 1:20)), timevar = "item", 
-  v.names = "rating", idvar = c("person"),
+  v.names = "rating", idvar = c("id"),
   direction = "long", new.row.names = 1:13020
 )
 
 head(HCI_long, n = 3)
-##   gender major person item rating
-## 1      0     1      1    1      1
-## 2      0     1      2    1      1
-## 3      1     1      3    1      1
+##   gender major id item rating
+## 1      0     1  1    1      1
+## 2      0     1  2    1      1
+## 3      1     1  3    1      1
 #--------------
 
 #--------------
 # reshape back to wide format
 HCI_wide <- reshape(
   data = HCI_long, v.names = "rating", timevar = "item", 
-  idvar = c("person"), direction = "wide"
+  idvar = c("id"), direction = "wide"
 )
 
 head(HCI_wide, n = 3)
-##   gender major person rating.1 rating.2 rating.3 ... 
-## 1      0     1      1        1        1        1 ...
-## 2      0     1      2        1        1        1 ...
-## 3      1     1      3        1        1        1 ...
+##   gender major id rating.1 rating.2 rating.3 ... 
+## 1      0     1  1        1        1        1 ...
+## 2      0     1  2        1        1        1 ...
+## 3      1     1  3        1        1        1 ...
 ## ...
 #--------------
 
 #--------------
 # tidyverse approach
+library(tidyverse)
 data(HCI, package = "ShinyItemAnalysis")
 HCI <- mutate(HCI, id = row_number())    # add variable with row number
 head(HCI)
@@ -231,6 +225,7 @@ hist(HCIdata$total, breaks = seq(3, 20, 1), col = "gold",
 
 #--------------
 # histogram with ggplot
+library(ggplot2)
 qplot(total, data = HCIdata)
 ggplot(data = HCIdata, aes(total)) +
   geom_histogram(binwidth = 1, fill = "gold", col = "black")
@@ -262,6 +257,7 @@ ggplot(data = HCIdata, aes(total)) +
 
 #--------------
 # histograms by gender with lattice
+library(lattice)
 histogram(~ total | gender, data = HCIdata, type = "count", 
           col = "gold", breaks = seq(3, 20, 1), xlab = "Total score")
 #--------------
@@ -521,9 +517,6 @@ c(Min = min(HCI$score), Max = max(HCI$score),
   Kurt = moments::kurtosis(HCI$score))
 ##     Min     Max    Mean     Med     Var      SD    Skew    Kurt
 ##  3.0000 20.0000 12.2120 12.0000 13.2473  3.6397 -0.1982  2.3474
-
-moments::kurtosis(HCI$score) - 3
-## [1] -0.6526
 #--------------
 
 #--------------
@@ -532,6 +525,12 @@ psych::describe(HCI$score, type = 1)
 ## X1    1 651 12.21 3.64     12   12.32 4.45   3  20    17
 ##    skew kurtosis   se
 ## X1 -0.2    -0.65 0.14
+#--------------
+
+#--------------
+# obtaining the same value for kurtosis, not shown in the book
+moments::kurtosis(HCI$score) - 3
+## [1] -0.6526
 #--------------
 
 #-----------------------------------------------------------------
