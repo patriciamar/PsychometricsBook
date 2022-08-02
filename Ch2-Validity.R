@@ -232,25 +232,20 @@ ggplot(data.frame(
 # differences between post-test and pre-test
 (dif <- HCIprepost$score.post - HCIprepost$score.pre)
 ## [1]  7  2  0  2  4  1  0  5  3  1  5 -2  4  8  1 -4
-# mean difference
-(barX <- mean(dif))
+(barX <- mean(dif))          # mean difference
 ## [1] 2.3125
-# standard deviation of difference
-(s <- sd(dif))
+(sX <- sd(dif))              # standard deviation of difference
 ## [1] 3.1563
-# number of observations
-(n <- length(dif))
+(n <- length(dif))           # number of observations
 ## [1] 16
-# t-value
-(t <- barX / (s / sqrt(n)))
+(t <- barX / (sX / sqrt(n))) # t-value
 ## [1] 2.9306
-# p-value
-2 * pt(-abs(t), df = n - 1)
+2 * pt(-abs(t), df = n - 1)  # p-value
 ## [1] 0.0103
 # confidence interval
-barX - qt(1 - 0.05 / 2, df = n - 1) * s / sqrt(n)
+barX - qt(1 - 0.05 / 2, df = n - 1) * sX / sqrt(n)
 ## [1] 0.6306
-barX + qt(1 - 0.05 / 2, df = n - 1) * s / sqrt(n)
+barX + qt(1 - 0.05 / 2, df = n - 1) * sX / sqrt(n)
 ## [1] 3.9944
 #--------------
 
@@ -296,16 +291,17 @@ t.test(score_grads, score_undergrads, alternative = "greater")
 ##         Welch Two Sample t-test
 ##
 ## data:  score_grads and score_undergrads
-## t = 2.2, df = 9.3, p-value = 0.03
+## t = 2.1889, df = 9.3448, p-value = 0.0276
 ## alternative hypothesis: true difference in means is greater than 0
 ## 95 percent confidence interval:
-##  0.38  Inf
+##  0.3800  Inf
 ## sample estimates:
-## mean of x mean of y
-## 14.50     12.21
+## mean of x   mean of y
+##   14.5000     12.2120
 #--------------
 
 #--------------
+# mean and sd for groups (code not shown in the book)
 mean(score_grads)
 ## [1] 14.5000
 sd(score_grads)
@@ -317,14 +313,13 @@ sd(score_undergrads)
 #--------------
 
 #--------------
+# boxplots (code not shown in the book)
 df <- data.frame(
   score = c(score_grads, score_undergrads),
   group = as.factor(c(rep("Graduate", length(score_grads)),
                       rep("Undergraduate", length(score_undergrads))))
 )
-#--------------
 
-#--------------
 ggplot(df, aes(x = group, y = score, fill = group)) +
   geom_boxplot() +
   xlab("") + ylab("Total score") +
@@ -352,6 +347,7 @@ data(HCIdata, package = "ShinyItemAnalysis")
 #--------------
 
 #--------------
+# boxplots (code not shown in the book)
 #set.seed(978)
 ggplot(HCIdata, aes(x = typeSCH, y = total, fill = typeSCH)) +
   geom_boxplot() +
@@ -474,6 +470,7 @@ qqline(lmMS$residuals, lty = "dotted")
 #--------------
 
 #--------------
+# more diagnostic plots (code not shown in the book)
 #plot(lmMS)
 plot(lmMS, which = 1)
 plot(lmMS, which = 2)
