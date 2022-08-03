@@ -5,22 +5,6 @@
 #-----------------------------------------------------------------
 
 #-----------------------------------------------------------------
-# Packages
-#-----------------------------------------------------------------
-
-library(Cairo)
-library(corrplot)
-library(ggdendro)
-library(ggplot2)
-library(GPArotation)
-library(lavaan)
-library(lme4)
-library(lmerTest)
-library(psych)
-library(semPlot)
-library(ShinyItemAnalysis)
-
-#-----------------------------------------------------------------
 # Plot settings
 #-----------------------------------------------------------------
 
@@ -91,6 +75,7 @@ head(MSclinical, n = 3)
 #--------------
 
 #--------------
+library(ggplot2)
 ggplot(MSclinical, aes(x = MI, y = EDSS)) +
   geom_point() + theme_fig()
 #--------------
@@ -171,19 +156,20 @@ cor.test(MSclinical$MI, MSclinical$EDSS, method = "kendall")
 #--------------
 
 #--------------
-psych::tetrachoric(table(HCI$"Item 1", HCI$"Item 2"))
-## [1] 0.23
+library(psych)
+tetrachoric(table(HCI$"Item 1", HCI$"Item 2"))
+## [1] 0.2338
 ##
 ##  with tau of
-##     0     0
-## -0.52 -0.68
+##       0       0
+## -0.5213 -0.6830
 cor(HCI$"Item 1", HCI$"Item 2")
 ## [1] 0.1360
 #--------------
 
 #--------------
 data(Anxiety, package = "lordif")
-psych::polychoric(table(Anxiety$R1, Anxiety$R2))
+polychoric(table(Anxiety$R1, Anxiety$R2))
 ## $rho
 ## [1] 0.8334
 ##
@@ -538,17 +524,16 @@ summary(lmF)
 #-----------------------------------------------------------------
 
 #--------------
-# polychoric correlation calculation
-corP <- psych::polychoric(HCI[, 1:20])
-# correlation matrix
+corP <- polychoric(x = HCI[, 1:20]) # polychoric correlation
 corP$rho[1:4, 1:4]
 ##        Item 1 Item 2 Item 3 Item 4
 ## Item 1 1.0000 0.2338 0.2818 0.0707
 ## Item 2 0.2338 1.0000 0.4800 0.1273
 ## Item 3 0.2818 0.4800 1.0000 0.0508
 ## Item 4 0.0707 0.1272 0.0508 1.0000
-# correlation plot
-ShinyItemAnalysis::plot_corr(HCI[, 1:20], cor = "polychoric")
+
+# correlation heat map
+ShinyItemAnalysis::plot_corr(Data = HCI[, 1:20], cor = "polychoric")
 #--------------
 
 #-----------------------------------------------------------------
@@ -557,13 +542,14 @@ ShinyItemAnalysis::plot_corr(HCI[, 1:20], cor = "polychoric")
 
 #--------------
 # hierarchical clustering
-hc <- hclust(as.dist(1 - corP$rho), method = "ward.D2")
+hc <- hclust(d = as.dist(1 - corP$rho), method = "ward.D2")
 # dendrogram
-ggdendrogram(hc)
+library(ggdendro)
+ggdendrogram(data = hc)
 #--------------
 
 #--------------
-ShinyItemAnalysis::plot_corr(HCI[, 1:20], cor = "poly",
+ShinyItemAnalysis::plot_corr(Data = HCI[, 1:20], cor = "poly",
                              clust_method = "ward.D2")
 #--------------
 
@@ -579,10 +565,6 @@ ShinyItemAnalysis::plot_corr(HCI[, 1:20], cor = "poly",
 # 2.4.4.1 Exploratory factor analysis
 #-----------------------------------------------------------------
 
-#--------------
-library(psych)
-#--------------
-
 # Single factor model
 # with fa() of the psych package
 
@@ -594,8 +576,8 @@ fa(corHCI, nfactors = 1, fm = "ml", n.obs = 651)
 #--------------
 
 #--------------
-(FA1 <- fa(HCI[, 1:20], cor = "tetrachoric", nfactors = 1, fm = "ml"))
-summary(FA1)
+FA1 <- fa(r = HCI[, 1:20], cor = "tetrachoric", nfactors = 1, fm = "ml")
+summary(FA1) # model summary, code not presented in the book
 print(FA1$loadings, cutoff = 0)
 ## Loadings:
 ##         ML1  
@@ -636,7 +618,7 @@ FA1$communality
 #--------------
 
 #--------------
-FA1$loadings[1]^2
+FA1$loadings[1]^2 # calculation check, code not presented in the book
 ## [1] 0.1973 
 #--------------
 
@@ -667,6 +649,7 @@ sum(FA1$loadings^2)
 #--------------
 
 #--------------
+# calculation check, code not presented in the book
 round(FA1$model, 2)
 round(tcrossprod(loadings(FA1)), 2)
 var(HCI[, 1])
@@ -694,7 +677,7 @@ FA1b$uniquenesses
 #--------------
 data(TestAnxietyCor, package = "ShinyItemAnalysis")
 # FA unrotated:
-(FA2_tAnxiety <- fa(TestAnxietyCor, nfactors = 2, n.obs = 335, 
+(FA2_tAnxiety <- fa(r = TestAnxietyCor, nfactors = 2, n.obs = 335, 
                     rotate = "none"))
 ## Factor Analysis using method =  minres
 ## Call: fa(r = TestAnxietyCor, nfactors = 2, n.obs = 335, rotate = "none")
@@ -711,23 +694,22 @@ plot(FA2_tAnxiety, xlim = c(-.5, 1), ylim = c(-.5, 1))
 
 #--------------
 # communalities are sum of squared loadings:
+# calculation check, code not shown in the book
 FA2_tAnxiety$communalities
 apply(FA2_tAnxiety$loadings^2, 1, sum)
 #--------------
 
 #--------------
 plot(FA2_tAnxiety, xlim = c(-.5, 1), ylim = c(-.5, 1))
-
-# label unrotated axes
-text(x = 0.95, y = -0.05, expression(paste(hat(alpha), "i1")))
-text(x = -0.05, y = 0.95, expression(paste(hat(alpha), "i2")))
+text(x = 0.95, y = -0.05, expression(hat(alpha)[i1])) # code not shown in the book
+text(x = -0.05, y = 0.95, expression(hat(alpha)[i2])) # code not shown in the book
 #--------------
 
 #-----------------------------------------------------------------
 # 2.4.4.2 Factor rotation
 #-----------------------------------------------------------------
 # FA oblimin rotation
-FA2_tAnxiety_obl <- fa(TestAnxietyCor, nfactors = 2, n.obs = 335, 
+FA2_tAnxiety_obl <- fa(r = TestAnxietyCor, nfactors = 2, n.obs = 335, 
                        rotate = "oblimin")
 print(FA2_tAnxiety_obl$loadings, cutoff = 0.4)
 ## Loadings:
@@ -739,10 +721,12 @@ print(FA2_tAnxiety_obl$loadings, cutoff = 0.4)
 ## i5          0.795
 ## ...
 plot(FA2_tAnxiety_obl, xlim = c(-.5, 1), ylim = c(-.5, 1))
+text(x = 0.95, y = -0.05, expression(hat(alpha)[i1r])) # code not shown in the book
+text(x = -0.05, y = 0.95, expression(hat(alpha)[i2r])) # code not shown in the book
 #--------------
 
 #--------------
-# rotation matrix:
+# rotation matrix, code not shown in the book:
 FA2_tAnxiety_obl$rot.mat
 ##         [,1]   [,2]
 ## [1,]  0.7725 0.3022
@@ -751,31 +735,24 @@ FA2_tAnxiety$loadings %*% FA2_tAnxiety_obl$rot.mat
 #--------------
 
 #--------------
+# code not shown in the book
 FA2_tAnxiety_obl$rot.mat
 solve(FA2_tAnxiety_obl$rot.mat)
 
-# rotated oblique axes
+# original plot with rotated oblique axes
+plot(FA2_tAnxiety, xlim = c(-.5,1), ylim = c(-.5, 1))
+text(x = 0.95, y = -0.05, expression(hat(alpha)[i1]))
+text(x = -0.05, y = 0.95, expression(hat(alpha)[i2]))
 lines(c(0, solve(FA2_tAnxiety_obl$rot.mat)[1,1]), c(0,solve(FA2_tAnxiety_obl$rot.mat)[1,2]), lty = 3)
 lines(c(0, solve(FA2_tAnxiety_obl$rot.mat)[2,1]), c(0,solve(FA2_tAnxiety_obl$rot.mat)[2,2]), lty = 3)
-
-# label rotated axes
-# TODO: move i2r and i1r to lower index
-text(x = 0.75, y = 0.6, labels = expression(paste(hat(alpha), "i2r")))
-text(x = 0.9, y = - 0.25, labels = expression(paste(hat(alpha), "i1r")))
-#--------------
-
-#--------------
-# rotated loadings
-# points(loadings(FA2_tAnxiety_obl), pch = 16, col = "grey")
-plot(FA2_tAnxiety_obl, xlim = c(-.5,1), ylim = c(-.5, 1))
-text(x = 0.95, y = -0.05, expression(paste(hat(alpha), "i1r")))
-text(x = -0.07, y = 0.95, expression(paste(hat(alpha), "i2r")))
-# TODO: move i2r and i1r to lower index
+text(x = 0.75, y = 0.6, labels = expression(paste(hat(alpha)[i2r])))
+text(x = 0.9, y = - 0.25, labels = expression(paste(hat(alpha)[i1r])))
 #--------------
 
 #--------------
 # with factanal() and GPArotation()
-?GPArotation::rotations
+library(GPArotation)
+?rotations
 (FA2b_tAnxiety <- factanal(covmat = TestAnxietyCor, factors = 2, 
                            rotation = "none", n.obs = 335))
 (FA2b_tAnxiety_obl <- factanal(covmat = TestAnxietyCor, factors = 2, 
@@ -788,6 +765,7 @@ update(FA2b_tAnxiety, rotation = "oblimin")
 #-----------------------------------------------------------------
 
 #--------------
+# code not shown in the book:
 # inverse matrix calculation
 solve(corHCI)
 # product of inverse and original matrix gives identity matrix as expected
@@ -813,7 +791,7 @@ head(FSa, n = 3)
 #--------------
 
 #--------------
-(FS <- psych::factor.scores(HCI[, 1:20], FA1, rho = corHCI, 
+(FS <- psych::factor.scores(x = HCI[, 1:20], f = FA1, rho = corHCI, 
                             method = "Thurstone"))
 ## $scores
 ##          ML1
@@ -832,15 +810,17 @@ head(FSa, n = 3)
 #--------------
 
 #--------------
-(FA1 <- fa(HCI[,1:20], cor = "tet", nfactors = 1, 
+# code not shown in the book:
+(FA1 <- fa(r = HCI[,1:20], cor = "tet", nfactors = 1, 
           fm = "ml", scores = "Thurstone"))
 FA1$scores[1:4]
 # ## [1] 1.203982 1.806541 1.331732 1.875942
-# seems to give different results?? Somewhat different setting?
+# seems to give different results, somewhat different setting
 plot(FS$scores ~ FA1$scores)
-#--------------
+cor(FS$scores, FA1$scores) # but highly correlated
+##        ML1
+## ML1 0.9988
 
-#--------------
 hist(FS$scores)
 plot(FS$scores ~ rowSums(HCI[,1:20]))
 cor(FS$scores, rowSums(HCI[,1:20]))
@@ -856,10 +836,11 @@ sd(FS$scores)
 # eigen values of the original cor. matrix
 eigen(TestAnxietyCor)$values
 ##  [1] 8.7790 1.3495 0.9710 0.8880 0.7744 0.7416 0.7062
-scree(TestAnxietyCor)
+scree(TestAnxietyCor) # code not shown in the book
 #--------------
 
 #--------------
+# code not shown in the book:
 # eigen values on the common factor solution
 FA1_tAnxiety <- fa(TestAnxietyCor, nfactors = 1, n.obs = 335)
 FA1_tAnxiety$e.values
@@ -870,7 +851,7 @@ eigen(FA1_tAnxiety$model)$values
 #--------------
 
 #--------------
-ShinyItemAnalysis::fa_parallel(TestAnxietyCor, n_obs = 335, 
+ShinyItemAnalysis::fa_parallel(Data = TestAnxietyCor, n_obs = 335, 
                                method = "pca")
 ## The input was recognized as a correlation matrix.
 ## Assuming 335 observations in the original data.
@@ -896,13 +877,12 @@ VSS(TestAnxietyCor, n.obs = 335)
 #-----------------------------------------------------------------
 
 #--------------
-library(lavaan)
-#--------------
-
-#--------------
 data(BFI2, package = "ShinyItemAnalysis")
 head(BFI2, n = 2)
-summary(BFI2)
+##   i1 i2 i3 i4 i5 i6 i7 i8 i9 i10 i11 i12 i13 i14 i15 i16 i17 i18 i19 i20 ...
+## 1  5  5  2  3  5  4  4  3  4   5   5   4   3   4   2   3   5   3   2   5 ...
+## 2  4  5  4  3  3  3  5  3  2   4   4   2   4   2   3   4   5   4   3   4 ...
+summary(BFI2) # code not shown in the book
 #--------------
 
 #--------------
@@ -910,6 +890,10 @@ model_EN <- 'E =~ i1 + i6 + i11 + i16 + i21 + i26 +
                   i31 + i36 + i41 + i46 + i51 + i56
              N =~ i4 + i9 + i14 + i19 + i24 + i29 + 
                   i34 + i39 + i44 + i49 + i54 + i59'
+#--------------
+
+#--------------
+library(lavaan)
 fit_EN <- cfa(model_EN, data = BFI2)
 #--------------
 
@@ -975,7 +959,7 @@ model_ENs <- 'E =~ NA*i1 + i6 + i11 + i16 + i21 + i26 +
                    i34 + i39 + i44 + i49 + i54 + i59
               E ~~ 1*E
               N ~~ 1*N'
-fit_ENs <- cfa(model_ENs, data = BFI2)
+fit_ENs <- cfa(model = model_ENs, data = BFI2)
 parameterEstimates(fit_ENs, ci = FALSE, standardized = TRUE)
 ##    lhs op rhs    est    se       z pvalue std.lv std.all std.nox
 ## 1    E =~  i1  0.699 0.024  29.740      0  0.699   0.665   0.665
@@ -984,6 +968,7 @@ parameterEstimates(fit_ENs, ci = FALSE, standardized = TRUE)
 #--------------
 
 #--------------
+# code not shown in the book:
 inspect(fit_EN)
 ## $lambda
 ##      E  N
@@ -1011,7 +996,7 @@ lavInspect(fit_EN, what = "std")$psi
 #--------------
 psych::lavaan.diagram(fit_ENs)
 semPlot::semPaths(fit_EN, what = "stdest", rotation = 4)
-semPlot::semPaths(fit_ENs, what = "est", rotation = 4)
+semPlot::semPaths(fit_ENs, what = "est", rotation = 4) # code not shown in the book
 #--------------
 
 #--------------
@@ -1036,13 +1021,17 @@ model_EN_hier <- 'Escb =~ i1 + i16 + i31 + i46
                   Nemt =~ i14 + i29 + i44 + i59
                   E =~ Escb + Easr + Eenl
                   N =~ Nanx + Ndep + Nemt'
-fit_EN_hier <- cfa(model_EN_hier, data = BFI2)
+fit_EN_hier <- cfa(model = model_EN_hier, data = BFI2)
 #--------------
 
 #--------------
+# code not shown in the book:
 summary(fit_EN_hier, fit.measures = TRUE, standardized = TRUE)
 parTable(fit_EN_hier)
 parameterEstimates(fit_EN_hier)
+#--------------
+
+#--------------
 semPlot::semPaths(fit_EN_hier, what = "std.est", rotation = 4)
 #--------------
 
@@ -1094,6 +1083,7 @@ cor(admitted$xvar, admitted$yvar)
 
 #-------------- 
 # Plot 1: All observations, r = 0.72
+# code not shown in the book:
 (scatter_all <- ggplot(df) + 
     geom_point(aes(x = xvar, y = yvar),
                size = 1.8, alpha = 0.5, shape = 19) +
@@ -1110,6 +1100,7 @@ psych::rangeCorrection(r = cor(admitted$xvar, admitted$yvar),
 #--------------
 
 #--------------
+# code not shown in the book:
 (scatter_admitted <- ggplot(admitted) +
    geom_point(aes(x = xvar, y = yvar),
               size = 1.8, alpha = 0.5, shape = 19) +
@@ -1133,6 +1124,7 @@ psych::rangeCorrection(r = cor(admitted2$xvar, admitted2$yvar),
 #-------------- 
 
 #-------------- 
+# code not shown in the book:
 (scatter_second <- ggplot(second_attempt) +
    geom_point(aes(x = xvar, y = yvar),
               size = 1.8,
