@@ -82,7 +82,7 @@ hist(Diff)
 #-----------------------------------------------------------------
 
 #-----------------------------------------------------------------
-# 9.3.4  CAT implementation in interactive application
+# 9.3.2  CAT implementation in interactive application
 #-----------------------------------------------------------------
 
 #--------------
@@ -115,7 +115,7 @@ results <- mirtCAT(df, mo = model, method = "MAP", criteria = "MI",
                    design = list(max_items = 10, min_SEM = 0.6))
 #--------------
 
-# Note: to match with the results presented, only the 1st, 6th and 8th (last)
+# Note: Note: to match with the results presented, only the 1st (value 1), 6th (value 20) and 8th (last, value 30)
 #        items are answered correctly
 
 #--------------
@@ -201,7 +201,7 @@ plot(results)
 #--------------
 
 #-----------------------------------------------------------------
-# 9.3.4 Post-hoc analysis
+# 9.3.3 Post-hoc analysis
 #-----------------------------------------------------------------
 
 #--------------
@@ -335,8 +335,25 @@ plot(posthocSim2)
 plot(posthocSim2, SE = qnorm(0.975))
 #--------------- 
 
+#--------------
+# with catR (code not shown in the book)
+library(catR)
+
+start = list(nrItems = 1, theta = 0)
+test = list(method = "BM", itemSelect = "MFI", random.seed = 1)
+stop = list(rule = "precision", thr = 0.3)
+final = list(method = "BM")
+
+sim = simulateRespondents(thetas = 0.5,
+                          itemBank = coef(fit2pl, IRTpars = TRUE, simplify = TRUE)$items, 
+                          responsesMatrix = dataMedical[1,1:100], model = "GPCM", 
+                          start=start, test = test, stop = stop, final = final)
+sim
+plot(sim, ci = TRUE)
+#---------------
+
 #-----------------------------------------------------------------
-# 9.3.6 CAT simulation study with MCMC
+# 9.3.4 CAT simulation study with MCMC
 #-----------------------------------------------------------------
 
 #--------------
@@ -454,4 +471,73 @@ plot(thetas, CAT_items, ylim = c(0, 100))
 
 plot(thetas, CAT_SE, ylim = c(0, 0.4))
 abline(0.3, 0, col = "blue")
+#--------------
+
+#--------------
+# with catR package obtaining the same results (code not shown in the book)
+#   start, test, stop and final conditions are the same as before
+
+catR_thetas <- c()
+catR_ses <- c()
+catR_items <- c()
+
+for (p in 1:length(thetas)) {
+  pr <- randomCAT(trueTheta = 0,
+                  itemBank = coef(fit2pl, IRTpars = TRUE, simplify = TRUE)$items,
+                  responses = responses[p, ], 
+                  start = start, test = test, stop = stop, final = final)
+  catR_thetas <- c(catR_thetas, pr$thFinal)
+  catR_ses <- c(catR_ses, pr$seFinal)
+  catR_items <- c(catR_items, length(pr$testItems))
+}
+
+cor(CAT_thetas, catR_thetas)
+## [1] 1
+plot(CAT_thetas, catR_thetas)
+
+
+cor(thetas, catR_thetas)
+## [1] 0.9491 
+cor(Zscores, catR_thetas)
+## [1] 0.9559
+
+cor(CAT_SE, catR_ses)
+## [1]
+
+summary(CAT_SE)
+##   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+## 0.2920  0.2959  0.2978  0.2975  0.2986  0.3122
+sd(CAT_SE)
+## 0.0024
+
+summary(catR_ses)
+
+
+CAT_items <- catR_items
+summary(CAT_items)
+##  Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##  18.0    19.0    20.5    25.5    24.0   100.0 
+sd(CAT_items)
+## [1] 14.7172
+
+# nice plotting options of catR
+start = list(nrItems = 1, theta = 0, seed = 1)
+test = list(method = "WL", itemSelect = "MFI", random.seed = 1)
+stop = list(rule = "length", thr = 20)  # TODO: implement precision criterion SE < 0.30
+final = list(method = "ML")
+
+
+sim = simulateRespondents(thetas = thetas, 
+                          itemBank = coef(fit2pl, IRTpars = TRUE, simplify = TRUE)$items, 
+                          start=start, test = test, stop = stop, final = final)
+
+sim
+plot(sim)
+
+## Fixing maximum exposure rate
+sim2 = simulateRespondents(thetas = thetas, 
+                           itemBank = coef(fit2pl, IRTpars = TRUE, simplify = TRUE)$items, start=start,
+                           test = test, stop = stop, final = final, rmax = 0.6)
+sim2
+plot(sim2)
 #--------------
