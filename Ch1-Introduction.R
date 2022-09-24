@@ -73,11 +73,11 @@ data(HCI, package = "ShinyItemAnalysis")
 #--------------
 # data dimension (number of rows, columns)
 dim(HCI)
-## [1] 651  22
+## [1] 651  23
 nrow(HCI)
 ## [1] 651
 ncol(HCI)
-## [1] 22
+## [1] 23
 #--------------
 
 #--------------
@@ -87,7 +87,7 @@ colnames(HCI)
 ##  [1] "Item 1"  "Item 2"  "Item 3"  "Item 4"  "Item 5"  "Item 6"
 ##  [7] "Item 7"  "Item 8"  "Item 9"  "Item 10" "Item 11" "Item 12"
 ## [13] "Item 13" "Item 14" "Item 15" "Item 16" "Item 17" "Item 18"
-## [19] "Item 19" "Item 20" "gender"  "major"
+## [19] "Item 19" "Item 20" "gender"  "major"   "total" 
 #--------------
 
 #--------------
@@ -107,7 +107,7 @@ str(HCI)
 ##  $ Item 1 : num  1 1 1 1 1 1 1 0 1 1 ...
 ##  $ Item 2 : num  1 1 1 1 1 1 1 1 1 1 ...
 ##  ...
-##  $ id     : int  1 2 3 4 5 6 7 8 9 10 ...
+##  $ total  : num  16 19 17 20 19 20 20 14 18 17 ...
 #--------------
 
 #--------------
@@ -341,7 +341,7 @@ summary(as.factor(HCIdata$yearc5))
 ## 67 137 171 216  78 
 
 min(as.factor(HCIdata$yearc5))
-## Error in Summary.factor(c(4L, 4L, 4L, 4L, 4L, 4L, 4L, 4L, 4L, 3L, ...
+## Error in Summary.factor(c(4L, 4L, 4L, 4L, 4L, 4L, 4L, 4L, 4L, ...
 ##  ‘min’ not meaningful for factors
 
 min(as.ordered(HCIdata$yearc5))
