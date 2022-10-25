@@ -498,29 +498,33 @@ summary(EPIA$"Item 1")
 #-----------------------------------------------------------------
 
 #--------------
-HCI$score <- rowSums(HCI[, 1:20])
-HCI$score <- apply(X = HCI[, 1:20], MARGIN = 1, FUN = sum)
+HCI$total
+# [1] 16 19 17 20 19 20 20 14 18 17 17 16 15 12 17 ...
+rowSums(HCI[, 1:20])
+# [1] 16 19 17 20 19 20 20 14 18 17 17 16 15 12 17 ...
+apply(X = HCI[, 1:20], MARGIN = 1, FUN = sum)
+# [1] 16 19 17 20 19 20 20 14 18 17 17 16 15 12 17 ...
 #--------------
 
 #--------------
 # summary of total score
-summary(HCI$score)
+summary(HCI$total)
 ##   Min.  1st Qu.   Median     Mean  3rd Qu.     Max.
 ## 3.0000  10.0000  12.0000  12.2120  15.0000  20.0000
 #--------------
 
 #--------------
-c(Min = min(HCI$score), Max = max(HCI$score),
-  Mean = mean(HCI$score), Med = median(HCI$score),
-  Var = var(HCI$score), SD = sd(HCI$score),
-  Skew = moments::skewness(HCI$score),
-  Kurt = moments::kurtosis(HCI$score))
+c(Min = min(HCI$total), Max = max(HCI$total),
+  Mean = mean(HCI$total), Med = median(HCI$total),
+  Var = var(HCI$total), SD = sd(HCI$total),
+  Skew = moments::skewness(HCI$total),
+  Kurt = moments::kurtosis(HCI$total))
 ##     Min     Max    Mean     Med     Var      SD    Skew    Kurt
 ##  3.0000 20.0000 12.2120 12.0000 13.2473  3.6397 -0.1982  2.3474
 #--------------
 
 #--------------
-psych::describe(HCI$score, type = 1)
+psych::describe(HCI$total, type = 1)
 ##    vars   n  mean   sd median trimmed  mad min max range
 ## X1    1 651 12.21 3.64     12   12.32 4.45   3  20    17
 ##    skew kurtosis   se
@@ -529,7 +533,7 @@ psych::describe(HCI$score, type = 1)
 
 #--------------
 # obtaining the same value for kurtosis, not shown in the book
-moments::kurtosis(HCI$score) - 3
+moments::kurtosis(HCI$total) - 3
 ## [1] -0.6526
 #--------------
 
@@ -538,20 +542,20 @@ moments::kurtosis(HCI$score) - 3
 #-----------------------------------------------------------------
 
 #--------------
-zscore <- scale(HCI$score) # Z-score
+zscore <- scale(HCI$total) # Z-score
 tscore <- 10 * zscore + 50 # T-score
-success_rate <- 100 * (HCI$score / max(HCI$score)) # success rate
+success_rate <- 100 * (HCI$total / max(HCI$total)) # success rate
 #--------------
 
 #--------------
-plot(ecdf(HCI$score), xlab = "HCI score", ylab = "Percentile")
-ecdf(HCI$score)(HCI$score)
+plot(ecdf(HCI$total), xlab = "HCI score", ylab = "Percentile")
+ecdf(HCI$total)(HCI$total)
 ## [1] 0.8725 0.9923 0.9401 1.0000 0.9923 1.0000 1.0000 ...
-centiles <- round(100 * ecdf(HCI$score)(HCI$score)) # percentiles
+centiles <- round(100 * ecdf(HCI$total)(HCI$total)) # percentiles
 #--------------
 
 #--------------
-head(data.frame(score = HCI$score, zscore, tscore,
+head(data.frame(score = HCI$total, zscore, tscore,
                 centiles, success_rate), n = 4)
 ##   score zscore  tscore centiles success_rate
 ## 1    16 1.0408 60.4075       87           80
@@ -690,25 +694,25 @@ qnorm(0.025)
 
 #-------------
 # Histogram with an estimated normal density
-ggplot(data = HCI, aes(score)) +
+ggplot(data = HCI, aes(total)) +
   geom_histogram(aes(y = ..density..), binwidth = 1,
                  col = "black", fill = "gold") +
   stat_function(fun = dnorm, colour = "red",
-                args = list(mean = mean(HCI$score),
-                            sd = sd(HCI$score)), size = 0.8) +
+                args = list(mean = mean(HCI$total),
+                            sd = sd(HCI$total)), size = 0.8) +
   xlab("Total score") + ylab("Density") +
   theme_fig()
 #--------------
 
 #--------------
 # QQ plot in base 
-qqnorm(HCI$score)
-qqline(HCI$score)
+qqnorm(HCI$total)
+qqline(HCI$total)
 #--------------
 
 #--------------
 # QQ plot in ggplot 
-ggplot(HCI, aes(sample = score)) +
+ggplot(HCI, aes(sample = total)) +
   stat_qq(size = 2,
           shape = 1) +
   stat_qq_line() + 
