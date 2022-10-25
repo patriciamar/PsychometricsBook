@@ -412,11 +412,12 @@ head(AIBS, n = 4)
 ##  2 10 ...            48   3.5  ...
 ##  3 10 ...            48   2.0  ...
 ##  4 12 ...            38   2.0  ...
-summary(AIBS[,c("ID", "Score", "ScoreAvg", "ScoreRankAdj")])
+summary(AIBS[,c("ID", "Score", "ScoreAvg", "ScoreRankAdj")]) # code not shown in the book
 #--------------
 
 #--------------
 # Caterpillar plot of AIBS overall scientific merit scores
+# code not shown in the book
 ggplot(data = AIBS, aes(x = ScoreRankAdj, y = Score, group = ID)) + 
   geom_line(col = "gray") + geom_point(shape = 1, size = 1.5) +
   stat_summary(fun = mean, fun.args = list(na.rm = TRUE), 
