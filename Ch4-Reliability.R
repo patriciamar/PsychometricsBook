@@ -1,23 +1,8 @@
 #-----------------------------------------------------------------
-# Chapter 3 - Reliability
+# Chapter 4 - Reliability
 # Computational aspects of psychometric methods. With R.
 # P. Martinkova & A. Hladka
 #-----------------------------------------------------------------
-
-#-----------------------------------------------------------------
-# Packages
-#-----------------------------------------------------------------
-
-library(ggplot2)
-library(gtheory)
-library(hemp)
-library(lme4)
-library(ShinyItemAnalysis)
-library(sirt)
-library(plotrix)
-library(ggforce)
-library(tidyverse)
-library(Cairo)
 
 #-----------------------------------------------------------------
 # Plot settings
@@ -36,18 +21,8 @@ theme_fig <- function(base_size = 17, base_family = "") {
     )
 }
 
-# margins for mirt plots
-library(lattice)
-lw <- list(left.padding = list(x = 0.1, units = "inches"))
-lw$right.padding <- list(x = -0.1, units = "inches")
-lh <- list(bottom.padding = list(x = 0, units = "inches"))
-lh$top.padding <- list(x = -0.2, units = "inches")
-
-lattice.options(layout.widths = lw, layout.heights = lh)
-
-
 #-----------------------------------------------------------------
-# 3.2.5.1  Spearman-Brown prophecy formula
+# 4.2.5.1  Spearman-Brown prophecy formula
 #-----------------------------------------------------------------
 
 #--------------
@@ -100,11 +75,11 @@ ceiling(m * items.original) # new test length
 #--------------
 
 #-----------------------------------------------------------------
-# 3.3.1  Reliability estimation with correlation coefficients
+# 4.3.1  Reliability estimation with correlation coefficients
 #-----------------------------------------------------------------
 
 #-----------------------------------------------------------------
-# Test-retest reliability
+# 4.3.1.1 Test-retest reliability
 #-----------------------------------------------------------------
 
 #--------------
@@ -116,6 +91,8 @@ HCI_retest  <- HCItestretest[HCItestretest$test == "retest", ]
 #--------------
 
 #--------------
+# code not shown in the book:
+library(ggplot2)
 ggplot(data.frame(Test = HCI_test$total, Retest = HCI_retest$total),
        aes(x = Test, y = Retest)) + geom_point() + theme_fig()
 #--------------
@@ -135,40 +112,30 @@ cor.test(HCI_test$total, HCI_retest$total)
 #--------------
 
 #-----------------------------------------------------------------
-# Split-half coefficient
+# 4.3.1.3 Split-half coefficient
 #-----------------------------------------------------------------
 
 #--------------
 # loading dataset, taking item data
 data(HCI, package = "ShinyItemAnalysis")
-data <- HCI[, 1:20]
+HCI_items <- HCI[, 1:20]
 #--------------
 
 #--------------
 # first-second split
-df1 <- data[, 1:10]
-df2 <- data[, 11:20]
-# total score calculation
-ts1 <- rowSums(df1)
-ts2 <- rowSums(df2)
-# correlation
+df1 <- HCI_items[, 1:10]; df2 <- HCI_items[, 11:20]
+ts1 <- rowSums(df1); ts2 <- rowSums(df2)
 cor.x <- cor(ts1, ts2)
-# apply Spearman-Brown formula to estimate reliability
-2 * cor.x / (1 + cor.x)
+2 * cor.x / (1 + cor.x) # Spearman-Brown formula
 ## [1] 0.6966
 #--------------
 
 #--------------
 # even-odd split
-df1 <- data[, seq(1, 20, 2)]
-df2 <- data[, seq(2, 20, 2)]
-# total score calculation
-ts1 <- rowSums(df1)
-ts2 <- rowSums(df2)
-# correlation
+df1 <- HCI_items[, seq(1, 20, 2)]; df2 <- HCI_items[, seq(2, 20, 2)]
+ts1 <- rowSums(df1); ts2 <- rowSums(df2)
 cor.x <- cor(ts1, ts2)
-# apply Spearman-Brown formula to estimate reliability
-2 * cor.x / (1 + cor.x)
+2 * cor.x / (1 + cor.x) # Spearman-Brown formula
 ## [1] 0.7415
 #--------------
 
@@ -176,141 +143,174 @@ cor.x <- cor(ts1, ts2)
 # random split
 set.seed(123) # setting seed for reproducibility
 samp <- sample(1:20, 10) # 10 random items
-df1 <- data[, samp]
-df2 <- data[, setdiff(1:20, samp)]
-# total score calculation
-ts1 <- rowSums(df1)
-ts2 <- rowSums(df2)
-# correlation
+df1 <- HCI_items[, samp]; df2 <- HCI_items[, setdiff(1:20, samp)]
+ts1 <- rowSums(df1); ts2 <- rowSums(df2)
 cor.x <- cor(ts1, ts2)
-# apply Spearman-Brown formula to estimate reliability
-2 * cor.x / (1 + cor.x)
+2 * cor.x / (1 + cor.x) # Spearman-Brown formula
 ## [1] 0.7386
 #--------------
 
-#--------------
-# minimum of all possible split-halves
-library(psych)
-split <- splitHalf(data, raw = TRUE, brute = TRUE)
-items1 <- split$minAB$A; items2 <- split$minAB$B
-df1 <- data[, items1]; df2 <- data[, items2]
-# total score calculation
-ts1 <- rowSums(df1); ts2 <- rowSums(df2)
-# correlation
-cor.x <- cor(ts1, ts2)
-# apply Spearman-Brown formula to estimate reliability
-2 * cor.x / (1 + cor.x)
-## [1] 0.6114
-#--------------
-
-#--------------
-# average of 10,000 split-halves
-split <- splitHalf(data, raw = TRUE)
-mean(split$raw)
-## [1] 0.7209
-#--------------
-
-#--------------
-# average of all split-halves
-split <- splitHalf(data, raw = TRUE, brute = TRUE)
-mean(split$raw)
-## [1] 0.7213
-#--------------
-
 #-----------------------------------------------------------------
-# 3.3.2  Cronbach's alpha
+# 4.3.2  Cronbach's alpha
 #-----------------------------------------------------------------
 
 #--------------
-score <- rowSums(data) # total scores
-m <- ncol(data) # number of items
-var(score) # variance of total scores
+m <- ncol(HCI_items) # number of items
+var(HCI$total) # sample variance of total scores
 ## [1] 13.2473
-item_vars <- sapply(data, var) # item variances
-
-# Cronbach's alpha (3.11)
-m / (m - 1) * (1 - (sum(item_vars)) / var(score))
+item_vars <- sapply(HCI_items, var) # item sample variances
+m / (m - 1) * (1 - (sum(item_vars)) / var(HCI$total))
 ## [1] 0.7155
 #--------------
 
 #--------------
-VC <- var(data) # covariance matrix of data
-
-# Cronbach's alpha (3.12)
+VC <- var(HCI_items)
 (m / (m - 1)) * (1 - sum(diag(VC)) / sum(VC))
 ## [1] 0.7155
 #--------------
 
 #--------------
 # Cronbach's alpha in the psych and the psychometric packages
-psych::alpha(data)$total[1]
+psych::alpha(HCI_items)$total[1]
 ## raw_alpha
 ## 0.7155
 
-psychometric::alpha(data)
+psychometric::alpha(HCI_items)
 ## [1] 0.7155
 #--------------
 
+#--------------
+# Cronbach's alpha in the psych package (code not shown in the book)
+psych::alpha(HCI_items)
+#--------------
+
 #-----------------------------------------------------------------
-# Cronbach's alpha and inter-item correlations
+# 4.3.2.1 Cronbach's alpha and inter-item correlations
 #-----------------------------------------------------------------
 
 #--------------
 # Cronbach's alpha  as function of average inter-item correlation
 (c_bar <- sum(sapply(1:m, function(i) {
-  sum(cov(data[, i], data[, -i]))
+  sum(cov(HCI_items[, i], HCI_items[, -i]))
 })) / (m * (m - 1)))
 ## [1] 0.0237
 (v_bar <- sum(item_vars) / m)
 ## [1] 0.2122
-
-# Cronbach's alpha (3.13)
 m * c_bar / (v_bar + (m - 1) * c_bar)
 ## [1] 0.7155
 #--------------
 
 #-----------------------------------------------------------------
-# Cronbach's alpha in ANOVA framework
+# 4.4 Estimation of reliability with variance components
+#-----------------------------------------------------------------
+
+#-----------------------------------------------------------------
+# 4.4.1 ANOVA method of estimation
+#-----------------------------------------------------------------
+
+#-----------------------------------------------------------------
+# 4.4.1.1 One-way ANOVA
 #-----------------------------------------------------------------
 
 #--------------
-# Cronbach's alpha in ANOVA framework
-m <- ncol(data) # number of items
-n <- nrow(data) # number of persons
+data(AIBS, package = "ShinyItemAnalysis")
+head(AIBS, n = 4)
+##    ID ...  ScoreRankAdj Score  ...
+##  1 10 ...            48   2.0  ...
+##  2 10 ...            48   3.5  ...
+##  3 10 ...            48   2.0  ...
+##  4 12 ...            38   2.0  ...
+#--------------
 
-# converting data to the long format
-data.long <- reshape(
-  data, varying = list(colnames(data)),
-  timevar = "item", idvar = "person", v.names = "rating",
-  direction = "long", new.row.names = 1:13020
-)
+#--------------
+# AIBS summary (code not shown in the book)
+summary(AIBS[,c("ID", "Score", "ScoreAvg", "ScoreRankAdj")]) # code not shown in the book
+#--------------
 
-head(data.long, n = 2)
-## item rating person
-## 1    1      1      1
-## 2    1      1      2
+#--------------
+# Caterpillar plot of AIBS overall scientific merit scores
+# code not shown in the book
+ggplot(data = AIBS, aes(x = ScoreRankAdj, y = Score, group = ID)) + 
+  geom_line(col = "gray") + geom_point(shape = 1, size = 1.5) +
+  stat_summary(fun = mean, fun.args = list(na.rm = TRUE), 
+               geom = "point", col = "blue") + 
+  labs(x = "AIBS application rank", y = "Rating") +
+  coord_cartesian(ylim = c(1, 5)) + theme_fig()
+#--------------
+
+#--------------
+n = 72; m = 3
+mean.proposals = tapply(AIBS$Score, AIBS$ID, mean)
+mean.overall = mean(AIBS$Score)
+
+(SSP = m*sum((mean.proposals - mean.overall)^2))     # Observed SSb
+## 78.74
+(SSe = sum((AIBS$Score - AIBS$ScoreAvg)^2)) # Observed SSw
+## 57.64
+#--------------
+
+#--------------
+(MSP <- SSP/(n-1))
+## [1] 1.109
+(MSe <- SSe/(n*(m-1)))  # Estimate of residual variance
+## [1] 0.4003
+
+(MSP - MSe)/3           # Proposal (true-score) variance
+## [1] 0.2362
+#--------------
+
+#--------------
+((MSP - MSe)/m)/((MSP - MSe)/m + MSe) # IRR
+## [1] 0.3711
+#--------------
+
+#--------------
+((MSP - MSe)/m)/((MSP - MSe)/m + MSe/m) # IRR
+## [1] 0.6391
+#--------------
+
+#--------------
+# With aov() (code not shown in the book)
+aov(Score ~ ID, data = AIBS)
+#--------------
+
+#-----------------------------------------------------------------
+# 4.4.1.2 Two-way ANOVA and Cronbach's alpha
+#-----------------------------------------------------------------
+
+#--------------
+data(HCIlong, package = "ShinyItemAnalysis")
+head(HCIlong, n = 2)
+##   id   item rating gender major total
+## 1  1 Item 1      1      0     1    16
+## 2  1 Item 2      1      0     1    16
+#--------------
+
+#--------------
+m <- nlevels(as.factor(HCIlong$item)) # number of items
+n <- nlevels(as.factor(HCIlong$id)) # number of persons
 #--------------
 
 #--------------
 # mean ratings
-mean.overall <- mean(data.long$rating)
-mean.items <- tapply(data.long$rating, data.long$item, mean)
-mean.persons <- tapply(data.long$rating, data.long$person, mean)
+mean.overall <- mean(HCIlong$rating)
+mean.items <- tapply(HCIlong$rating, HCIlong$item, mean)
+mean.persons <- tapply(HCIlong$rating, HCIlong$id, mean)
 #--------------
 
 #--------------
-# sum of squares, mean sum of squares
-# total sum of squares total, df = n * m - 1
-SStotal <- sum((data.long$rating - mean.overall)^2)
-MStotal <- SStotal / (n * m - 1)
-# sum of squares persons, df = n - 1
+# sum of squares
+SStotal <- sum((HCIlong$rating - mean.overall)^2)
 SSP <- m * sum((mean.persons - mean.overall)^2)
-MSP <- SSP / (n - 1)
-# sum of squares items, df = m - 1
 SSI <- n * sum((mean.items - mean.overall)^2)
-MSI <- SSI / (m - 1)
-# sum of squares residual, df = (n - 1) * (m - 1)
 SSe <- SStotal - SSP - SSI
+#--------------
+
+#--------------
+# mean sum of squares
+MStotal <- SStotal / (n * m - 1)
+MSP <- SSP / (n - 1)
+MSI <- SSI / (m - 1)
 MSe <- SSe / ((n - 1) * (m - 1))
 #--------------
 
@@ -324,7 +324,9 @@ MSe <- SSe / ((n - 1) * (m - 1))
 ## [1] 0.1885
 (sigma2total <- sigma2P + sigma2I + sigma2e)
 ## [1] 0.2392
+#--------------
 
+#--------------
 # Cronbach's alpha
 sigma2P / (sigma2P + 1 / m * sigma2e)
 ## [1] 0.7155
@@ -341,7 +343,9 @@ sigma2P / (sigma2P + 1 / m * sigma2e)
 ## [1] 3.5144
 1 - 1 / FA # Cronbach's alpha
 ## [1] 0.7155
+#--------------
 
+#--------------
 # confidence interval
 gamma <- 0.05 # significance level
 # lower bound in 95% two-sided confidence interval
@@ -353,18 +357,30 @@ gamma <- 0.05 # significance level
 #--------------
 
 #--------------
-a <- psychometric::alpha(data)
+# confidence interval in psychometric package
+a <- psychometric::alpha(HCI_items)
 psychometric::alpha.CI(
-  a, N = nrow(data), k = ncol(data), level = 0.95
+  a, N = nrow(HCI_items), k = ncol(HCI_items), level = 0.95
 )
 ##      LCL  ALPHA    UCL
 ## 1 0.6828 0.7155 0.7462
 #--------------
 
 #--------------
-a <- psych::alpha(data)$total[1]
+# confidence interval in psych package
+psych::alpha(HCI_items)$feldt
+## 95% confidence boundaries (Feldt)
+## lower alpha upper
+##  0.68  0.72  0.75
+#--------------
+
+#--------------
+# confidence interval in psych package
+# not shown in the book
+# NOTE: for some reason does not work now (no output)
+a <- psych::alpha(HCI_items)$total[1]
 psych::alpha.ci(
-  a, n.obs = nrow(data), n.var = ncol(data),
+  a, n.obs = nrow(HCI_items), n.var = ncol(HCI_items),
   p.val = 0.05, digits = 4
 )
 ## $lower.ci
@@ -385,7 +401,7 @@ psych::alpha.ci(
 #--------------
 
 #--------------
-# CI calculated as in psych package:
+# CI calculated as in psych package (not shown in the book)
 # lower bound in 95% two-sided confidence interval
 1 - qf(1 - gamma / 2, n - 1, Inf) / FA
 ## [1] 0.6837
@@ -394,296 +410,139 @@ psych::alpha.ci(
 ## [1] 0.7456
 #--------------
 
-
 #-----------------------------------------------------------------
-# 3.3.3 Estimation of variance components
-#-----------------------------------------------------------------
-
-#-----------------------------------------------------------------
-# 3.3.3.1 Model specification
+# # 4.4.2 Maximum likelihood
 #-----------------------------------------------------------------
 
-#--------------
-# AIBS data upload and summary
-data(AIBS, package = "ShinyItemAnalysis")
-head(AIBS, n = 4)
-##    ID ...  ScoreRankAdj Score  ...
-##  1 10 ...            48   2.0  ...
-##  2 10 ...            48   3.5  ...
-##  3 10 ...            48   2.0  ...
-##  4 12 ...            38   2.0  ...
-summary(AIBS[,c("ID", "Score", "ScoreAvg", "ScoreRankAdj")]) # code not shown in the book
-#--------------
-
-#--------------
-# Caterpillar plot of AIBS overall scientific merit scores
-# code not shown in the book
-ggplot(data = AIBS, aes(x = ScoreRankAdj, y = Score, group = ID)) + 
-  geom_line(col = "gray") + geom_point(shape = 1, size = 1.5) +
-  stat_summary(fun = mean, fun.args = list(na.rm = TRUE), 
-               geom = "point", col = "blue") + 
-  labs(x = "AIBS application rank", y = "Overall score") +
-  coord_cartesian(ylim = c(1, 5)) + theme_fig()
-#--------------
-
-#--------------
-ICC(data)
-## Call: ICC(x = data)
-##
-## Intraclass correlation coefficients
-##                    type   ICC   F df1   df2        p   LCI   UCI
-## Sing_raters_abs    ICC1 0.094 3.1 650 12369 1.1e-122 0.083  0.11
-## Sing_rand_raters   ICC2 0.099 3.5 650 12350 1.3e-159 0.087  0.11
-## Sing_fix_raters    ICC3 0.112 3.5 650 12350 1.3e-159 0.099  0.13
-## Aver_raters_abs   ICC1k 0.675 3.1 650 12369 1.1e-122 0.644  0.70
-## Aver_rand_raters  ICC2k 0.687 3.5 650 12350 1.3e-159 0.655  0.72
-## Aver_fix_raters   ICC3k 0.715 3.5 650 12350 1.3e-159 0.688  0.74
-##
-## Number of subjects = 651     Number of Judges =  20
-#--------------
-
-
-#-----------------------------------------------------------------
-# 3.3.3.2 ANOVA method of estimation
-#-----------------------------------------------------------------
-
-#--------------
-# IRR for AIBS with ANOVA
-J = 72
-n = 3
-mean.proposals = tapply(AIBS$Score, AIBS$ID, mean)
-mean.overall = mean(AIBS$Score)
-(SSw = sum((AIBS$Score - AIBS$ScoreAvg)^2)) # Observed SSw
-## 57.64
-(SSb = 3*sum((mean.proposals - mean.overall)^2))     # Observed SSb
-## 78.74
-
-(MSb <- SSb/(J-1))
-(MSw <- SSw/(J*(3-1)))  # Estimate of residual variance
-# [1] 0.4002778
-(MSb - MSw)/3           # Proposal (true-score) variance
-# [1] 0.2362446
-
-((MSb - MSw)/3)/((MSb - MSw)/3 + MSw) # IRR
-## [1] 0.3711489
-
-# With aov()
-aov(Score ~ ID, data = AIBS)
-
-#--------------
-# ORIGINAL: HCI?
-#--------------
-# mean ratings
-mean.overall <- mean(data.long$rating)
-mean.persons <- tapply(data.long$rating, data.long$person, mean)
-
-m <- length(unique(data.long$item))
-n <- length(unique(data.long$person))
-#--------------
-
-#--------------
-# sum of squares persons, df = n - 1
-SSP <- m * sum((mean.persons - mean.overall)^2)
-MSP <- SSP / (n - 1)
-
-# sum of squares residual, df = (n - 1) * (m - 1)
-SSe1way <- sum((data.long$rating - rep(mean.persons, 20))^2)
-MSe1way <- SSe1way / ((m - 1) * n)
-
-# ANOVA estimates of variance components
-(sigma2E_ANOVA <- MSe1way)
-## [1] 0.2155
-(sigma2P_ANOVA <- ((MSP - MSe1way) / m))
-## [1] 0.0223
-#--------------
-
-#-----------------------------------------------------------------
-# # 3.3.3.3 Maximum likelihood
-#-----------------------------------------------------------------
-
-# ------------------------
-# IRR with REML in lmer() function of the lme4 package
-?lmer # REML is the default estimation method
-model1 <- lmer(Score ~ 1 + (1|ID), data = AIBS[,c("ID", "Score")])
-summary(model1)
-as.data.frame(VarCorr(model1))
-as.numeric(VarCorr(model1))      # Proposal (true score) variance
-## [1] 0.2362446
-sigma(model1)^2                  # Residual variance
-## [1] 0.4002778
-as.numeric(VarCorr(model1))/(as.numeric(VarCorr(model1))+sigma(model1)^2) # IRR
-## [1] 0.3711489
-
-# ------------------------
-# ML forced by REML = FALSE
-model1_ML <- lmer(Score ~ 1 + (1|ID), data = AIBS[,c("ID", "Score")], REML = FALSE)
-summary(model1_ML)
-as.data.frame(VarCorr(model1_ML))
-as.numeric(VarCorr(model1_ML))      # Proposal (true score) variance
-## [1] 0.2311103
-sigma(model1_ML)^2                  # Residual variance
-## [1] 0.4002778
-as.numeric(VarCorr(model1_ML))/(as.numeric(VarCorr(model1_ML))+sigma(model1_ML)^2) # IRR
-## [1] 0.3660352
-
-
-#--------------
-# ORIGINAL: HCI?
 #--------------
 library(lme4)
-fit <- lmer(rating ~ (1 | person), data = data.long, REML = FALSE)
-as.data.frame(VarCorr(fit))
+model1_ML <- lmer(Score ~ 1 + (1|ID), data = AIBS, REML = FALSE)
+#--------------
+
+#--------------
+# model summary (code not shown in the book)
+summary(model1_ML)
+#--------------
+
+#--------------
+as.data.frame(VarCorr(model1_ML))
 ##        grp        var1 var2   vcov  sdcor
-## 1   person (Intercept) <NA> 0.0223 0.1493
-## 2 Residual        <NA> <NA> 0.2155 0.4642
+## 1       ID (Intercept) <NA> 0.2311 0.4807
+## 2 Residual        <NA> <NA> 0.4003 0.6327
+#--------------
 
 #--------------
-# ML estimates of variance components
-(sigma2E_ML <- MSe1way)
-## [1] 0.2155
-(sigma2P_ML <- ((1 - 1 / n) * MSP - MSe1way) / m)
-## [1] 0.0223
+(sigma2P_ML <- as.numeric(VarCorr(model1_ML)))  # Proposal (true score) variance
+## [1] 0.2311
+(sigma2e_ML <- sigma(model1_ML)^2)  # Residual variance
+## [1] 0.4003
+#--------------
+
+#--------------
+# single-rating IRR
+sigma2P_ML/(sigma2P_ML + sigma2e_ML)
+## [1] 0.366
+
+# multiple-rating IRR
+sigma2P_ML/(sigma2P_ML + sigma2e_ML/3)
+## [1] 0.634
 #--------------
 
 #-----------------------------------------------------------------
-# # 3.3.3.4 Restricted maximum likelihood (REML)
+# 4.4.3 Restricted maximum likelihood (REML)
 #-----------------------------------------------------------------
 
 #--------------
-fit_1wayr <- lmer(rating ~ (1 | person), data = data.long)
-as.data.frame(VarCorr(fit_1wayr))
+# AIBS with one-way random-effect model
+model1_REML <- lmer(Score ~ 1 + (1|ID), data = AIBS, REML = TRUE)
+as.data.frame(VarCorr(model1_REML))
+#        grp        var1 var2   vcov  sdcor
+# 1       ID (Intercept) <NA> 0.2362 0.4860
+# 2 Residual        <NA> <NA> 0.4003 0.6327
+#--------------
+
+#--------------
+# variance components (code not shown in the book)
+(sigma2P_REML <- as.numeric(VarCorr(model1_REML)))
+## [1] 0.2362
+(sigma2e_REML <- sigma(model1_REML)^2)
+## [1] 0.4003
+#--------------
+
+#--------------
+# single-rating IRR (code not shown in the book)
+sigma2P_REML/(sigma2P_REML + sigma2e_REML)
+## [1] 0.3711
+
+# multiple-rating IRR
+sigma2P_REML/(sigma2P_REML + sigma2e_REML/3)
+## [1] 0.6391
+#--------------
+
+#--------------
+# HCI with two-way random-effect model
+model2_REML <- lmer(rating ~ (1 | id) + (1 | item), data = HCIlong)
+(VC <- as.data.frame(VarCorr(model2_REML)))
 ##        grp        var1 var2   vcov  sdcor
-## 1   person (Intercept) <NA> 0.0223 0.1495
-## 2 Residual        <NA> <NA> 0.2155 0.4642
-#--------------
-
-#-----------------------------------------------------------------
-## 3.3.3.5 Bootstrap
-#-----------------------------------------------------------------
-
-# -------
-# Bootstrapped confidence interval
-N <- 100 
-model <- model1
-bootstrap <- bootMer(model, 
-                     function(mm) c(as.numeric(VarCorr(mm)), sigma(mm)^2), 
-                     nsim = N, seed = 1357)
-bootstrap
-
-# Saves data frame with N rows and 2 columns (each for one var component)
-bootTab <- bootstrap$t
-colnames(bootTab) <- c(names(VarCorr(model)), "Residual")
-head(bootTab, n = 3)
-bIRR <- bootTab[,"ID"]/apply(bootTab[,],1,sum) # Vector of bootstrapped IRR
-hist(bIRR)
-
-(IRRLCI <- quantile(bIRR, 0.025)) # Lower bound of 95% bootstrap confidence interval
-##      2.5% 
-## 0.2006552 
-
-(IRRUCI <- quantile(bIRR, 0.975)) # Upper bound of 95% bootstrap confidence interval
-##     97.5% 
-## 0.5104698 
-
-bIRR3 <- bootTab[,"ID"] / (bootTab[,"ID"] + bootTab[,"Residual"] / 3)
-
-# -------
-# Multiple-rater IRR (average rating from 3 raters)
-as.numeric(VarCorr(model1))/(as.numeric(VarCorr(model1))+sigma(model1)^2/3)
-## [1] 0.639068
-
-# -------
-# Bootstrapped confidence interval for IRR3
-
-(IRR3LCI <- quantile(bIRR3, 0.025)) # Lower bound of 95% bootstrap confidence interval
-##      2.5% 
-## 0.4295591 
-
-(IRR3UCI <- quantile(bIRR3, 0.975)) # Upper bound of 95% bootstrap confidence interval
-##     97.5% 
-## 0.7577547 
-
-
-
-#--------------
-# ORIGINAL: HCI 1 way
-#--------------
-boot <- bootMer(
-  fit_1wayr,
-  FUN = function(mm) unlist(as.data.frame(VarCorr(mm))["vcov"]),
-  nsim = 100, seed = 123
-)
-(fitVar_1wayr <- as.data.frame(VarCorr(fit_1wayr)))
-bootVars <- as.data.frame(boot$t)
-colnames(bootVars) <- fitVar_1wayr[, "grp"]
-head(bootVars, n = 2)
-##   person Residual
-## 1 0.0204   0.2132
-## 2 0.0245   0.2162
-#--------------
-
-#--------------
-bootAlphaCR <- bootVars[, "person"] /
-  (bootVars[, "person"] + bootVars[, "Residual"] / m)
-
-# median of bootstrapped samples
-median(bootAlphaCR)
-## [1] 0.673
-
-# lower bound of 95% bootstrapped confidence interval
-quantile(bootAlphaCR, 0.025)
-##      2.5%
-##    0.6245
-# upper bound of 95% bootstrapped confidence interval
-quantile(bootAlphaCR, 0.975)
-##     97.5%
-##    0.7029
-#--------------
-
-#--------------
-fit_2wayr <- lmer(rating ~ (1 | person) + (1 | item), data = data.long)
-(fitVar_2wayr <- as.data.frame(VarCorr(fit_2wayr)))
-##        grp        var1 var2   vcov  sdcor
-## 1   person (Intercept) <NA> 0.0237 0.1539
+## 1       id (Intercept) <NA> 0.0237 0.1539
 ## 2     item (Intercept) <NA> 0.0270 0.1643
 ## 3 Residual        <NA> <NA> 0.1885 0.4341
+#--------------
+
+#--------------
+(sigma2P_HCI <- VC[VC$grp == "id", "vcov"])
+## [1] 0.0237
+(sigma2e_HCI <- VC[VC$grp == "Residual", "vcov"])
+## [1] 0.1885
+
+sigma2P_HCI / (sigma2P_HCI + sigma2e_HCI / m)
+## [1] 0.7155
+#--------------
+
+#-----------------------------------------------------------------
+## 4.3.3.5 Bootstrap
+#-----------------------------------------------------------------
+
+#--------------
 boot <- bootMer(
-  fit_2wayr,
+  model2_REML,
   FUN = function(mm) unlist(as.data.frame(VarCorr(mm))["vcov"]),
-  nsim = 100, seed = 123
+  nsim = 100, seed = 543
 )
+#--------------
+
+#--------------
 bootVars <- as.data.frame(boot$t)
-colnames(bootVars) <- fitVar_2wayr[, "grp"]
+colnames(bootVars) <- VC[, "grp"]
 head(bootVars, n = 2)
-##    person    item Residual
-## 1 0.01990 0.02665   0.1899
-## 2 0.02637 0.04694   0.1876
-## 3 0.02410 0.02064   0.1886
-## 4 0.02286 0.02237   0.1859
-## 5 0.02496 0.01048   0.1884
-## 6 0.02413 0.04510   0.1925
+##        id    item Residual
+## 1 0.02382 0.01229   0.1883
+## 2 0.02069 0.01420   0.1893
 #--------------
 
 #--------------
-bootAlphaCR <- bootVars[, "person"] /
-  (bootVars[, "person"] + bootVars[, "Residual"] / m)
+bootAlphaCR <- bootVars[, "id"] /
+  (bootVars[, "id"] + bootVars[, "Residual"] / m)
+#--------------
 
-# median of bootstrapped samples
+#--------------
+# median (code not shown in the book)
 median(bootAlphaCR)
-## [1] 0.7162
+## [1] 0.7138
+#--------------
 
-# lower bound of 95% bootstrapped confidence interval
+#--------------
+# lower and upper bound of bootstrapped CI
 quantile(bootAlphaCR, 0.025)
 ##      2.5%
-##    0.6864
-# upper bound of 95% bootstrapped confidence interval
+##    0.6819
 quantile(bootAlphaCR, 0.975)
 ##     97.5%
-##    0.7446
+##    0.7406
 #--------------
 
 #--------------
-# histogram
+# histogram (code not shown in the book)
 ggplot(
   data = data.frame(alpha = bootAlphaCR),
   aes(x = alpha)
@@ -697,89 +556,46 @@ ggplot(
 #--------------
 
 #-----------------------------------------------------------------
-# # 3.3.3.6 Bayesian estimation
+# # 4.4.5 Bayesian estimation
 #-----------------------------------------------------------------
 
-# ------------------------
-# Bayesian with brm package
-library(brms)
-set.seed(1357)
-model <- brm(Score ~ 1 + (1|ID), data = AIBS, 
-             control  = list(adapt_delta = .95), refresh = 0)
-
-brms::prior_summary(model)
-
-results <- as.matrix(model)
-dim(results)               # Dimension of results: 4000 rows (N = 1000, 4 chains)
-head(results[,1:3], n = 2) # First lines of results
-
-# Global IRR
-IRR <- (results[,"sd_ID__Intercept"])^2 / ((results[,"sd_ID__Intercept"])^2 + 
-                                             (results[,"sigma"])^2)
-# Distributon and quantiles of the IRRs
-hist(IRR, xlim = c(0,1), main = "Histogram of IRR", xlab = "full-sample IRR")
-(IRR_50 <- quantile(IRR, 0.5))      # Bayesian estimate of IRR
-##       50% 
-## 0.3696991 
-
-(IRR_025 <- quantile(IRR, 0.025))   # Lower bound of 95% credible interval
-##      2.5% 
-## 0.2230458 
-
-(IRR_975 <- quantile(IRR, 0.975))   # Upper bound of 95% credible interval
-##     97.5% 
-## 0.5158844 
-
-### Multiple-rater IRR
-# IRR3
-IRR3 <- (results[,"sd_ID__Intercept"])^2 / ((results[,"sd_ID__Intercept"])^2 + 
-                                              ((results[,"sigma"])^2)/3)
-(IRR3_50 <- quantile(IRR3, 0.5))     # Bayesian estimate of multiple-rater IRR
-##       50% 
-## 0.6376328 
-
-(IRR3_025 <- quantile(IRR3, 0.025))  # Lower bound of 95% credible interval
-##      2.5% 
-## 0.4627212 
-
-(IRR3_975 <- quantile(IRR3, 0.975))  # Upper bound of 95% credible interval
-##    97.5% 
-## 0.761727 
-
-
-#--------------
-# ORIGINAL: HCI
 #--------------
 library(brms)
-set.seed(1234)
-fitB <- brm(
-  rating ~ (1 | person) + (1 | item),
-  data = data.long
-)
+set.seed(1234) 
+fitB <- brm(rating ~ (1 | id) + (1 | item),
+            data = HCIlong)
+#--------------
+
+#--------------
 results <- as.data.frame(fitB)
 head(results[, 1:4], n = 3)
-##   b_Intercept sd_item__Intercept sd_person__Intercept  sigma
-## 1      0.5845             0.1810               0.1474 0.4352
-## 2      0.5730             0.1839               0.1549 0.4330
-## 3      0.5811             0.1553               0.1582 0.4322
+##   b_Intercept sd_item__Intercept sd_id__Intercept  sigma
+## 1      0.5845             0.1810           0.1474 0.4352
+## 2      0.5730             0.1839           0.1549 0.4330
+## 3      0.5811             0.1553           0.1582 0.4322
+#--------------
 
+#--------------
 # Cronbach's alpha for each generated sample
-alphaCR <- results[, "sd_person__Intercept"]^2 /
-  (results[, "sd_person__Intercept"]^2 + results[, "sigma"]^2 / m)
+alphaCR <- results[, "sd_id__Intercept"]^2 /
+  (results[, "sd_id__Intercept"]^2 + results[, "sigma"]^2 / m)
+#--------------
 
-quantile(alphaCR, 0.5) # median of generated samples
+#--------------
+# median, lower and upper bound of credible interval
+quantile(alphaCR, 0.5)
 ##    50%
 ## 0.7156
-quantile(alphaCR, 0.025) # lower bound of 95% credible interval
+quantile(alphaCR, 0.025)
 ##   2.5%
 ## 0.6814
-quantile(alphaCR, 0.975) # upper bound of 95% credible interval
+quantile(alphaCR, 0.975)
 ##  97.5%
 ## 0.7455
 #--------------
 
 #--------------
-# histogram
+# histogram (code not shown in the book)
 ggplot(
   data = data.frame(alphaCR),
   aes(x = alphaCR)
@@ -793,28 +609,31 @@ ggplot(
 #--------------
 
 #-----------------------------------------------------------------
-# 3.4. More sources of error and G-theory
+# 4.5. More sources of error and G-theory
 #-----------------------------------------------------------------
 
 #-----------------------------------------------------------------
-# 3.4.1 A one facet study
+# 4.5.1 A one facet study
 #-----------------------------------------------------------------
 
 #--------------
-fit_2wayr <- lmer(rating ~ (1 | person) + (1 | item), data = data.long)
-(fitVar_2wayr <- as.data.frame(VarCorr(fit_2wayr)))
+# 2-way random/effect model from Section on REML
+# (code not shown again in the book)
+model2_REML <- lmer(rating ~ (1 | id) + (1 | item), data = HCIlong)
+(VC <- as.data.frame(VarCorr(model2_REML)))
 ##        grp        var1 var2   vcov  sdcor
-## 1   person (Intercept) <NA> 0.0237 0.1539
+## 1      id  (Intercept) <NA> 0.0237 0.1539
 ## 2     item (Intercept) <NA> 0.0270 0.1643
 ## 3 Residual        <NA> <NA> 0.1885 0.4341
 #--------------
 
 #--------------
-(varP <- fitVar_2wayr[fitVar_2wayr$grp == "person", "vcov"])
+# variance components, total variance, ratios
+(varP <- VC[VC$grp == "id", "vcov"])
 ## [1] 0.0237
-(varI <- fitVar_2wayr[fitVar_2wayr$grp == "item", "vcov"])
+(varI <- VC[VC$grp == "item", "vcov"])
 ## [1] 0.0270
-(vare <- fitVar_2wayr[fitVar_2wayr$grp == "Residual", "vcov"])
+(vare <- VC[VC$grp == "Residual", "vcov"])
 ## [1] 0.1885
 
 (varT <- varP + varI + vare)
@@ -824,6 +643,7 @@ c(varP, varI, vare) / varT
 #--------------
 
 #--------------
+# total variance and variance ratios for composite measurement
 varT20 <- varP + varI / m + vare / m
 c(varP, varI / m, vare / m) / varT20
 # [1] 0.6874 0.0392 0.2734
@@ -866,25 +686,22 @@ varP / (varP + varDeltaRel)
 #--------------
 
 #--------------
-model <- rating ~ (1 | person) + (1 | item)
-(gfit <- gtheory::gstudy(formula = model, data = data.long))
+model <- rating ~ (1 | id) + (1 | item)
+(gfit <- gtheory::gstudy(formula = model, 
+                         data = HCIlong))
 ## $components
-## source        var percent n
-## 1   person 0.0237     9.9 1
+##     source    var percent n
+## 1       id 0.0237     9.9 1
 ## 2     item 0.0270    11.3 1
 ## 3 Residual 0.1885    78.8 1
 #--------------
 
 #--------------
-gtheory::dstudy(
-  gfit,
-  colname.objects = "person",
-  colname.scores = "rating",
-  data = data.long
-)
+gtheory::dstudy(gfit, colname.objects = "id",
+                colname.scores = "rating", data = HCIlong)
 ## $components
 ##     source    var percent  n
-## 1   person 0.0237    68.7  1
+## 1       id 0.0237    68.7  1
 ## 2     item 0.0014     3.9 20
 ## 3 Residual 0.0094    27.3 20
 ##
@@ -917,17 +734,17 @@ gtheory::dstudy(
 #--------------
 
 #--------------
-(G_pxi <- hemp::gstudy(fit_2wayr))
+(G_pxi <- hemp::gstudy(model2_REML))
 ##     Source Est.Variance Percent.Variance
-## 1   person       0.0237             9.9%
+## 1       id       0.0237             9.9%
 ## 2     item       0.0270            11.3%
 ## 3 Residual       0.1885            78.8%
 #--------------
 
 #--------------
-hemp::dstudy(G_pxi, n = c("item" = 20), unit = "person")
+hemp::dstudy(G_pxi, n = c("item" = 20), unit = "id")
 ##     Source Est.Variance     N Ratio of Var:N
-## 1   person       0.0237 13020         0.0237
+## 1       id       0.0237 13020         0.0237
 ## 2     item       0.0270    20         0.0014
 ## 3 Residual       0.1885    20         0.0094
 ##
@@ -936,20 +753,16 @@ hemp::dstudy(G_pxi, n = c("item" = 20), unit = "person")
 #--------------
 
 #--------------
-hemp::dstudy_plot(
-  G_pxi, unit = "person",
-  facets = list("Item" = seq(from = 0, to = 30, by = 5)),
-  g_coef = TRUE
-)
-hemp::dstudy_plot(
-  G_pxi, unit = "person",
-  facets = list("Item" = seq(from = 0, to = 30, by = 5)),
-  g_coef = FALSE
-)
+hemp::dstudy_plot(G_pxi, unit = "id",
+                  facets = list("Item" = seq(0, 30, 5)), 
+                  g_coef = TRUE)
+hemp::dstudy_plot(G_pxi, unit = "id", 
+                  facets = list("Item" = seq(0, 30, 5)),
+                  g_coef = FALSE)
 #--------------
 
 #-----------------------------------------------------------------
-# 3.4.2 A two facet study
+# 4.5.2 A two facet study
 #-----------------------------------------------------------------
 
 #--------------
@@ -1086,20 +899,11 @@ hemp::dstudy_plot(
                 "rater" = c(1, 2, 3)),
   g_coef = FALSE
 )
-
-
-#-----------------------------------------------------------------
-# 3.5.1 Correction for unreliability
-#-----------------------------------------------------------------
-
+#--------------
 
 #-----------------------------------------------------------------
-# 3.5.2 Issues with range restriction
+# 4.6.3 Issues with range restriction
 #-----------------------------------------------------------------
-
-# ------------------------------------------
-# IRR estimation in restricted samples
-# ------------------------------------------
 
 # estimate reliability with ICC for complete AIBS dataset
 library(ShinyItemAnalysis)
@@ -1125,74 +929,7 @@ all_top_restricted %>%
   coord_cartesian(ylim = c(0, 1), xlim = c(0, 1)) +
   theme_app()
 
-# ------------------------------------------
-
-
 #-----------------------------------------------------------------
-# 3.5.4 Heterogeneity in reliability
+# 4.7 Reliability in interactive application
 #-----------------------------------------------------------------
-
-
-
-#-----------------------------------------------------------------
-# Exercises
-#-----------------------------------------------------------------
-
-#--------------
-# Exercise 1.10
-l1 <- lme4::lmer(ratings ~ (1 | items) + (1 | rater) + (1 | idstud) +
-  (1 | items:rater) + (1 | idstud:rater) +
-  (1 | idstud:items),
-data = data.long
-)
-summary(l1)
-## Linear mixed model fit by REML ['lmerMod']
-## Formula: ratings ~ (1 | items) + (1 | rater) + (1 | idstud) + (1 | items:rater) +
-## (1 | idstud:rater) + (1 | idstud:items)
-## Data: data.long
-##
-## REML criterion at convergence: 5413.7
-##
-## Scaled residuals:
-## Min      1Q  Median      3Q     Max
-## -4.9159 -0.5219 -0.0086  0.5302  4.0807
-##
-## Random effects:
-## Groups       Name        Variance Std.Dev.
-## idstud:items (Intercept) 0.10369  0.32202
-## idstud:rater (Intercept) 0.06896  0.26260
-## idstud       (Intercept) 0.36818  0.60677
-## items:rater  (Intercept) 0.01803  0.13426
-## rater        (Intercept) 0.04181  0.20447
-## items        (Intercept) 0.00287  0.05357
-## Residual                 0.18800  0.43359
-## Number of obs: 3075, groups:
-## idstud:items, 890; idstud:rater, 615; idstud, 178; items:rater, 80; rater, 16; items, 5
-##
-## Fixed effects:
-## Estimate Std. Error t value
-## (Intercept)  1.31403    0.07675   17.12
-
-matrixSD <- as.matrix(lme4::VarCorr(l1))
-Var <- data.frame(c(matrixSD, attr(matrixSD, "sc")^2))
-names(Var) <- c(
-  "idstud:items", "idstud:rater", "idstud", "items:rater",
-  "rater", "items", "Residual"
-)
-Var
-##             idstud:items idstud:rater    idstud items:rater
-## (Intercept)    0.1036941    0.0689583 0.3681753  0.01802671
-##                    rater        items  Residual
-## (Intercept)    0.0418083    0.0028701 0.1879999
-
-
-## variance ratios?
-## variance ratios of average rating?
-## var.universe?
-## generalizability?
-## relative error variance?
-## relative standard error of measurement?
-## dependability?
-## absolute error variance?
-## absolute standard error of measurement?
-#--------------
+ShinyItemAnalysis::run_app()
