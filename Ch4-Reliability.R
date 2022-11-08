@@ -224,7 +224,7 @@ head(AIBS, n = 4)
 
 #--------------
 # AIBS summary (code not shown in the book)
-summary(AIBS[,c("ID", "Score", "ScoreAvg", "ScoreRankAdj")]) # code not shown in the book
+summary(AIBS[, c("ID", "Score", "ScoreAvg", "ScoreRankAdj")]) # code not shown in the book
 #--------------
 
 #--------------
@@ -240,32 +240,28 @@ ggplot(data = AIBS, aes(x = ScoreRankAdj, y = Score, group = ID)) +
 
 #--------------
 n = 72; m = 3
-mean.proposals = tapply(AIBS$Score, AIBS$ID, mean)
-mean.overall = mean(AIBS$Score)
+mean.proposals <- tapply(AIBS$Score, AIBS$ID, mean)
+mean.overall <- mean(AIBS$Score)
 
-(SSP = m*sum((mean.proposals - mean.overall)^2))     # Observed SSb
-## 78.74
-(SSe = sum((AIBS$Score - AIBS$ScoreAvg)^2)) # Observed SSw
-## 57.64
+(SSP <- m*sum((mean.proposals - mean.overall)^2)) # Observed SSb
+## [1] 78.7398
+(SSe <- sum((AIBS$Score - AIBS$ScoreAvg)^2)) # Observed SSw
+## [1] 57.6400
 #--------------
 
 #--------------
-(MSP <- SSP/(n-1))
-## [1] 1.109
-(MSe <- SSe/(n*(m-1)))  # Estimate of residual variance
+(MSP <- SSP / (n - 1))
+## [1] 1.1090
+(MSe <- SSe / (n * (m - 1)))  # Estimate of residual variance
 ## [1] 0.4003
-
-(MSP - MSe)/3           # Proposal (true-score) variance
+(MSP - MSe) / m # Proposal (true-score) variance
 ## [1] 0.2362
 #--------------
 
 #--------------
-((MSP - MSe)/m)/((MSP - MSe)/m + MSe) # IRR
+((MSP - MSe) / m) / ((MSP - MSe) / m + MSe) # IRR
 ## [1] 0.3711
-#--------------
-
-#--------------
-((MSP - MSe)/m)/((MSP - MSe)/m + MSe/m) # IRR
+((MSP - MSe) / m) / ((MSP - MSe) / m + MSe / m) # IRR
 ## [1] 0.6391
 #--------------
 
@@ -361,7 +357,7 @@ gamma <- 0.05 # significance level
 a <- psychometric::alpha(HCI_items)
 psychometric::alpha.CI(
   a, N = nrow(HCI_items), k = ncol(HCI_items), level = 0.95
-)
+  )
 ##      LCL  ALPHA    UCL
 ## 1 0.6828 0.7155 0.7462
 #--------------
@@ -440,12 +436,11 @@ as.data.frame(VarCorr(model1_ML))
 
 #--------------
 # single-rating IRR
-sigma2P_ML/(sigma2P_ML + sigma2e_ML)
-## [1] 0.366
-
+sigma2P_ML / (sigma2P_ML + sigma2e_ML)
+## [1] 0.3660
 # multiple-rating IRR
-sigma2P_ML/(sigma2P_ML + sigma2e_ML/3)
-## [1] 0.634
+sigma2P_ML / (sigma2P_ML + sigma2e_ML / m)
+## [1] 0.6340
 #--------------
 
 #-----------------------------------------------------------------
@@ -471,11 +466,10 @@ as.data.frame(VarCorr(model1_REML))
 
 #--------------
 # single-rating IRR (code not shown in the book)
-sigma2P_REML/(sigma2P_REML + sigma2e_REML)
+sigma2P_REML / (sigma2P_REML + sigma2e_REML)
 ## [1] 0.3711
-
 # multiple-rating IRR
-sigma2P_REML/(sigma2P_REML + sigma2e_REML/3)
+sigma2P_REML / (sigma2P_REML + sigma2e_REML / m)
 ## [1] 0.6391
 #--------------
 
@@ -494,7 +488,6 @@ model2_REML <- lmer(rating ~ (1 | id) + (1 | item), data = HCIlong)
 ## [1] 0.0237
 (sigma2e_HCI <- VC[VC$grp == "Residual", "vcov"])
 ## [1] 0.1885
-
 sigma2P_HCI / (sigma2P_HCI + sigma2e_HCI / m)
 ## [1] 0.7155
 #--------------
@@ -561,7 +554,7 @@ ggplot(
 
 #--------------
 library(brms)
-set.seed(1234) 
+set.seed(1234) # TODO: resave results with seed
 fitB <- brm(rating ~ (1 | id) + (1 | item),
             data = HCIlong)
 #--------------
@@ -742,7 +735,7 @@ gtheory::dstudy(gfit, colname.objects = "id",
 #--------------
 
 #--------------
-hemp::dstudy(G_pxi, n = c("item" = 20), unit = "id")
+hemp::dstudy(G_pxi, n = c(item = 20), unit = "id")
 ##     Source Est.Variance     N Ratio of Var:N
 ## 1       id       0.0237 13020         0.0237
 ## 2     item       0.0270    20         0.0014
@@ -754,10 +747,10 @@ hemp::dstudy(G_pxi, n = c("item" = 20), unit = "id")
 
 #--------------
 hemp::dstudy_plot(G_pxi, unit = "id",
-                  facets = list("Item" = seq(0, 30, 5)), 
+                  facets = list(item = seq(0, 30, 5)), 
                   g_coef = TRUE)
 hemp::dstudy_plot(G_pxi, unit = "id", 
-                  facets = list("Item" = seq(0, 30, 5)),
+                  facets = list(item = seq(0, 30, 5)),
                   g_coef = FALSE)
 #--------------
 
