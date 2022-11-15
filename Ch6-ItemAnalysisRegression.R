@@ -152,7 +152,7 @@ ggplot(data = EPIA, aes(x = `zscore`, y = `Item 1`)) +
 
 #--------------
 data(HCI, package = "ShinyItemAnalysis")
-zscore <- scale(HCI$total) # Z-score
+zscore <- scale(HCI$total)
 #--------------
 
 #--------------
@@ -374,10 +374,21 @@ mod_3PL <- function(x, a, b, c) {
 fit3PL <- nls(HCI[, 13] ~ mod_3PL(zscore, a, b, c),
               algorithm = "port", start = c(a = 0.7, b = -0.9, c = 0),
               lower = c(-Inf, -Inf, 0), upper = c(Inf, Inf, 1))
-# coefficients
+#--------------
+
+#--------------
+# model summary (code not shown in the book)
+summary(fit3PL)
+#--------------
+
+#--------------
+# estimated model parameters and their standard errors
 coef(fit3PL)
 ##      a      b      c
 ## 2.6692 0.2708 0.3214 
+sqrt(diag(vcov(fit3PL)))
+##      a      b      c 
+## 0.5276 0.0908 0.0393
 #--------------
 
 #--------------
@@ -418,10 +429,21 @@ fit4PL <- nls(HCI[, 13] ~ mod_4PL(zscore, a, b, c, d),
               algorithm = "port", 
               start = c(a = 0.7, b = -0.9, c = 0, d = 1),
               lower = c(-Inf, -Inf, 0, 0), upper = c(Inf, Inf, 1, 1))
-# coefficients
+#--------------
+
+#--------------
+# model summary (code not shown in the book)
+summary(fit4PL)
+#--------------
+
+#--------------
+# estimated model parameters and their standard errors
 coef(fit4PL)
 ##      a      b      c      d
 ## 3.3405 0.2326 0.3379 0.9569 
+sqrt(diag(vcov(fit4PL)))
+##      a      b      c      d 
+## 0.9844 0.0992 0.0363 0.0500 
 #--------------
 
 #-----------------------------------------------------------------
@@ -457,22 +479,28 @@ BIC(fit3PL, fit4PL)
 #-----------------------------------------------------------------
 # 6.7.1  Ordinal regression models
 #-----------------------------------------------------------------
+#-----------------------------------------------------------------
+# 6.7.1.1 Cumulative logit model
+#-----------------------------------------------------------------
 
 #--------------
 data("Anxiety", package = "ShinyItemAnalysis")
-data <- Anxiety[, paste0("R", 1:29)] - 1
 zscore <- Anxiety$zscore
-maxval <- max(data[, 18]) # maximal number of points for item 18
-# reordering item 18
-data[, 18] <- ordered(factor(data[, 18], levels = 0:maxval))
+Anxiety_items <- Anxiety[, paste0("R", 1:29)] - 1
+Anxiety_items$R18 <- ordered(factor(Anxiety_items$R18, 
+                                    levels = 0:max(Anxiety_items$R18)))
 #--------------
 
 #--------------
 # cumulative logit model for item 18
 library(VGAM)
-fit.cum <- vglm(data[, 18] ~ zscore,
-                family = cumulative(reverse = TRUE, 
-                                    parallel = TRUE))
+fit.cum <- vglm(Anxiety_items$R18 ~ zscore,
+                family = cumulative(reverse = TRUE, parallel = TRUE))
+#--------------
+
+#--------------
+# model summary (code not shown in the book)
+summary(fit.cum)
 #--------------
 
 #--------------
@@ -491,6 +519,9 @@ sqrt(diag(vcov(fit.cum)))
 c(-coef(fit.cum)[1:4] / coef(fit.cum)[5], coef(fit.cum)[5])
 ## (Intercept):1 (Intercept):2 (Intercept):3 (Intercept):4    zscore
 ##       -0.2398        0.7392        1.9841        3.0002    1.7325
+#--------------
+
+#--------------
 # SE using delta method
 deltamethod(
   list(~ -x1 / x5, ~ -x2 / x5, ~ -x3 / x5, ~ -x4 / x5, ~x5),
@@ -504,6 +535,10 @@ deltamethod(
 # plotting cumulative probabilities
 library(ShinyItemAnalysis)
 plotCumulative(fit.cum, type = "cumulative")
+#--------------
+
+#--------------
+# more plotting options (code not shown in the book)
 plotCumulative(
   fit.cum,
   type = "cumulative", matching.name = "Z-score"
@@ -519,6 +554,10 @@ plotCumulative(
 #--------------
 # plotting category probabilities
 plotCumulative(fit.cum, type = "category")
+#--------------
+
+#--------------
+# more plotting options (code not shown in the book)
 plotCumulative(
   fit.cum,
   type = "category", matching.name = "Z-score"
@@ -532,10 +571,22 @@ plotCumulative(
   guides(size = FALSE)
 #--------------
 
+#-----------------------------------------------------------------
+# 6.7.1.2 Adjacent category logit model
+#-----------------------------------------------------------------
+
 #--------------
 # adjacent category logit model for item 18
-fit.adj <-  vglm(data[, 18] ~ zscore,
+fit.adj <-  vglm(Anxiety_items$R18 ~ zscore,
                  family = acat(reverse = FALSE, parallel = TRUE))
+#--------------
+
+#--------------
+# model summary (code not shown in the book)
+summary(fit.adj)
+#--------------
+
+#--------------
 # coefficients for item 18
 coef(fit.adj)
 ## (Intercept):1 (Intercept):2 (Intercept):3 (Intercept):4    zscore
@@ -551,6 +602,9 @@ sqrt(diag(vcov(fit.adj)))
 c(-coef(fit.adj)[1:4] / coef(fit.adj)[5], coef(fit.adj)[5])
 ## (Intercept):1 (Intercept):2 (Intercept):3 (Intercept):4    zscore
 ##        0.2296        0.5239        2.1906        2.7113    1.0109
+#--------------
+
+#--------------
 # SE using delta method
 deltamethod(
   list(~ -x1 / x5, ~ -x2 / x5, ~ -x3 / x5, ~ -x4 / x5, ~x5),
@@ -561,6 +615,10 @@ deltamethod(
 #--------------
 # plotting category probabilities
 plotAdjacent(fit.adj, matching.name = "Z-score")
+#--------------
+
+#--------------
+# more plotting options (code not shown in the book)
 plotAdjacent(fit.adj, matching.name = "Z-score") +
   theme_fig() + 
   scale_size_continuous(breaks = c(5, 10, 30, 50)) + 
@@ -575,19 +633,25 @@ plotAdjacent(fit.adj, matching.name = "Z-score") +
 #-----------------------------------------------------------------
 
 #--------------
-# multinominal model
 data(HCItest, HCIkey, package = "ShinyItemAnalysis")
 key <- unlist(HCIkey)
-zscore <- scale(HCI$total) # Z-score
-
-# re-leveling item 13
+zscore <- scale(HCItest$total)
 HCItest[, 13] <- relevel(HCItest[, 13], ref = paste(key[13]))
+#--------------
 
+#--------------
 # multinomial model for item 13
 library(nnet)
 fit.mult <- multinom(HCItest[, 13] ~ zscore)
+#--------------
 
-# coefficients for item 13
+#--------------
+# model summary (code not shown in the book)
+summary(fit.mult)
+#--------------
+
+#--------------
+# item parameters and their standard errors
 coef(fit.mult)
 ##   (Intercept)  zscore
 ## B     -2.3463 -1.4234
@@ -635,6 +699,10 @@ t(sapply(
 
 #--------------
 plotMultinomial(fit.mult, matching = zscore)
+#--------------
+
+#--------------
+# more plotting options (code not shown in the book)
 plotMultinomial(
   fit.mult,
   matching = zscore, matching.name = "Z-score"
@@ -653,40 +721,24 @@ plotMultinomial(
 
 #--------------
 # data preparation
-HCI$zscore <- scale(rowSums(HCI[, 1:20])) # Z-score
-HCI$person <- 1:nrow(HCI)
-
-# converting data to the long format
-HCI.long <- reshape(
-  data = HCI,
-  varying = list(paste("Item", 1:20)), timevar = "item", v.names = "rating",
-  idvar = c("person", "gender", "major", "zscore"),
-  direction = "long", new.row.names = 1:13020
-)
-
-head(HCI.long, n = 2)
-##   gender major   zscore person item rating
-## 1      0     1 1.040755      1    1      1
-## 2      0     1 1.865002      2    1      1
-
-summary(HCI.long)
+data("HCIlong")
+head(HCIlong)
+summary(HCIlong)
+HCIlong$zscore <- (HCIlong$total - mean(HCI$total))/sd(HCI$total)
 # person ID and item ID as factors:
-HCI.long$person <- as.factor(HCI.long$person)
-HCI.long$item <- as.factor(HCI.long$item)
+#HCIlong$id <- as.factor(HCIlong$id)
+#HCIlong$item <- as.factor(HCIlong$item)
+#summary(HCIlong)
 #--------------
 
 #--------------
 # joint model for all items - 1PL model with common discrimination
-fit1PLjoint <- glm(rating ~ -1 + item + zscore, data = HCI.long,
-                    family = binomial)
+fit1PLjoint <- glm(rating ~ -1 + item + zscore, data = HCIlong,
+                   family = binomial)
 # coefficients
 coef(fit1PLjoint)
-##   item1   item2   item3   item4   item5   item6   item7   item8 
-##  1.0098  1.3320  2.0333 -0.4829 -0.2927 -0.6937  0.2174  1.0449 
-##   item9  item10  item11  item12  item13  item14  item15  item16 
-## -0.3381  0.7318  1.5033  0.3466  0.5244  1.3713 -0.2852  0.5166 
-##  item17  item18  item19  item20  zscore 
-## -1.0490  1.6321  1.5454  1.1437  0.9861 
+## itemItem 1  ...  itemItem 13  ...  zscore
+##     1.0098  ...       0.5244  ...  0.9861
 #--------------
 
 #--------------
@@ -720,26 +772,14 @@ g
 
 #--------------
 # joint model for all items - 2PL model
-fit2PLjoint <- glm(rating ~ -1 + item + zscore:item, data = HCI.long,
+fit2PLjoint <- glm(rating ~ -1 + item + zscore:item, data = HCIlong,
                    family = binomial)
 # coefficients
 coef(fit2PLjoint)
-##         item1         item2         item3         item4         item5
-##        1.0118        1.2723        2.3746       -0.4340       -0.2873
-##         item6         item7         item8         item9        item10
-##       -0.7498        0.1972        1.0867       -0.3114        0.7139
-##        item11        item12        item13        item14        item15
-##        1.5345        0.3508        0.5552        1.4739       -0.2879
-##        item16        item17        item18        item19        item20
-##        0.5587       -0.8941        2.0232        1.7478        1.2137
-##  item1:zscore  item2:zscore  item3:zscore  item4:zscore  item5:zscore
-##        0.9925        0.8294        1.4842        0.6751        0.9399
-##  item6:zscore  item7:zscore  item8:zscore  item9:zscore item10:zscore
-##        1.1988        0.4931        1.1130        0.7690        0.9007
-## item11:zscore item12:zscore item13:zscore item14:zscore item15:zscore
-##        1.0535        1.0329        1.1824        1.2166        1.0093
-## item16:zscore item17:zscore item18:zscore item19:zscore item20:zscore
-##        1.2543        0.3844        1.6575        1.3748        1.1766
+##         itemItem 1 ...        itemItem 13 ... 
+##             1.0118 ...             0.5552 ... 
+##  itemItem 1:zscore ... itemItem 13:zscore ... 
+##             0.9925 ...             1.1824 ... 
 #--------------
 
 #--------------
