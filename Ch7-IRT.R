@@ -1,5 +1,5 @@
 #-----------------------------------------------------------------
-# Chapter 6 - Item response theory models
+# Chapter 7 - Item response theory models
 # Computational aspects of psychometric methods. With R.
 # P. Martinkova & A. Hladka
 #-----------------------------------------------------------------
@@ -7,19 +7,6 @@
 #-----------------------------------------------------------------
 # Packages
 #-----------------------------------------------------------------
-
-# library(Cairo)
-# library(cowplot)
-library(brms)
-library(eRm)
-library(ggplot2)
-library(lme4)
-library(ltm)
-library(mirt)
-library(psych)
-library(reshape)
-library(TAM)
-library(ShinyItemAnalysis)
 
 #-----------------------------------------------------------------
 # Plot settings
@@ -39,7 +26,7 @@ theme_fig <- function(base_size = 17, base_family = "") {
 }
 
 #-----------------------------------------------------------------
-# 6.4.1  The mirt package
+# 7.4.1  The mirt package
 #-----------------------------------------------------------------
 
 #--------------
@@ -99,7 +86,7 @@ coef(fit_rasch_mirt, IRTpars = TRUE, simplify = TRUE)
 
 #--------------
 sqrt(0.669) # 0.818 is the SD of the latent trait
-0.963/sqrt(0.669) # latent trait 1.177 below average is needed
+0.963 / sqrt(0.669) # latent trait 1.177 below average is needed
 # to answer Item 1 correctly with probability 0.5
 #--------------
 
@@ -148,6 +135,7 @@ sd(fs_rasch_mirt_SE[, 1])
 cor(HCI$total, fs_rasch_mirt_SE[, 1])
 # [1] 0.9985
 
+library(ggplot2)
 ggplot(
   data.frame(HCI$total, fs = fs_rasch_mirt_SE[, 1]),
   aes(x = HCI$total, y = fs)
@@ -235,9 +223,9 @@ mirt(HCI[, 1:20], model = 1, itemtype = "2PL", pars = "values") # a1 parnum are 
 
 #--------------
 # 1PL model fitted as 2PL with slope a1 parameters constrained to be equal
-fit_1pl_mirt <- mirt(HCI[, 1:20], model = 1, itemtype = "2PL",
+fit_1PL_mirt <- mirt(HCI[, 1:20], model = 1, itemtype = "2PL",
                      constrain = list((1:20) * 4 - 3))
-coef(fit_1pl_mirt, IRTpars = TRUE, simplify = TRUE)
+coef(fit_1PL_mirt, IRTpars = TRUE, simplify = TRUE)
 ## $items
 ##             a      b g u
 ## Item 1  0.818 -1.178 0 1
@@ -308,8 +296,38 @@ coef(fit_4PL_mirt, printSE = TRUE) # SE not calculated, thus not printed
 coef(fit_4PL_mirt, IRTpars = TRUE, simplify = TRUE)
 #--------------
 
+#--------------
+# model selection (X2 test not appropriate for selection btw. 2PL, 3PL, and 4PL)
+anova(fit_1PL_mirt, fit_2PL_mirt, fit_3PL_mirt, fit_4PL_mirt)
+##                AIC SABIC    HQ   BIC logLik      X2 df     p
+## fit_1PL_mirt 15278 15306 15315 15372  -7618             
+## fit_2PL_mirt 15133 15186 15203 15313  -7527 182.928 19     0
+## fit_3PL_mirt 15104 15182 15208 15373  -7492  69.468 20     0
+#--------------
+
+#--------------
+# model fit (code not shown in the book)
+M2(fit_1PL_mirt)
+M2(fit_2PL_mirt)
+M2(fit_3PL_mirt)
+#--------------
+
+#--------------
+# item fit (code not shown in the book)
+itemfit(fit_1PL_mirt)
+itemfit(fit_2PL_mirt)
+itemfit(fit_3PL_mirt)
+#--------------
+
+#--------------
+# person fit (code not shown in the book)
+personfit(fit_1PL_mirt)
+personfit(fit_2PL_mirt)
+personfit(fit_3PL_mirt)
+#--------------
+
 #-----------------------------------------------------------------
-# 6.4.2  The ltm package
+# 7.4.2  The ltm package
 #-----------------------------------------------------------------
 
 #--------------
@@ -400,7 +418,7 @@ ltm::factor.scores(fit_rasch_ltm,
 #--------------
 
 #-----------------------------------------------------------------
-# 6.4.3  The eRm package
+# 7.4.3  The eRm package
 #-----------------------------------------------------------------
 
 #--------------
@@ -456,7 +474,7 @@ coef(fit_rasch_eRm2)
 #--------------
 
 #-----------------------------------------------------------------
-# 6.4.4  Other IRT packages
+# 7.4.4  Other IRT packages
 #-----------------------------------------------------------------
 
 #--------------
@@ -465,7 +483,7 @@ library(TAM)
 
 #--------------
 # JML estimation with the TAM package
-fit_rasch_TAM1 <- tam.jml(HCI[, 1:20])
+fit_rasch_TAM1 <- tam.jml(resp = HCI[, 1:20])
 fit_rasch_TAM1$xsi
 ##  [1] -0.9855 -1.2883 -1.9470  0.4327  0.2496  0.6366 -0.2373 -1.0186
 ##  [9]  0.2932 -0.7238 -1.4491 -0.3598 -0.5281 -1.3251  0.2424 -0.5207
@@ -473,27 +491,27 @@ fit_rasch_TAM1$xsi
 #--------------
 
 #--------------
-# MML estimation with the TAM package - sum = 0 constraint
-fit_rasch_TAM2 <- tam.mml(HCI[, 1:20], constraint = "items") 
-betas_TAM2 <- c(fit_rasch_TAM2$xsi[, 1], -sum(fit_rasch_TAM2$xsi[, 1]))
-# latent abilities
-lat_var_TAM <- tam.wle(fit_rasch_TAM2)
-# item parameters shifted by mean latent ability
-betas_TAM2 - mean(lat_var_TAM[, "theta"])
-##  [1] -0.9660 -1.2700 -1.9365  0.4412  0.2608  0.6420 -0.2207 -0.9992
-##  [9]  0.3038 -0.7046 -1.4321 -0.3423 -0.5095 -1.3072  0.2536 -0.5022
-## [17]  0.9825 -1.5543 -1.4721 -1.0930
+# MML estimation with the TAM package
+fit_rasch_TAM2 <- tam.mml(resp = HCI[, 1:20], irtmodel = "Rasch") 
+fit_rasch_TAM2$xsi[, 1]
+##  [1] -0.9629 -1.2670 -1.9336  0.4445  0.2641  0.6453 -0.2175 -0.9961
+##  [9]  0.3070 -0.7013 -1.4291 -0.3390 -0.5062 -1.3041  0.2569 -0.4989
+## [17]  0.9858 -1.5512 -1.4690 -1.0891
+#--------------
+
+#--------------
+library(ShinyItemAnalysis)
 #--------------
 
 #--------------
 # Wright map with the ShinyItemAnalysis package
 b <- coef(fit_1pl_mirt, simplify = TRUE, IRTpars = TRUE)$items[, "b"]
 fs_1PL_mirt <- as.vector(fscores(fit_1pl_mirt))
-ShinyItemAnalysis::ggWrightMap(theta = fs_1PL_mirt, b = b)
+ggWrightMap(theta = fs_1PL_mirt, b = b)
 #--------------
 
 #-----------------------------------------------------------------
-# 6.4.5  IRT models in the lme4 and nlme package
+# 7.4.5  IRT models in the lme4 and nlme package
 #-----------------------------------------------------------------
 
 #--------------
@@ -532,8 +550,12 @@ coef(fit_rasch_lme4)$person[1, -1]
 #--------------
 
 #-----------------------------------------------------------------
-# 6.4.6  Bayesian IRT with the brms package
+# 7.4.6  Bayesian IRT with the brms package
 #-----------------------------------------------------------------
+
+#--------------
+library(brms)
+#--------------
 
 #--------------
 # brms package (Bayesian 1PL IRT). NOTE: this analysis takes several minutes
@@ -573,18 +595,19 @@ plot(fit_1PL_brms)
 #--------------
 
 #-----------------------------------------------------------------
-# 6.4.7 Comparison of R packages for IRT (not shown in the book)
+# Comparison of R packages for IRT (not shown in the book)
 #-----------------------------------------------------------------
 
 #--------------
-b_mirt = coef(fit_rasch_mirt, IRTpars = TRUE, 
-              simplify = TRUE)$items[, "b"]
-b_ltm = coef(fit_rasch_ltm)[, 1]
-b_eRm1 = -coef(fit_rasch_eRm1) - mean(as.numeric(unlist(lat_var$thetapar)))
-b_lme4 = -unlist(coef(fit_rasch_lme4)$person[1, -1])
-b_TAMj = fit_rasch_TAM1$xsi
-b_TAMm = betas_TAM2 - mean(lat_var_TAM[,"theta"])
-b_brms = - coef(fit_1PL_brms)$item[, "Estimate", "Intercept"]
+b_mirt <- coef(fit_rasch_mirt, IRTpars = TRUE, 
+               simplify = TRUE)$items[, "b"]
+b_ltm <- coef(fit_rasch_ltm)[, 1]
+b_eRm1 <- -coef(fit_rasch_eRm1) - mean(as.numeric(unlist(lat_var$thetapar)))
+b_lme4 <- -unlist(coef(fit_rasch_lme4)$person[1, -1])
+b_TAMj <- fit_rasch_TAM1$xsi
+b_TAMm <- fit_rasch_TAM2$xsi[, 1]
+b_brms <- -coef(fit_1PL_brms)$item[, "Estimate", "Intercept"]
+
 cbind(b_mirt, b_ltm, b_eRm1, b_lme4, b_TAMj, b_TAMm, b_brms)
 rbind(b_mirt, b_ltm, b_eRm1, b_lme4, b_TAMj, b_TAMm, b_brms)
 
@@ -633,7 +656,7 @@ plot(b_mirt, dif_trad)
 #--------------
 
 #-----------------------------------------------------------------
-# 6.5.1 Relationship between IRT and factor analysis
+# 7.5.1 Relationship between IRT and factor analysis
 #-----------------------------------------------------------------
 
 #--------------
@@ -740,8 +763,15 @@ plot(fit_irtfa, type = "IIC")
 plot(fit_irtfa, type = "test")
 #--------------
 
+
+#--------------
+summary(FA1)
+
+
+M2(fit_2PL_mirt)
+anova(fit_2PL_mirt, test = "Chisq")
 #-----------------------------------------------------------------
-# 6.7. IRT models in interactive application
+# 7.7. IRT models in interactive application
 #-----------------------------------------------------------------
 
 startShinyItemAnalysis()
