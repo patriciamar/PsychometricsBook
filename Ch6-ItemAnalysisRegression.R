@@ -721,14 +721,16 @@ plotMultinomial(
 
 #--------------
 # data preparation
-data("HCIlong")
+data("HCIlong", package = "ShinyItemAnalysis")
+#--------------
+
+#--------------
 head(HCIlong)
 summary(HCIlong)
-HCIlong$zscore <- (HCIlong$total - mean(HCI$total))/sd(HCI$total)
-# person ID and item ID as factors:
-#HCIlong$id <- as.factor(HCIlong$id)
-#HCIlong$item <- as.factor(HCIlong$item)
-#summary(HCIlong)
+HCIlong$zscore <- (HCIlong$total - mean(HCI$total)) / sd(HCI$total)
+HCIlong$id <- factor(HCIlong$id)
+HCIlong$item <- factor(gsub("Item ", "", HCIlong$item), levels = 1:20)
+summary(HCIlong)
 #--------------
 
 #--------------
@@ -737,12 +739,17 @@ fit1PLjoint <- glm(rating ~ -1 + item + zscore, data = HCIlong,
                    family = binomial)
 # coefficients
 coef(fit1PLjoint)
-## itemItem 1  ...  itemItem 13  ...  zscore
-##     1.0098  ...       0.5244  ...  0.9861
+##  item1   item2   item3 ...  item13 ...  zscore 
+## 1.0098  1.3320  2.0333 ...  0.5244 ...  0.9861 
 #--------------
 
 #--------------
 # code not shown in the book
+library(grDevices)
+library(RColorBrewer)
+getPalette <- colorRampPalette(brewer.pal(9, "Set1"))
+colours <- getPalette(20)
+
 fit1PLjoint_b0 <- coef(fit1PLjoint)[1:20]
 fit1PLjoint_b1 <- coef(fit1PLjoint)[21]
 
@@ -763,11 +770,17 @@ for (i in 1:20) {
     stat_function(
       fun = ICC_IS_parametric,
       args = list(b0 = fit1PLjoint_b0[i], b1 = fit1PLjoint_b1[1]),
-      size = .8,
-      geom = "line", show.legend = FALSE, col = i, linetype = i
+      linewidth = .8,
+      geom = "line", show.legend = FALSE, col = colours[i], linetype = i
     )
 }
 g
+
+annotation <- data.frame(x = seq(-3, 2, length.out = 20), 
+                         y = ICC_IS_parametric(x = seq(-3, 2, length.out = 20), b0 = fit1PLjoint_b0, b1 = fit1PLjoint_b1),
+                         label = paste("Item", 1:20))
+g + geom_text(data = annotation, aes(x = x, y = y, label = label),        
+              color = colours, size = 3.5, angle = 45, fontface = "bold")
 #--------------
 
 #--------------
@@ -776,10 +789,10 @@ fit2PLjoint <- glm(rating ~ -1 + item + zscore:item, data = HCIlong,
                    family = binomial)
 # coefficients
 coef(fit2PLjoint)
-##         itemItem 1 ...        itemItem 13 ... 
-##             1.0118 ...             0.5552 ... 
-##  itemItem 1:zscore ... itemItem 13:zscore ... 
-##             0.9925 ...             1.1824 ... 
+##        item1         item2         item3 ...        item13 ...
+##       1.0118        1.2723        2.3746 ...        0.5552 ...
+## item1:zscore  item2:zscore  item3:zscore ... item13:zscore ...
+##       0.9925        0.8294        1.4842 ...        1.1824 ...
 #--------------
 
 #--------------
@@ -804,11 +817,17 @@ for (i in 1:20) {
     stat_function(
       fun = ICC_IS_parametric,
       args = list(b0 = fit2PLjoint_b0[i], b1 = fit2PLjoint_b1[i]),
-      size = .8,
-      geom = "line", show.legend = FALSE, col = i, linetype = i
+      linewidth = .8,
+      geom = "line", show.legend = FALSE, col = colours[i], linetype = i
     )
 }
 g
+
+annotation <- data.frame(x = seq(-3, 2, length.out = 20), 
+                         y = ICC_IS_parametric(x = seq(-3, 2, length.out = 20), b0 = fit2PLjoint_b0, b1 = fit2PLjoint_b1),
+                         label = paste("Item", 1:20))
+g + geom_text(data = annotation, aes(x = x, y = y, label = label),        
+              color = colours, size = 3.5, angle = 45, fontface = "bold")
 #--------------
 
 #--------------
