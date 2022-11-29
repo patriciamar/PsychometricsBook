@@ -505,8 +505,8 @@ library(ShinyItemAnalysis)
 
 #--------------
 # Wright map with the ShinyItemAnalysis package
-b <- coef(fit_1pl_mirt, simplify = TRUE, IRTpars = TRUE)$items[, "b"]
-fs_1PL_mirt <- as.vector(fscores(fit_1pl_mirt))
+b <- coef(fit_1PL_mirt, simplify = TRUE, IRTpars = TRUE)$items[, "b"]
+fs_1PL_mirt <- as.vector(fscores(fit_1PL_mirt))
 ggWrightMap(theta = fs_1PL_mirt, b = b)
 #--------------
 
@@ -519,28 +519,23 @@ library(lme4)
 #--------------
 
 #--------------
-# data long format:
-HCI.wide <- HCI
-HCI.wide$person <- as.factor(1:nrow(HCI))
-HCI.wide$zscore <- scale(rowSums(HCI.wide[, 1:20]))
-# converting data to the long format
-HCI.long <- reshape(
-  data = HCI.wide,
-  varying = list(paste("Item", 1:20)), timevar = "item",
-  v.names = "rating",
-  idvar = c("person", "gender", "major", "zscore"),
-  direction = "long", new.row.names = 1:13020
-)
-summary(HCI.long)
-head(HCI.long)
+# HCI data long format:
+data("HCIlong", package = "ShinyItemAnalysis")
+#--------------
+
+#--------------
+head(HCIlong)
+HCIlong$zscore <- (HCIlong$total - mean(HCI$total))/sd(HCI$total)
+HCIlong$id <- factor(HCIlong$id)
+HCIlong$item <- factor(gsub("Item ", "", HCIlong$item), levels = 1:20)
+summary(HCIlong)
 #--------------
 
 #--------------
 # fit Rasch model with lme4 (TAKES FEW MINUTES!)
-HCI.long$item <- as.factor(HCI.long$item)
-fit_rasch_lme4 <- glmer(rating ~ -1 + item + (1 | person),
-                        data = HCI.long, family = binomial)
-coef(fit_rasch_lme4)$person[1, -1]
+fit_rasch_lme4 <- glmer(rating ~ -1 + item + (1 | id),
+                        data = HCIlong, family = binomial)
+coef(fit_rasch_lme4)$id[1, -1]
 ##    Item1 Item2 Item3   Item4   Item5  Item6  Item7  Item8   Item9
 ## 1 0.9494 1.266 1.925 -0.4515 -0.2701 -0.653 0.2068 0.9911 -0.3128
 ##   Item10 Item11 Item12 Item13 Item14  Item15 Item16  Item17 Item18
@@ -559,38 +554,25 @@ library(brms)
 
 #--------------
 # brms package (Bayesian 1PL IRT). NOTE: this analysis takes several minutes
-formula_1PL <- bf(rating ~ 1 + (1 | item) + (1 | person))
-# formula_1PL <- bf(rating ~ 0 + item + (1 | person))
-prior_1PL <- prior("normal(0, 3)", class = "sd", group = "person") +
+formula_1PL <- bf(rating ~ 1 + (1 | item) + (1 | id))
+# formula_1PL <- bf(rating ~ 0 + item + (1 | id))
+prior_1PL <- prior("normal(0, 3)", class = "sd", group = "id") +
   prior("normal(0, 3)", class = "sd", group = "item")
-# prior_1PL <- prior("normal(0, 3)", class = "sd", group = "person")
+# prior_1PL <- prior("normal(0, 3)", class = "sd", group = "id")
 
 fit_1PL_brms <- brm(formula = formula_1PL,
-                    data = HCI.long, family = brmsfamily("bernoulli", "logit"),
-                    prior = prior_1PL, seed = 123)
+  data = HCIlong, family = brmsfamily("bernoulli", "logit"),
+  prior = prior_1PL, seed = 123)
 coef(fit_1PL_brms)$item[, , "Intercept"]
 ##     Estimate Est.Error     Q2.5    Q97.5
 ##  1    0.9602   0.09574  0.76907  1.15350
 ##  2    1.2570   0.09977  1.06261  1.45843
 ##  3    1.9112   0.11642  1.68002  2.14513
-##  4   -0.4359   0.09231 -0.61655 -0.25707
-##  5   -0.2549   0.08821 -0.42376 -0.07950
-##  6   -0.6331   0.09203 -0.81080 -0.45376
-##  7    0.2182   0.08939  0.04554  0.38996
-##  8    0.9897   0.09536  0.80870  1.17961
-##  9   -0.2992   0.08925 -0.47398 -0.12246
-## 10    0.6982   0.09200  0.51844  0.87965
-## 11    1.4174   0.10446  1.21841  1.62221
-## 12    0.3417   0.08872  0.16662  0.51027
-## 13    0.5081   0.09144  0.32887  0.69132
-## 14    1.2946   0.10041  1.09431  1.49231
-## 15   -0.2483   0.08794 -0.42191 -0.07667
-## 16    0.4979   0.09009  0.32538  0.67370
-## 17   -0.9669   0.09658 -1.15987 -0.77796
-## 18    1.5384   0.10873  1.32993  1.75239
-## 19    1.4557   0.10322  1.25663  1.64973
+## ...
 ## 20    1.0797   0.09478  0.89838  1.26513
+#--------------
 
+#--------------
 plot(fit_1PL_brms)
 #--------------
 
@@ -603,7 +585,7 @@ b_mirt <- coef(fit_rasch_mirt, IRTpars = TRUE,
                simplify = TRUE)$items[, "b"]
 b_ltm <- coef(fit_rasch_ltm)[, 1]
 b_eRm1 <- -coef(fit_rasch_eRm1) - mean(as.numeric(unlist(lat_var$thetapar)))
-b_lme4 <- -unlist(coef(fit_rasch_lme4)$person[1, -1])
+b_lme4 <- -unlist(coef(fit_rasch_lme4)$id[1, -1])
 b_TAMj <- fit_rasch_TAM1$xsi
 b_TAMm <- fit_rasch_TAM2$xsi[, 1]
 b_brms <- -coef(fit_1PL_brms)$item[, "Estimate", "Intercept"]
@@ -743,17 +725,17 @@ FA1$communalities
 #--------------
 
 #--------------
-# psych::fit_irtfa() function
+# psych::fit_irtfa() function (code not shown in the book)
 fit_irtfa <- irt.fa(HCI[,1:20], nfactors = 1, fm = "ml", cor = "poly")
 fit_irtfa$tau
 b_irtfa <- c(fit_irtfa$irt$difficulty[[1]])
 a_irtfa <- c(fit_irtfa$irt$discrimination)
 
-cor(aFA, a_irtfa) # 1
-cor(-dFA, b_irtfa) # -1
+cor(beta1FA, a_irtfa) # 1
+cor(beta0FA, b_irtfa) # -1
 
--D * b_irtfa # equals dFA
-D * a_irtfa # equals aFA
+-D * b_irtfa # equals beta0FA
+D * a_irtfa # equals beta1FA
 #--------------
 
 #--------------
@@ -763,13 +745,6 @@ plot(fit_irtfa, type = "IIC")
 plot(fit_irtfa, type = "test")
 #--------------
 
-
-#--------------
-summary(FA1)
-
-
-M2(fit_2PL_mirt)
-anova(fit_2PL_mirt, test = "Chisq")
 #-----------------------------------------------------------------
 # 7.7. IRT models in interactive application
 #-----------------------------------------------------------------
