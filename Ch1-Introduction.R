@@ -5,234 +5,9 @@
 #-----------------------------------------------------------------
 
 #-----------------------------------------------------------------
-# 1.4.1 Obtaining and running R and RStudio
+# Plot settings
 #-----------------------------------------------------------------
 
-#--------------
-# add 1 and 2
-1 + 2
-## [1] 3
-
-# square root of 25
-sqrt(25)
-## [1] 5
-#--------------
-
-#--------------
-v <-  c(1:10)  # define v as a vector of numbers 1 to 10
-v              # print v 
-## [1] 1 2 3 4 5 6 7 8 9 10
-#--------------
-
-#--------------
-(v <-  c(1:10))  # define v as a vector of numbers 1 to 10 and print
-## [1] 1 2 3 4 5 6 7 8 9 10
-#--------------
-
-#--------------
-v * 3
-## [1] 3 6 9 12 15 18  21 24 27 30
-#--------------
-
-#--------------
-help(sqrt)
-?install.packages
-#--------------
-
-#-----------------------------------------------------------------
-# 1.4.2 R packages
-#-----------------------------------------------------------------
-#
-# Note: go to file InstallPackages.R to obtain full code for installation of 
-#       all packages needed in the book.  
-#       For this reason, this code is commented below.
-#--------------
-# install.packages("remotes")
-# install.packages("ShinyItemAnalysis", dependencies = TRUE)
-#--------------
-
-#--------------
-# remotes::install_github("patriciamar/ShinyItemAnalysis")
-#--------------
-
-#--------------
-library(ShinyItemAnalysis)
-#--------------
-
-#-----------------------------------------------------------------
-# 1.4.3 Data handling
-#-----------------------------------------------------------------
-
-#--------------
-# loading data
-data(HCI)
-data(HCI, package = "ShinyItemAnalysis")
-?HCI
-#--------------
-
-#--------------
-# data dimension (number of rows, columns)
-dim(HCI)
-## [1] 651  23
-nrow(HCI)
-## [1] 651
-ncol(HCI)
-## [1] 23
-#--------------
-
-#--------------
-# variable names
-names(HCI)
-colnames(HCI)
-##  [1] "Item 1"  "Item 2"  "Item 3"  "Item 4"  "Item 5"  "Item 6"
-##  [7] "Item 7"  "Item 8"  "Item 9"  "Item 10" "Item 11" "Item 12"
-## [13] "Item 13" "Item 14" "Item 15" "Item 16" "Item 17" "Item 18"
-## [19] "Item 19" "Item 20" "gender"  "major"   "total" 
-#--------------
-
-#--------------
-# view data head
-head(HCI, n = 3)
-##   Item 1 Item 2 Item 3 Item 4 Item 5 Item 6 Item 7 Item 8 Item 9
-## 1      1      1      1      1      1      0      0      1      1
-## 2      1      1      1      1      1      1      0      1      1
-## 3      1      1      1      1      0      1      0      1      1
-## ...
-#--------------
-
-#--------------
-# view data structure of an R object
-str(HCI)
-## 'data.frame':	651 obs. of  22 variables:
-##  $ Item 1 : num  1 1 1 1 1 1 1 0 1 1 ...
-##  $ Item 2 : num  1 1 1 1 1 1 1 1 1 1 ...
-##  ...
-##  $ total  : num  16 19 17 20 19 20 20 14 18 17 ...
-#--------------
-
-#--------------
-HCI$gender
-##  [1] 0 0 1 1 1 0 0 0 1 0 1 1 0 0 1 0 0 0 0 0 0 0 0 1 0 1 0 1 0 0 0
-## [32] 0 1 0 0 1 0 1 0 0 0 0 1 0 0 1 1 1 0 1 1 1 0 0 1 0 0 0 0 1 0 1
-## ...
-HCI[, "gender"]
-HCI[, 21]
-
-HCI$"Item 1"
-##  [1] 1 1 1 1 1 1 1 0 1 1 0 1 1 0 1 0 0 1 0 1 0 1 1 0 1 1 1 1 0 1 0
-## [32] 0 1 1 1 1 1 0 1 0 1 1 1 1 0 1 1 1 1 1 1 1 1 1 0 1 1 0 1 1 1 1
-
-HCI[1, 1]
-##  [1] 1
-#--------------
-
-#--------------
-# add new variable: person ID
-HCI$id <- as.factor(1:nrow(HCI))
-str(HCI$id)
-## Factor w/ 651 levels "1","2","3","4",..: 1 2 3 4 5 6 7 8 9 10 ...
-#--------------
-
-#--------------
-# reshape data to the long format
-HCI_long <- reshape(
-  data = HCI,
-  varying = list(paste("Item", 1:20)), timevar = "item", 
-  v.names = "rating", idvar = c("id"),
-  direction = "long", new.row.names = 1:13020
-)
-
-head(HCI_long, n = 3)
-##   gender major id item rating
-## 1      0     1  1    1      1
-## 2      0     1  2    1      1
-## 3      1     1  3    1      1
-#--------------
-
-#--------------
-# reshape back to wide format
-HCI_wide <- reshape(
-  data = HCI_long, v.names = "rating", timevar = "item", 
-  idvar = c("id"), direction = "wide"
-)
-
-head(HCI_wide, n = 3)
-##   gender major id rating.1 rating.2 rating.3 ... 
-## 1      0     1  1        1        1        1 ...
-## 2      0     1  2        1        1        1 ...
-## 3      1     1  3        1        1        1 ...
-## ...
-#--------------
-
-#--------------
-# tidyverse approach
-library(tidyverse)
-data(HCI, package = "ShinyItemAnalysis")
-HCI <- mutate(HCI, id = row_number())    # add variable with row number
-head(HCI)
-#--------------
-
-#--------------
-HCI_long_tidy <- pivot_longer(
-  data = HCI,
-  cols = starts_with("Item"),
-  names_to = "item", values_to = "rating"
-)
-head(HCI_long_tidy, n = 3)
-## # A tibble: 3 x 6
-##   gender major    id  item   rating
-##    <int> <int> <int>  <chr>   <dbl>
-## 1      0     1     1  Item 1      1
-## 2      0     1     1  Item 2      1
-## 3      0     1     1  Item 3      1
-#--------------
-
-#--------------
-# tidyverse approach: all in once
-HCI_long_tidy <- HCI %>%         # take HCI dataset, then
-  mutate(id = row_number()) %>%  # add variable with row number, then
-  pivot_longer(starts_with("Item"),   # pivot to long form
-               names_to = "item", values_to = "rating")
-head(HCI_long_tidy, n = 3)
-#--------------
-
-#--------------
-# tidyverse pivot back to wide
-HCI_long_tidy %>% pivot_wider(names_from = item, values_from = rating)
- # A tibble: 651 x 23
-##   gender major    id `Item 1` `Item 2` `Item 3` `Item 4` ...
-##    <int> <int> <int>    <dbl>    <dbl>    <dbl>    <dbl> ...
-## 1      0     1     1        1        1        1        1 ...
-## 2      0     1     2        1        1        1        1 ...
-## 3      1     1     3        1        1        1        1 ...
-##  ...
-#--------------
-
-#-----------------------------------------------------------------
-# 1.4.4 Graphics
-#-----------------------------------------------------------------
-
-#--------------
-data(HCIdata, package = "ShinyItemAnalysis")
-#--------------
-
-#--------------
-# histogram with base R
-hist(HCIdata$total)
-hist(HCIdata$total, breaks = seq(3, 20, 1), col = "gold",
-     main = "", xlab = "Total score", ylab = "Number of respondents")
-#--------------
-
-#--------------
-# histogram with ggplot
-library(ggplot2)
-qplot(total, data = HCIdata)
-ggplot(data = HCIdata, aes(total)) +
-  geom_histogram(binwidth = 1, fill = "gold", col = "black")
-#--------------
-
-#--------------
-# define theme
 theme_fig <- function(base_size = 17, base_family = "") {
   theme_bw(base_size = base_size, base_family = base_family) +
     theme(
@@ -245,117 +20,12 @@ theme_fig <- function(base_size = 17, base_family = "") {
       legend.background = element_blank()
     )
 }
-#--------------
-
-#--------------
-ggplot(data = HCIdata, aes(total)) +
-  geom_histogram(binwidth = 1, fill = "gold", col = "black") +
-  xlab("Total score") + ylab("Number of respondents") + 
-  scale_y_continuous(breaks = seq(0, 70, 10)) + 
-  theme_fig()
-#--------------
-
-#--------------
-# histograms by gender with lattice
-library(lattice)
-histogram(~ total | gender, data = HCIdata, type = "count", 
-          col = "gold", breaks = seq(3, 20, 1), xlab = "Total score")
-#--------------
-
-#-----------------------------------------------------------------
-# 1.4.5 Interactive psychometrics with shiny
-#-----------------------------------------------------------------
-
-#--------------
-# simple shiny app
-library(shiny)
-# Define global variables
-n <- 100
-
-# Define the UI
-ui <- bootstrapPage(
-  numericInput('n', 'Number of obs', n),
-  plotOutput('plot')
-)
-
-# Define the server code
-server <- function(input, output) {
-  output$plot <- renderPlot({
-    hist(rnorm(input$n))
-  })
-}
-
-# Return a Shiny app object
-shinyApp(ui = ui, server = server)
-#--------------
-
-#--------------
-ShinyItemAnalysis::run_app()
-#--------------
-
-
 
 #-----------------------------------------------------------------
 # 1.5 Exploring measurement data
 #-----------------------------------------------------------------
-
 #-----------------------------------------------------------------
-# 1.5.1 Data types
-#-----------------------------------------------------------------
-
-#--------------
-class(HCIdata)
-## [1] "data.frame"
-class(HCIdata$gender)
-## [1] "factor"
-summary(HCIdata$gender)
-##    M    F none 
-##  246  405   18 
-#--------------
-
-#--------------
-class(HCI$gender)
-## [1] "integer"
-summary(HCI$gender)
-##   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-## 0.0000  0.0000  0.0000  0.3779  1.0000  1.0000 
-#--------------
-
-#--------------
-summary(factor(HCI$gender, labels = c("F", "M")))
-##   F   M 
-## 405 246 
-#--------------
-
-#--------------
-class(HCIdata$yearc5)
-## [1] "integer"
-summary(HCIdata$yearc5)
-##  Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-## 1.000   2.000   3.000   3.151   4.000   5.000
-#--------------
-
-#--------------
-summary(as.factor(HCIdata$yearc5))
-##  1   2   3   4   5 
-## 67 137 171 216  78 
-
-min(as.factor(HCIdata$yearc5))
-## Error in Summary.factor(c(4L, 4L, 4L, 4L, 4L, 4L, 4L, 4L, 4L, ...
-##  ‘min’ not meaningful for factors
-
-min(as.ordered(HCIdata$yearc5))
-## [1] 1
-## Levels: 1 < 2 < 3 < 4 < 5
-
-mean(as.ordered(HCIdata$yearc5))
-## Warning message:
-## In mean.default(as.ordered(HCIdata$yearc5)) :
-##  argument is not numeric or logical: returning NA
-#--------------
-
-#-----------------------------------------------------------------
-# 1.5.2 Item scores
+# 1.5.1 Item scores
 #-----------------------------------------------------------------
 #-----------------------------------------------------------------
 # Nominal items
@@ -366,12 +36,10 @@ mean(as.ordered(HCIdata$yearc5))
 data(HCItest, package = "ShinyItemAnalysis")
 
 # view data head
-head(HCItest, n = 3)
-##   Item 1 Item 2 Item 3 Item 4 Item 5 Item 6 Item 7 Item 8 Item 9
-## 1      D      B      A      D      B      B      B      C      D
-## 2      D      B      A      D      B      C      B      C      D
-## 3      D      B      A      D      C      C      B      C      D
-## ...
+head(HCItest, n = 2)
+##   Item 1 Item 2 Item 3 Item 4 Item 5 Item 6 Item 7 Item 8 Item 9 ...
+## 1      D      B      A      D      B      B      B      C      D ...
+## 2      D      B      A      D      B      C      B      C      D ...
 #--------------
 
 #--------------
@@ -397,21 +65,18 @@ unlist(HCIkey)
 
 #--------------
 HCIscored <- as.data.frame(mirt::key2binary(HCItest[, 1:20], HCIkey))
-head(HCIscored, n = 3)
-##   Item 1 Item 2 Item 3 Item 4 Item 5 Item 6 Item 7 Item 8 Item 9
-## 1      1      1      1      1      1      0      0      1      1
-## 2      1      1      1      1      1      1      0      1      1
-## 3      1      1      1      1      0      1      0      1      1
-## ...
+head(HCIscored, n = 2)
+##   Item 1 Item 2 Item 3 Item 4 Item 5 Item 6 Item 7 Item 8 Item 9 ...
+## 1      1      1      1      1      1      0      0      1      1 ...
+## 2      1      1      1      1      1      1      0      1      1 ...
 #--------------
 
 #--------------
-head(HCI, n = 3)
-##   Item 1 Item 2 Item 3 Item 4 Item 5 Item 6 Item 7 Item 8 Item 9
-## 1      1      1      1      1      1      0      0      1      1
-## 2      1      1      1      1      1      1      0      1      1
-## 3      1      1      1      1      0      1      0      1      1
-## ...
+data(HCI, package = "ShinyItemAnalysis")
+head(HCI, n = 2)
+##   Item 1 Item 2 Item 3 Item 4 Item 5 Item 6 Item 7 Item 8 Item 9 ...
+## 1      1      1      1      1      1      0      0      1      1 ...
+## 2      1      1      1      1      1      1      0      1      1 ...
 #--------------
 
 #-----------------------------------------------------------------
@@ -432,6 +97,13 @@ prop.table(table(HCI$"Item 1"))
 #--------------
 
 #--------------
+summary(HCI$"Item 1")
+##   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+## 0.0000  0.0000  1.0000  0.6989  1.0000  1.0000 
+#--------------
+
+#--------------
+# summary statistics for all variables (not shown in the book)
 summary(HCI)
 ##      Item1           Item2            Item3            Item4
 ## Min.   :0.0000   Min.   :0.0000   Min.   :0.0000   Min.   :0.000
@@ -449,13 +121,10 @@ summary(HCI)
 
 #--------------
 data("BFI2", package = "ShinyItemAnalysis")
-
-head(BFI2, n = 3)
-##   i1 i2 i3 i4 i5 i6 i7 i8 i9 i10 i11 i12 i13 i14 i15 i16 i17 i18 
-## 1  5  5  2  3  5  4  4  3  4   5   5   4   3   4   2   3   5   3 
-## 2  4  5  4  3  3  3  5  3  2   4   4   2   4   2   3   4   5   4 
-## 3  1  4  3  5  2  1  3  1  5   4   4   1   5   5   2   1   5   5   
-##  ...
+head(BFI2, n = 2)
+##   i1 i2 i3 i4 i5 i6 i7 i8 i9 i10 i11 i12 i13 i14 i15 i16 i17 i18 ...
+## 1  5  5  2  3  5  4  4  3  4   5   5   4   3   4   2   3   5   3 ...
+## 2  4  5  4  3  3  3  5  3  2   4   4   2   4   2   3   4   5   4 ...
 #--------------
 
 #--------------
@@ -466,12 +135,10 @@ table(BFI2$i1)
 
 #--------------
 BFI2binary <- 1 * as.data.frame(BFI2[, 1:60] >= 3)
-head(BFI2binary, n = 3)
-##   i1 i2 i3 i4 i5 i6 i7 i8 i9 i10 i11 i12 i13 i14 i15 i16 i17 i18
-## 1  1  1  0  1  1  1  1  1  1   1   1   1   1   1   0   1   1   1
-## 2  1  1  1  1  1  1  1  1  0   1   1   0   1   0   1   1   1   1
-## 3  0  1  1  1  0  0  1  0  1   1   1   0   1   1   0   0   1   1 
-## ...
+head(BFI2binary, n = 2)
+##   i1 i2 i3 i4 i5 i6 i7 i8 i9 i10 i11 i12 i13 i14 i15 i16 i17 i18 ...
+## 1  1  1  0  1  1  1  1  1  1   1   1   1   1   1   0   1   1   1 ...
+## 2  1  1  1  1  1  1  1  1  0   1   1   0   1   0   1   1   1   1 ...
 #--------------
 
 #-----------------------------------------------------------------
@@ -479,12 +146,11 @@ head(BFI2binary, n = 3)
 #-----------------------------------------------------------------
 
 #--------------
-data(EPIA, package = "EstCRM")
-
+data(EPIA, package = "ShinyItemAnalysis")
 head(EPIA, n = 2)
-##   Item 1 Item 2 Item 3 Item 4 Item 5
-## 1     96     36     80     78     79
-## 2     42      2      1      1      1
+##   Item 1 Item 2 Item 3 Item 4 Item 5 score
+## 1     96     36     80     78     79   369
+## 2     42      2      1      1      1    47
 #--------------
 
 #--------------
@@ -494,7 +160,7 @@ summary(EPIA$"Item 1")
 #--------------
 
 #-----------------------------------------------------------------
-# 1.5.3 Test scores
+# 1.5.2 Test scores
 #-----------------------------------------------------------------
 
 #--------------
@@ -514,21 +180,17 @@ summary(HCI$total)
 #--------------
 
 #--------------
-c(Min = min(HCI$total), Max = max(HCI$total),
-  Mean = mean(HCI$total), Med = median(HCI$total),
-  Var = var(HCI$total), SD = sd(HCI$total),
-  Skew = moments::skewness(HCI$total),
-  Kurt = moments::kurtosis(HCI$total))
+c(Min = min(HCI$total), Max = max(HCI$total), Mean = mean(HCI$total), 
+  Med = median(HCI$total), Var = var(HCI$total), SD = sd(HCI$total),
+  Skew = moments::skewness(HCI$total), Kurt = moments::kurtosis(HCI$total))
 ##     Min     Max    Mean     Med     Var      SD    Skew    Kurt
 ##  3.0000 20.0000 12.2120 12.0000 13.2473  3.6397 -0.1982  2.3474
 #--------------
 
 #--------------
 psych::describe(HCI$total, type = 1)
-##    vars   n  mean   sd median trimmed  mad min max range
-## X1    1 651 12.21 3.64     12   12.32 4.45   3  20    17
-##    skew kurtosis   se
-## X1 -0.2    -0.65 0.14
+##    vars   n  mean   sd median trimmed  mad min max range skew kurtosis   se
+## X1    1 651 12.21 3.64     12   12.32 4.45   3  20    17 -0.2    -0.65 0.14
 #--------------
 
 #--------------
@@ -542,30 +204,40 @@ moments::kurtosis(HCI$total) - 3
 #-----------------------------------------------------------------
 
 #--------------
-zscore <- scale(HCI$total) # Z-score
-tscore <- 10 * zscore + 50 # T-score
-success_rate <- 100 * (HCI$total / max(HCI$total)) # success rate
+# Z-score
+(zscore <- as.vector(scale(HCI$total)))
+## [1]  1.0408  1.8650  1.3155  2.1398  1.8650  2.1398  2.1398 ...
+
+# T-score
+(tscore <- 10 * zscore + 50)
+## [1] 60.4075 68.6500 63.1550 71.3975 68.6500 71.3975 71.3975 ...
+
+# success rate
+(success_rate <- 100 * (HCI$total / max(HCI$total)))
+## [1]  80  95  85 100  95 100 100 ...
 #--------------
 
 #--------------
 plot(ecdf(HCI$total), xlab = "HCI score", ylab = "Percentile")
 ecdf(HCI$total)(HCI$total)
 ## [1] 0.8725 0.9923 0.9401 1.0000 0.9923 1.0000 1.0000 ...
-centiles <- round(100 * ecdf(HCI$total)(HCI$total)) # percentiles
+(percentiles <- round(100 * ecdf(HCI$total)(HCI$total))) # percentiles
+## [1]  87  99  94 100  99 100 100 ...
 #--------------
 
 #--------------
-head(data.frame(score = HCI$total, zscore, tscore,
-                centiles, success_rate), n = 4)
-##   score zscore  tscore centiles success_rate
-## 1    16 1.0408 60.4075       87           80
-## 2    19 1.8650 68.6500       99           95
-## 3    17 1.3155 63.1550       94           85
-## 4    20 2.1398 71.3975      100          100
+# Summarizing the score, its standardizations and transformations
+# (code not displayed in the book)
+head(data.frame(score = HCI$total, zscore, tscore, percentiles, success_rate), n = 4)
+##   score zscore  tscore percentiles success_rate
+## 1    16 1.0408 60.4075          87           80
+## 2    19 1.8650 68.6500          99           95
+## 3    17 1.3155 63.1550          94           85
+## 4    20 2.1398 71.3975         100          100
 #--------------
 
 #-----------------------------------------------------------------
-# 1.5.4 Covariates
+# 1.5.3 Covariates
 #-----------------------------------------------------------------
 
 #--------------
@@ -607,7 +279,6 @@ by(HCI$"Item 1", HCI$gender, FUN = summary)
 #-----------------------------------------------------------------
 # 1.6 Modelling measurement data
 #-----------------------------------------------------------------
-
 #-----------------------------------------------------------------
 # 1.6.1 Discrete random variables
 #-----------------------------------------------------------------
@@ -624,11 +295,9 @@ dbinom(x = 0, size = 1, prob = 0.3)
 # simulating a Bernoulli trial
 set.seed(42)
 (item1 <- rbinom(n = 100, size = 1, prob = 0.3))
-##   [1] 0 0 1 0 0 1 0 1 0 0 1 0 0 1 1 0 0 1 1 1 0 1 0 0 1 1 1
-##  [28] 0 1 0 0 0 1 0 1 0 1 1 0 0 1 1 1 0 1 0 0 0 0 0 1 1 1 0
-##  [55] 1 0 0 1 1 1 0 0 0 1 0 1 1 0 0 1 1 1 1 1 1 0 1 1 1 1 1
-##  [82] 1 1 0 0 1 1 1 1 1 0 1 1 0 0 0 1 1 0 0
-
+##  [1] 0 0 0 0 1 1 0 0 0 0 0 1 0 0 0 1 0 0 1 1 0 0 0 0 0 1 0 1 1 1 1 0 0 0 0 0
+## [37] 0 0 1 0 0 0 1 0 0 0 1 0 1 1 0 0 0 0 1 0 0 1 0 0 0 0 0 1 0 0 0 1 0 0 0 0
+## [73] 1 0 1 1 0 0 0 1 0 0 0 0 0 1 0 1 0 0 1 0 0 0 1 0 1 1 0 0
 # sample mean and variance
 mean(item1)
 ## [1] 0.3400
@@ -659,9 +328,9 @@ pbinom(8, size = 10, prob = 0.5) - pbinom(2, size = 10, prob = 0.5)
 score <- rbinom(n = 100, size = 20, prob = 0.7)
 
 mean(score)
-# [1] 13.9600
+## [1] 13.9600
 20 * 0.7
-# [1] 14.0000
+## [1] 14.0000
 
 sd(score)
 ## [1] 1.9065
@@ -694,14 +363,13 @@ qnorm(0.025)
 
 #-------------
 # Histogram with an estimated normal density
-ggplot(data = HCI, aes(total)) +
-  geom_histogram(aes(y = ..density..), binwidth = 1,
+library(ggplot2)
+ggplot(data = HCI, aes(total)) + 
+  geom_histogram(aes(y = after_stat(density)), binwidth = 1, 
                  col = "black", fill = "gold") +
-  stat_function(fun = dnorm, colour = "red",
-                args = list(mean = mean(HCI$total),
-                            sd = sd(HCI$total)), size = 0.8) +
-  xlab("Total score") + ylab("Density") +
-  theme_fig()
+  stat_function(fun = dnorm, colour = "red", linewidth = 0.8, 
+                args = list(mean = mean(HCI$total), sd = sd(HCI$total))) +
+  xlab("Total score") + ylab("Density") + theme_fig()
 #--------------
 
 #--------------
@@ -713,10 +381,15 @@ qqline(HCI$total)
 #--------------
 # QQ plot in ggplot 
 ggplot(HCI, aes(sample = total)) +
-  stat_qq(size = 2,
-          shape = 1) +
+  stat_qq(size = 2, shape = 1) +
   stat_qq_line() + 
   theme_fig() +
   ylab("Sample Quantiles") + 
   xlab("Theoretical Quantiles") 
 #--------------
+
+#-----------------------------------------------------------------
+# 1.7 ShinyItemAnalysis interactive application
+#-----------------------------------------------------------------
+
+ShinyItemAnalysis::run_app()
