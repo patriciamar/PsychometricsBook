@@ -5,14 +5,6 @@
 #-----------------------------------------------------------------
 
 #-----------------------------------------------------------------
-# Packages
-#-----------------------------------------------------------------
-
-library(ggplot2)
-library(lattice)
-library(ltm)
-
-#-----------------------------------------------------------------
 # Plot settings
 #-----------------------------------------------------------------
 
@@ -145,6 +137,12 @@ library(deltaPlotR)
 #--------------
 
 #--------------
+# delta plot method with item purification (code not shown in the book)
+deltaPlot(data = MSATB, group = "gender", focal.name = 1, 
+          thr = "norm", purify = TRUE)
+#--------------
+
+#--------------
 # diagonal plots
 diagPlot(DP_fixed, thr.draw = TRUE)
 diagPlot(DP_norm, thr.draw = TRUE)
@@ -199,7 +197,7 @@ n_item49 <- n_item49_01 + n_item49_00 + n_item49_11 + n_item49_10
 
 # alphaMH
 (alphaMH <- sum(n_item49_01 * n_item49_10 / n_item49) /
-    sum(n_item49_00 * n_item49_11 / n_item49))
+  sum(n_item49_00 * n_item49_11 / n_item49))
 ## [1] 0.5430
 #--------------
 
@@ -217,8 +215,8 @@ n_item49_0 <- n_item49_00 + n_item49_10 # incorrect answers
 
 # MH test statistic
 (MHstat <- (abs(sum(n_item49_01 - n_item49_R * n_item49_1 / n_item49)) - 0.5)^2 /
-    sum((n_item49_R * n_item49_F * n_item49_1 * n_item49_0) /
-          (n_item49^2 * (n_item49 - 1))))
+  sum((n_item49_R * n_item49_F * n_item49_1 * n_item49_0) /
+        (n_item49^2 * (n_item49 - 1))))
 ## [1] 12.4456
 # critical value on 0.05 significance level
 qchisq(p = 0.95, df = 1)
@@ -261,6 +259,23 @@ difMH(Data = MSATB, group = "gender", focal.name = 1)
 ## ...
 #--------------
 
+#--------------
+# MH test with item purification and Benjamini-Hochberg adjustment for multiple comparisons
+# (code not shown in the book)
+difMH(Data = MSATB, group = "gender", focal.name = 1,
+      purify = TRUE, p.adjust.method = "BH")
+
+# purification steps (code not shown in the book)
+difMH(Data = MSATB, group = "gender", focal.name = 1,
+      purify = TRUE, p.adjust.method = "BH")$difPur
+##       Item1 Item2 Item3 Item4 Item5 Item6 Item7 Item8 Item9 Item10 Item11 Item12 Item13 Item14
+## Step0     1     0     0     0     0     0     0     0     0      0      0      0      0      0
+## Step1     1     0     0     0     0     0     0     0     0      0      0      0      0      0
+##       Item15 Item16 Item17 Item18 Item19 Item20
+## Step0      0      0      1      0      0      0
+## Step1      0      0      1      0      0      0
+#--------------
+
 #-----------------------------------------------------------------
 # 9.3.3 SIBTEST
 #-----------------------------------------------------------------
@@ -299,9 +314,23 @@ difSIBTEST(Data = MSATB, group = "gender", focal.name = 1, type = "nudif")
 #--------------
 
 #--------------
+# SIBTEST with item purification and Benjamini-Hochberg adjustment for multiple comparisons
+# (code not shown in the book)
+difSIBTEST(Data = MSATB, group = "gender", focal.name = 1,
+           purify = TRUE, p.adjust.method = "BH")
+## ...
+## Items detected as DIF items:
+##   Item49
+
+# purification steps (code not shown in the book)
+difSIBTEST(Data = MSATB, group = "gender", focal.name = 1,
+           purify = TRUE, p.adjust.method = "BH")$difPur
+#--------------
+
+#--------------
 library(mirt)
 lapply(1:20, function(i)
-  SIBTEST(dat = MSATB[, 1:20], group = MSATB$gender, suspect_set = i))
+    SIBTEST(dat = MSATB[, 1:20], group = MSATB$gender, suspect_set = i))
 ## [[1]]
 ##                     focal_group n_matched_set n_suspect_set  beta
 ## SIBTEST                       0            19             1 0.087
@@ -376,7 +405,7 @@ a <- coef(fit_alt)[2]
 b <- -coef(fit_alt)[1] / coef(fit_alt)[2]
 aDIF <- coef(fit_alt)[4]
 bDIF <- (coef(fit_alt)[1] * coef(fit_alt)[4] - coef(fit_alt)[2] * 
-           coef(fit_alt)[3]) /  (coef(fit_alt)[2] * (coef(fit_alt)[2] + coef(fit_alt)[4]))
+    coef(fit_alt)[3]) /  (coef(fit_alt)[2] * (coef(fit_alt)[2] + coef(fit_alt)[4]))
 setNames(c(a, b, aDIF, bDIF), c("a", "b", "aDIF", "bDIF"))
 ##      a       b    aDIF    bDIF 
 ## 1.2659 -1.4740 -0.0797 -0.6025 
@@ -440,7 +469,17 @@ plotDIFLogistic(fit_LR, item = 1, Data = MSATB[, 1:20], group = MSATB[, 21])
 #--------------
 
 #--------------
-# DIF detection with 2PL model
+# difLogistic() with item purification and BH multiple comparsions adjustment 
+# (code not shown in th book) 
+(fit_LR_puriBH <- difLogistic(Data = MSATB, group = "gender", focal.name = 1,
+                              purify = TRUE, p.adjust.method = "BH"))
+# item purification steps
+fit_LR_puriBH$difPur
+#--------------
+
+
+#--------------
+# DIF detection with logistic regression (2PL model) in the difNLR package
 library(difNLR)
 (fit_NLR_2PL <- difNLR(Data = MSATB, group = "gender", focal.name = 1, 
                        model = "2PL", method = "irls"))
@@ -459,12 +498,17 @@ coef(fit_NLR_2PL)$Item49
 ## estimate 1.2659 -1.4740 -0.0797 -0.6025
 ## CI2.5    0.9384 -1.7845 -0.4994 -1.0678
 ## CI97.5   1.5934 -1.1634  0.3401 -0.1371
-# parameters for item 49 - intercept-slope parametrization
+#--------------
+
+#--------------
+# parameters for item 49 - intercept-slope parametrization (code not shown in the book)
 coef(fit_NLR_2PL, IRTpars = FALSE)$Item49
 ##          (Intercept)     x       g     x:g
 ## estimate      1.8659 1.2659 0.5973 -0.0797
 ## CI2.5         1.5558 0.9384 0.1765 -0.4994
 ## CI97.5        2.1761 1.5934 1.0180  0.3401
+
+# parameters for item 49 - IRT parametrization, with SE (code not shown in the book)
 coef(fit_NLR_2PL, SE = TRUE, CI = 0)$Item49
 ##               a       b    aDif    bDif
 ## estimate 1.2659 -1.4740 -0.0797 -0.6025
@@ -474,6 +518,17 @@ coef(fit_NLR_2PL, SE = TRUE, CI = 0)$Item49
 #--------------
 # plot of characteristic curves for item 47
 plot(fit_NLR_2PL, item = "Item47")
+#--------------
+
+#--------------
+# difNLR with item purification and BH correction for multiple comparisons 
+# (code not shown in the book)
+(fit_NLR_2PL_puriBH <- difNLR(Data = MSATB, group = "gender", focal.name = 1, 
+                              model = "2PL", method = "irls", 
+                              purify = TRUE, p.adjust.method = "BH"))
+
+# item purification steps
+fit_NLR_2PL_puriBH$difPur
 #--------------
 
 #-----------------------------------------------------------------
@@ -887,12 +942,6 @@ sapply(1:20, function(i) fUA(a = c(fit_difR0[i, "a"],
 #--------------
 difRaju(Data = MSATB, group = "gender", focal.name = 1, model = "2PL", 
         signed = TRUE)
-## PM: this gave me eeror
-## Error in gauher(k) : object 'gh' not found
-## I was able to solve the error by loading the ltm package as recommended here:
-## https://stackoverflow.com/questions/52256310/error-in-gauherk-object-gh-not-found-using-difgenlord-function
-## Maybe add code with loading the package?
-
 
 ##        Stat.   P-value  
 ## Item49 -1.6608  0.0967 .
@@ -900,6 +949,7 @@ difRaju(Data = MSATB, group = "gender", focal.name = 1, model = "2PL",
 ## ...
 ## Item64  0.1499  0.8809 
 ## ...
+
 difR::difRaju(Data = MSATB, group = "gender", focal.name = 1, 
               model = "2PL", signed = FALSE)
 ##        Stat.   P-value  
@@ -910,7 +960,10 @@ difR::difRaju(Data = MSATB, group = "gender", focal.name = 1,
 ## ... 
 ## Item68 -2.2388  0.0252 *
 ## ...
+#--------------
 
+#--------------
+# code not shown in the book
 SA.Raju <- difRaju(Data = MSATB, group = "gender", 
                    focal.name = 1, model = "1PL", 
                    signed = TRUE)
@@ -951,11 +1004,16 @@ fit_lordif$ipar.sparse
 ## I6.1  2.3511 0.3619 1.1025 1.8668 2.6918
 ## I6.2  3.0226 0.6220 1.2403 1.9581 2.6711
 ## ...
+#--------------
+
+#--------------
+# code not shown in the book
 cor(rowSums(Anxiety_items), fit_lordif$calib.sparse$theta)
 ## [1] 0.9373
 #--------------
 
 #--------------
+# code not shown in the book
 ggplot(data.frame(theta = fit_lordif$calib.sparse$theta,
                   group = as.factor(Anxiety$gender)),
        aes(x = theta, group = group, col = group, fill = group)) +
@@ -969,6 +1027,7 @@ ggplot(data.frame(theta = fit_lordif$calib.sparse$theta,
 #--------------
 
 #--------------
+# code not shown in the book
 ggplot(data.frame(score = rowSums(Anxiety_items),
                   group = as.factor(Anxiety$gender)),
        aes(x = score, group = group, col = group, fill = group)) +
@@ -987,7 +1046,7 @@ ggplot(data.frame(score = rowSums(Anxiety_items),
 
 #-------------- code not shown in book
 library(DIFlasso)
-Anxiety_bin_items <- as.data.frame(0 + (Anxiety[, -c(1:3)] >= 3))
+Anxiety_bin_items <- as.data.frame(0 + (Anxiety[, -c(1:3,33:34)] >= 3))
 Anxiety_covar_std <- as.data.frame(sapply(Anxiety[, 1:3], scale))
 fitRasch_lasso <- DIFlasso(Y = Anxiety_bin_items, X = Anxiety_covar_std)
 ## Number of (valid) persons: P = 569 
@@ -1023,3 +1082,9 @@ fit_Rasch_education <- multipleGroup(data = Anxiety_bin_items, model = 1,
 (test_education <- DIF(MGmodel = fit_Rasch_education, which.par = c("a1", "d")))
 ##  [1] "R3"  "R8"  "R10" "R14" "R22" "R26" "R27" "R29"
 #--------------
+
+#-----------------------------------------------------------------
+# 9.7. DIF detection in interactive application
+#-----------------------------------------------------------------
+
+startShinyItemAnalysis()
