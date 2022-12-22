@@ -25,8 +25,35 @@ theme_fig <- function(base_size = 17, base_family = "") {
 # 3.1  Correlation structure
 #-----------------------------------------------------------------
 
+#--------------
+# code not shown in the book:
+data(EPIA, package = "ShinyItemAnalysis")
+EPIA_items <- EPIA[, 1:5]
+colnames(EPIA_items) <- paste0("i", 1:5)
+head(EPIA_items, n = 3)
+##   i1 i2 i3 i4 i5
+## 1 96 36 80 78 79
+## 2 42  2  1  1  1
+## 3 64 23 36 13 38
+
+cor(EPIA_items)
+##        i1     i2     i3     i4     i5
+## i1 1.0000 0.1962 0.1888 0.2326 0.1786
+## i2 0.1962 1.0000 0.1453 0.2535 0.2511
+## i3 0.1888 0.1453 1.0000 0.1586 0.1282
+## i4 0.2326 0.2535 0.1586 1.0000 0.3140
+## i5 0.1786 0.2511 0.1282 0.3140 1.0000
+
+# Pearson correlation between Item 1 and Item 2, with CI (not shown in book)
+cor.test(EPIA_items$i1, EPIA_items$i2)
+
+# correlation heat map (code not shown in the book)
+library(ShinyItemAnalysis)
+plot_corr(Data = EPIA_items)
+#--------------
+
 #-----------------------------------------------------------------
-# 3.1.1 Tetrachoric and polychoric correlation
+# Tetrachoric and polychoric correlation
 #-----------------------------------------------------------------
 
 #--------------
@@ -41,8 +68,69 @@ tetrachoric(table(HCI$"Item 1", HCI$"Item 2"))
 ##  with tau of
 ##       0       0
 ## -0.5213 -0.6830
+#--------------
+
+#--------------
+# Pearson correlation (code not shown in the book)
 cor(HCI$"Item 1", HCI$"Item 2")
 ## [1] 0.1360
+#--------------
+
+#--------------
+# visualization of the tetrachoric correlation
+draw.tetra(r = 0.23, t1 = -0.52, t2 = -0.68)
+#--------------
+
+#--------------
+# Manual calculation of tau1 and tau2 
+# Contingency table
+(tab <- table(HCI$"Item 1", HCI$"Item 2"))
+##     0   1
+## 0  66 130
+## 1  95 360
+#--------------
+
+#--------------
+# Empirical joint probabilities and 
+# marginal empirical probabilities P(Item1 = 1) and P(Item2 = 1)
+(ptab <- tab / sum(tab)) 
+##        0      1
+## 0 0.1014 0.1997
+## 1 0.1459 0.5530
+(pi_1o <- sum(ptab[2, ]))
+## [1] 0.6989
+(pi_o1 <- sum(ptab[, 2])) 
+## [1] 0.7527
+#--------------
+
+#--------------
+# tau1 and tau2
+qnorm(1 - pi_1o)
+## [1] -0.5213
+qnorm(1 - pi_o1)
+## [1] -0.6830
+#--------------
+
+#--------------
+# Joint empirical probability P(Item1 = 1, Item2 = 1), code not shown in the book
+(pi_11 <- ptab[2, 2])
+## [1] 0.5530
+#--------------
+
+#--------------
+# Approximation of tetrachoric correlation
+cos(pi / (1 + sqrt(tab[1, 1] * tab[2, 2] / (tab[1, 2] * tab[2, 1]))))
+## [1] 0.2519
+#--------------
+
+#--------------
+# Alternative calculations (code not shown)
+cos(pi / (1 + sqrt(ptab[1, 1] * ptab[2, 2] / (ptab[1, 2] * ptab[2, 1]))))
+## [1] 0.2519
+a <- tab[1, 1]; b <- tab[1, 2]
+c <- tab[2, 1]; d <- tab[2, 2]
+cos(pi / (1 + sqrt(a * d / (b * c))))
+## [1] 0.2519
 #--------------
 
 #--------------
@@ -61,21 +149,32 @@ polychoric(table(Anxiety$R1, Anxiety$R2))
 ## $tau.col
 ##      1      2      3      4
 ## 0.5236 1.2898 2.0104 3.2148
+#--------------
+
+#--------------
+# Pearson correlation (code not shown in the book)
 cor(Anxiety$R1, Anxiety$R2)
 ## [1] 0.7813
 #--------------
 
 #--------------
-corP <- polychoric(x = HCI[, 1:20]) # correlation matrix
-corP$rho[1:4, 1:4]
-##        Item 1 Item 2 Item 3 Item 4
-## Item 1 1.0000 0.2338 0.2818 0.0707
-## Item 2 0.2338 1.0000 0.4800 0.1273
-## Item 3 0.2818 0.4800 1.0000 0.0508
-## Item 4 0.0707 0.1272 0.0508 1.0000
+# polychoric is generalization of tetrachoric correlation
+# the same results are obtained for binary data (code not shown in the book)
+polychoric(x = HCI[, 1:20])$rho
+tetrachoric(x = HCI[, 1:20])$rho
+#--------------
 
-# correlation heat map
-library(ShinyItemAnalysis)
+#--------------
+(corHCI <- polychoric(x = HCI[, 1:20])$rho)
+##        Item 1 Item 2 Item 3 Item 4 ...
+## Item 1 1.0000 0.2338 0.2818 0.0707 ...
+## Item 2 0.2338 1.0000 0.4800 0.1273 ...
+## Item 3 0.2818 0.4800 1.0000 0.0508 ...
+## Item 4 0.0707 0.1272 0.0508 1.0000 ...
+#--------------
+
+#--------------
+# correlation heat map (not shown in the book)
 plot_corr(Data = HCI[, 1:20], cor = "polychoric")
 #--------------
 
@@ -85,7 +184,7 @@ plot_corr(Data = HCI[, 1:20], cor = "polychoric")
 
 #--------------
 # hierarchical clustering
-hc <- hclust(d = as.dist(1 - corP$rho), method = "ward.D2")
+hc <- hclust(d = as.dist(1 - corHCI), method = "ward.D2")
 # dendrogram
 library(ggdendro)
 ggdendrogram(data = hc)
@@ -106,15 +205,32 @@ plot_corr(Data = HCI[, 1:20], cor = "poly", clust_method = "ward.D2")
 #-----------------------------------------------------------------
 
 #--------------
-data(HCI, package = "ShinyItemAnalysis")
-corHCI <- tetrachoric(x = HCI[, 1:20])$rho
 fa(r = corHCI, nfactors = 1, fm = "ml")
 fa(r = corHCI, nfactors = 1, fm = "ml", n.obs = 651)
 #--------------
 
 #--------------
 FA1 <- fa(r = HCI[, 1:20], cor = "tetrachoric", nfactors = 1, fm = "ml")
-summary(FA1) # model summary, code not presented in the book
+#--------------
+
+#--------------
+# model summary, code not presented in the book
+summary(FA1) 
+## Factor analysis with Call: fa(r = HCI[, 1:20], nfactors = 1, fm = "ml", cor = "tetrachoric")
+## 
+## Test of the hypothesis that 1 factor is sufficient.
+## The degrees of freedom for the model is 170  and the objective function was  1.91 
+## The number of observations was  651  with Chi Square =  1226.23  with prob <  2.7e-159 
+##
+## The root mean square of the residuals (RMSA) is  0.07 
+## The df corrected root mean square of the residuals is  0.08 
+##
+## Tucker Lewis Index of factoring reliability =  0.622
+## RMSEA index =  0.098  and the 10 % confidence intervals are  0.093 0.103
+## BIC =  124.88
+#--------------
+
+#--------------
 print(FA1$loadings, cutoff = 0)
 ## Loadings:
 ##         ML1  
@@ -122,23 +238,7 @@ print(FA1$loadings, cutoff = 0)
 ## Item 2  0.386
 ## Item 3  0.615
 ## Item 4  0.199
-## Item 5  0.416
-## Item 6  0.513
-## Item 7  0.152
-## Item 8  0.530
-## Item 9  0.283
-## Item 10 0.419
-## Item 11 0.476
-## Item 12 0.448
-## Item 13 0.565
-## Item 14 0.539
-## Item 15 0.460
-## Item 16 0.552
-## Item 17 0.045
-## Item 18 0.697
-## Item 19 0.607
-## Item 20 0.499
-## 
+## ...
 ##                  ML1
 ## SS loadings    4.418
 ## Proportion Var 0.221
@@ -146,27 +246,24 @@ print(FA1$loadings, cutoff = 0)
 
 #--------------
 FA1$communality
-##  Item 1  Item 2  Item 3  Item 4  Item 5  Item 6  Item 7  Item 8 
-##  0.1973  0.1492  0.3780  0.0395  0.1731  0.2635  0.0232  0.2804 
-##  Item 9 Item 10 Item 11 Item 12 Item 13 Item 14 Item 15 Item 16 
-##  0.0802  0.1755  0.2268  0.2004  0.3195  0.2904  0.2118  0.3048 
-## Item 17 Item 18 Item 19 Item 20 
-##  0.0020  0.4853  0.3679  0.2489 
+##  Item 1  Item 2  Item 3  Item 4  Item 5  Item 6  Item 7  Item 8  Item 9 Item 10 
+##  0.1973  0.1492  0.3780  0.0395  0.1731  0.2635  0.0232  0.2804  0.0802  0.1755 
+## Item 11 Item 12 Item 13 Item 14 Item 15 Item 16 Item 17 Item 18 Item 19 Item 20 
+##  0.2268  0.2004  0.3195  0.2904  0.2118  0.3048  0.0020  0.4853  0.3679  0.2489
 #--------------
 
 #--------------
-FA1$loadings[1]^2 # calculation check, code not presented in the book
+# calculation check, code not presented in the book
+FA1$loadings[1]^2
 ## [1] 0.1973 
 #--------------
 
 #--------------
 FA1$uniquenesses
-##  Item 1  Item 2  Item 3  Item 4  Item 5  Item 6  Item 7  Item 8 
-##  0.8027  0.8508  0.6220  0.9605  0.8269  0.7365  0.9768  0.7196 
-##  Item 9 Item 10 Item 11 Item 12 Item 13 Item 14 Item 15 Item 16 
-##  0.9198  0.8245  0.7732  0.7996  0.6805  0.7096  0.7882  0.6952 
-## Item 17 Item 18 Item 19 Item 20 
-##  0.9980  0.5147  0.6321  0.7511
+##  Item 1  Item 2  Item 3  Item 4  Item 5  Item 6  Item 7  Item 8  Item 9 Item 10 
+##  0.8027  0.8508  0.6220  0.9605  0.8269  0.7365  0.9768  0.7196  0.9198  0.8245  
+## Item 11 Item 12 Item 13 Item 14 Item 15 Item 16 Item 17 Item 18 Item 19 Item 20 
+##  0.7732  0.7996  0.6805  0.7096  0.7882  0.6952  0.9980  0.5147  0.6321  0.7511 
 #--------------
 
 #--------------
@@ -197,7 +294,7 @@ var(HCI[, 1])
 #--------------
 
 #--------------
-# with factanal()
+# with factanal() (code not shown in the book)
 # (FA1b <- factanal(x = HCI[, 1:20], covmat = corHCI, factors = 1, 
 #                   rotation = "none"))
 # names(FA1b)
@@ -371,7 +468,7 @@ sd(FS$scores)
 #--------------
 # eigen values of the original cor. matrix
 eigen(TestAnxietyCor)$values
-##  [1] 8.7790 1.3495 0.9710 0.8880 0.7744 0.7416 0.7062
+##  [1] 8.7790 1.3495 0.9710 0.8880 0.7744 0.7416 0.7062 ...
 scree(TestAnxietyCor) # code not shown in the book
 #--------------
 
@@ -446,46 +543,15 @@ summary(fit_EN, fit.measures = TRUE, standardized = TRUE)
 
 #--------------
 parameterEstimates(fit_EN)
-##    lhs op rhs    est    se       z pvalue ci.lower ci.upper
-## 1    E =~  i1  1.000 0.000      NA     NA    1.000    1.000
-## 2    E =~  i6  0.969 0.041  23.611      0    0.889    1.049
-## ...
-## 13   N =~  i4  1.000 0.000      NA     NA    1.000    1.000
-## 14   N =~  i9  0.833 0.039  21.509      0    0.757    0.909
-## ...
-## 25  i1 ~~  i1  0.617 0.023  26.337      0    0.571    0.663
-## 26  i6 ~~  i6  0.647 0.024  26.664      0    0.599    0.694
-## ...
-## 49   E ~~   E  0.489 0.033  14.870      0    0.425    0.554
-## 50   N ~~   N  0.587 0.039  15.191      0    0.512    0.663
-## 51   E ~~   N -0.196 0.017 -11.514      0   -0.229   -0.162
-
 parameterEstimates(fit_EN, ci = FALSE, standardized = TRUE)
 ##    lhs op rhs    est    se       z pvalue std.lv std.all std.nox
 ## 1    E =~  i1  1.000 0.000      NA     NA  0.699   0.665   0.665
 ## 2    E =~  i6  0.969 0.041  23.611      0  0.678   0.644   0.644
-## 3    E =~ i11  0.470 0.041  11.423      0  0.329   0.296   0.296
-## 4    E =~ i16  1.420 0.052  27.066      0  0.993   0.757   0.757
-## 5    E =~ i21  1.150 0.047  24.647      0  0.804   0.677   0.677
-## 6    E =~ i26  0.510 0.034  14.790      0  0.357   0.387   0.387
-## 7    E =~ i31  1.265 0.050  25.257      0  0.885   0.697   0.697
-## 8    E =~ i36  0.547 0.039  14.137      0  0.382   0.369   0.369
-## 9    E =~ i41  0.813 0.039  20.583      0  0.568   0.552   0.552
-## 10   E =~ i46  1.126 0.045  25.099      0  0.787   0.692   0.692
-## 11   E =~ i51  1.052 0.045  23.559      0  0.736   0.643   0.643
-## 12   E =~ i56  0.669 0.036  18.468      0  0.468   0.491   0.491
-## 13   N =~  i4  1.000 0.000      NA     NA  0.766   0.672   0.672
-## 14   N =~  i9  0.833 0.039  21.509      0  0.639   0.569   0.569
-## 15   N =~ i14  1.069 0.044  24.397      0  0.819   0.653   0.653
-## 16   N =~ i19  0.817 0.037  22.095      0  0.626   0.585   0.585
-## 17   N =~ i24  0.807 0.039  20.685      0  0.618   0.545   0.545
-## 18   N =~ i29  1.171 0.042  27.874      0  0.898   0.761   0.761
-## 19   N =~ i34  0.828 0.038  21.852      0  0.634   0.578   0.578
-## 20   N =~ i39  1.155 0.043  26.963      0  0.885   0.732   0.732
-## 21   N =~ i44  0.730 0.038  19.372      0  0.560   0.508   0.508
-## 22   N =~ i49  0.836 0.039  21.611      0  0.641   0.571   0.571
-## 23   N =~ i54  1.176 0.044  26.900      0  0.901   0.730   0.730
-## 24   N =~ i59  0.974 0.041  23.968      0  0.747   0.641   0.641
+## ... 
+## 48 i59 ~~ i59  0.801 0.030  27.106      0  0.801   0.590   0.590
+## 49   E ~~   E  0.489 0.033  14.870      0  1.000   1.000   1.000
+## 50   N ~~   N  0.587 0.039  15.191      0  1.000   1.000   1.000
+## 51   E ~~   N -0.196 0.017 -11.514      0 -0.365  -0.365  -0.365
 #--------------
 
 #--------------
