@@ -5,10 +5,6 @@
 #-----------------------------------------------------------------
 
 #-----------------------------------------------------------------
-# Packages
-#-----------------------------------------------------------------
-
-#-----------------------------------------------------------------
 # Plot settings
 #-----------------------------------------------------------------
 
@@ -24,6 +20,7 @@ theme_fig <- function(base_size = 17, base_family = "") {
       legend.background = element_blank()
     )
 }
+#-----------------------------------------------------------------
 
 #-----------------------------------------------------------------
 # 7.4.1  The mirt package
@@ -37,14 +34,18 @@ library(mirt)
 #--------------
 # load the data
 data(HCI, package = "ShinyItemAnalysis")
+#--------------
+
+#--------------
+# explore the data (code not shown in the book)
 head(HCI)
 summary(HCI)
 #--------------
 
 #--------------
 # Rasch model
-fit_rasch_mirt <- mirt(data = HCI[, 1:20], model = 1, 
-                       itemtype = "Rasch", SE = TRUE)
+fit_rasch_mirt <- mirt(data = HCI[, 1:20], model = 1, itemtype = "Rasch", 
+                       SE = TRUE)
 #--------------
 
 #--------------
@@ -85,9 +86,10 @@ coef(fit_rasch_mirt, IRTpars = TRUE, simplify = TRUE)
 #--------------
 
 #--------------
+# code not shown in the book
 sqrt(0.669) # 0.818 is the SD of the latent trait
 0.963 / sqrt(0.669) # latent trait 1.177 below average is needed
-# to answer Item 1 correctly with probability 0.5
+                    # to answer Item 1 correctly with probability 0.5
 #--------------
 
 #--------------
@@ -124,14 +126,16 @@ head(fs_rasch_mirt_SE, n = 3)
 summary(fs_rasch_mirt_SE[, 1])
 ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
 ## -1.7051 -0.4252 -0.0680 -0.0001  0.5028  1.6951
+#--------------
 
-# SD of ability estimates is close to 0.669 
+#--------------
+# SD of ability estimates is close to 0.669 (code not shown in the book)
 sd(fs_rasch_mirt_SE[, 1])
 ## [1] 0.6899
 #--------------
 
 #--------------
-# comparison with total test score
+# comparison with total test score (code not shown in the book)
 cor(HCI$total, fs_rasch_mirt_SE[, 1])
 # [1] 0.9985
 
@@ -147,6 +151,7 @@ ggplot(
 #--------------
 
 #--------------
+# histogram of Rasch ability estimates(code not shown in the book)
 ggplot(
   data.frame(fs = fs_rasch_mirt_SE[, 1]),
   aes(x = fs)
@@ -186,7 +191,7 @@ plot(fit_2PL_mirt, type = "infoSE")
 #--------------
 
 #--------------
-# latent abilities (factor scores)
+# estimated latent abilities (code not shown in the book)
 fs_2PL_mirt <- as.vector(fscores(fit_2PL_mirt))
 summary(fs_2PL_mirt)
 ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
@@ -194,7 +199,7 @@ summary(fs_2PL_mirt)
 #--------------
 
 #--------------
-# comparison with total test score
+# comparison with total test score (code not shown in the book)
 cor(HCI$total, fs_2PL_mirt)
 # [1] 0.9695
 
@@ -234,7 +239,7 @@ coef(fit_1PL_mirt, IRTpars = TRUE, simplify = TRUE)
 #--------------
 
 #--------------
-# 3PL IRT model with default setting (not shown in the book)
+# 3PL IRT model with default setting (code not shown in the book)
 fit_3PL_mirt <- mirt(HCI[, 1:20], model = 1, itemtype = "3PL")
 ## EM cycles terminated after 500 iterations.
 #--------------
@@ -273,8 +278,7 @@ summary(fs_3PL_mirt)
 
 #--------------
 # 4PL IRT model (not shown in the book)
-fit_4PL_mirt <- mirt(HCI[, 1:20], model = 1, itemtype = "4PL", 
-                     SE = TRUE)
+fit_4PL_mirt <- mirt(HCI[, 1:20], model = 1, itemtype = "4PL", SE = TRUE)
 summary(fit_4PL_mirt)
 coef(fit_4PL_mirt)
 ## $`Item 1`
@@ -337,8 +341,14 @@ library(ltm)
 #--------------
 # 1PL model, discrimination not fixed
 fit_1PL_ltm <- rasch(HCI[, 1:20])
-summary(fit_1PL_ltm)
+#--------------
 
+#--------------
+# model summary (code not shown in the book)
+summary(fit_1PL_ltm)  
+#--------------
+
+#--------------
 # coefficients - IRT parametrization
 coef(fit_1PL_ltm)
 ##           Dffclt Dscrmn
@@ -351,8 +361,14 @@ coef(fit_1PL_ltm)
 #--------------
 # Rasch model, discrimination fixed at value of 1
 fit_rasch_ltm <- rasch(HCI[, 1:20], constraint = cbind(20 + 1, 1))
-summary(fit_rasch_ltm)
+#--------------
 
+#--------------
+# model summary (code not shown in the book)
+summary(fit_rasch_ltm)
+#--------------
+
+#--------------
 # coefficients - IRT parametrization
 coef(fit_rasch_ltm)
 ##          Dffclt Dscrmn
@@ -410,8 +426,7 @@ ltm::factor.scores(fit_rasch_ltm, resp.patterns = HCI[, 1:20])
 
 #-------------- 
 ltm::factor.scores(fit_rasch_ltm, 
-                   resp.patterns = matrix(rep(c(1, 0), each = 10),
-                                          nrow = 1))
+                   resp.patterns = matrix(rep(c(1, 0), each = 10), nrow = 1))
 ## Factor-Scores for specified response patterns:
 ##    Item 1 Item 2 ... Item 18 Item 19 Item 20 Obs Exp     z1 se.z1
 ## 1       1      1 ...       0       0       0   0   0 -0.482 0.436
@@ -428,8 +443,15 @@ library(eRm)
 #--------------
 # Rasch model with sum = 0 beta restriction
 fit_rasch_eRm1 <- RM(X = HCI[, 1:20])
+#--------------
+
+#--------------
+# model summary (code not shown in the book)
 fit_rasch_eRm1
 summary(fit_rasch_eRm1)
+#--------------
+
+#--------------
 coef(fit_rasch_eRm1)
 ## beta Item 1  beta Item 2  beta Item 3  beta Item 4  beta Item 5
 ##      0.3963       0.6994       1.3619      -1.0137      -0.8327
@@ -444,7 +466,7 @@ coef(fit_rasch_eRm1)
 #--------------
 # shifted by mean ability estimate
 lat_var <- person.parameter(fit_rasch_eRm1)
-lat_var$thetapar[1]
+lat_var$thetapar[1] # not shown in the book
 mean(as.numeric(unlist(lat_var$thetapar)))
 ## [1] 0.5789
 coef(fit_rasch_eRm1) + mean(as.numeric(unlist(lat_var$thetapar)))
@@ -476,6 +498,9 @@ coef(fit_rasch_eRm2)
 #-----------------------------------------------------------------
 # 7.4.4  Other IRT packages
 #-----------------------------------------------------------------
+#-----------------------------------------------------------------
+# 7.4.4.1  The TAM package
+#-----------------------------------------------------------------
 
 #--------------
 library(TAM)
@@ -498,6 +523,10 @@ fit_rasch_TAM2$xsi[, 1]
 ##  [9]  0.3070 -0.7013 -1.4291 -0.3390 -0.5062 -1.3041  0.2569 -0.4989
 ## [17]  0.9858 -1.5512 -1.4690 -1.0891
 #--------------
+
+#-----------------------------------------------------------------
+# 7.4.4.2  The ShinyItemAnalysis package
+#-----------------------------------------------------------------
 
 #--------------
 library(ShinyItemAnalysis)
@@ -524,6 +553,7 @@ data("HCIlong", package = "ShinyItemAnalysis")
 #--------------
 
 #--------------
+# explore the data (code not shown in the book)
 head(HCIlong)
 HCIlong$zscore <- (HCIlong$total - mean(HCI$total))/sd(HCI$total)
 HCIlong$id <- factor(HCIlong$id)
@@ -533,8 +563,8 @@ summary(HCIlong)
 
 #--------------
 # fit Rasch model with lme4 (TAKES FEW MINUTES!)
-fit_rasch_lme4 <- glmer(rating ~ -1 + item + (1 | id),
-                        data = HCIlong, family = binomial)
+fit_rasch_lme4 <- glmer(rating ~ -1 + item + (1 | id), data = HCIlong, 
+                        family = binomial)
 coef(fit_rasch_lme4)$id[1, -1]
 ##    Item1 Item2 Item3   Item4   Item5  Item6  Item7  Item8   Item9
 ## 1 0.9494 1.266 1.925 -0.4515 -0.2701 -0.653 0.2068 0.9911 -0.3128
@@ -557,12 +587,11 @@ library(brms)
 formula_1PL <- bf(rating ~ 1 + (1 | item) + (1 | id))
 # formula_1PL <- bf(rating ~ 0 + item + (1 | id))
 prior_1PL <- prior("normal(0, 3)", class = "sd", group = "id") +
-  prior("normal(0, 3)", class = "sd", group = "item")
+             prior("normal(0, 3)", class = "sd", group = "item")
 # prior_1PL <- prior("normal(0, 3)", class = "sd", group = "id")
 
-fit_1PL_brms <- brm(formula = formula_1PL,
-  data = HCIlong, family = brmsfamily("bernoulli", "logit"),
-  prior = prior_1PL, seed = 123)
+fit_1PL_brms <- brm(formula = formula_1PL, data = HLIlong, prior = prior_1PL,
+                    family = brmsfamily("bernoulli", "logit"), seed = 123)
 coef(fit_1PL_brms)$item[, , "Intercept"]
 ##     Estimate Est.Error     Q2.5    Q97.5
 ##  1    0.9602   0.09574  0.76907  1.15350
@@ -726,7 +755,7 @@ FA1$communalities
 
 #--------------
 # psych::fit_irtfa() function (code not shown in the book)
-fit_irtfa <- irt.fa(HCI[,1:20], nfactors = 1, fm = "ml", cor = "poly")
+fit_irtfa <- irt.fa(HCI[, 1:20], nfactors = 1, fm = "ml", cor = "poly")
 fit_irtfa$tau
 b_irtfa <- c(fit_irtfa$irt$difficulty[[1]])
 a_irtfa <- c(fit_irtfa$irt$discrimination)
