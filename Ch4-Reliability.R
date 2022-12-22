@@ -26,51 +26,51 @@ theme_fig <- function(base_size = 17, base_family = "") {
 #-----------------------------------------------------------------
 
 #--------------
-rho.original <- 0.75 # reliability of original data
-items.original <- 20 # number of items in original data
-items.new <- 30 # number of items in new data
-(m <- items.new / items.original) # ratio of tests lengths
+rho_original <- 0.75 # reliability of original data
+items_original <- 20 # number of items in original data
+items_new <- 30 # number of items in new data
+(m <- items_new / items_original) # ratio of tests lengths
 ## [1] 1.5
 
 # new reliability
-m * rho.original / (1 + (m - 1) * rho.original)
+m * rho_original / (1 + (m - 1) * rho_original)
 ## [1] 0.8182
 #--------------
 
 #--------------
 library(psychometric)
-SBrel(Nlength = m, rxx = rho.original)
+SBrel(Nlength = m, rxx = rho_original)
 ## [1] 0.8182
 #--------------
 
 #--------------
-rho.new <- 0.85 # desired reliability
+rho_new <- 0.85 # desired reliability
 # determining test length
-(m <- rho.new * (1 - rho.original) / (rho.original * (1 - rho.new)))
+(m <- rho_new * (1 - rho_original) / (rho_original * (1 - rho_new)))
 ## [1] 1.8889
-ceiling(m * items.original) # new test length
+ceiling(m * items_original) # new test length
 ## [1] 38
 #--------------
 
 #--------------
-(m <- SBlength(rxxp = rho.new, rxx = rho.original))
+(m <- SBlength(rxxp = rho_new, rxx = rho_original))
 ## [1] 1.8889
-ceiling(m * items.original) # new test length
+ceiling(m * items_original) # new test length
 ## [1] 38
 #--------------
 
 #--------------
-rho.new <- 0.7 # desired reliability
-(m <- rho.new * (1 - rho.original) / (rho.original * (1 - rho.new)))
+rho_new <- 0.7 # desired reliability
+(m <- rho_new * (1 - rho_original) / (rho_original * (1 - rho_new)))
 ## [1] 0.7778
-ceiling(m * items.original) # new test length
+ceiling(m * items_original) # new test length
 ## [1] 16
 #--------------
 
 #--------------
-(m <- SBlength(rxxp = rho.new, rxx = rho.original))
+(m <- SBlength(rxxp = rho_new, rxx = rho_original))
 ## [1] 0.7778
-ceiling(m * items.original) # new test length
+ceiling(m * items_original) # new test length
 ## [1] 16
 #--------------
 
@@ -125,8 +125,8 @@ HCI_items <- HCI[, 1:20]
 # first-second split
 df1 <- HCI_items[, 1:10]; df2 <- HCI_items[, 11:20]
 ts1 <- rowSums(df1); ts2 <- rowSums(df2)
-cor.x <- cor(ts1, ts2)
-2 * cor.x / (1 + cor.x) # Spearman-Brown formula
+cor_x <- cor(ts1, ts2)
+2 * cor_x / (1 + cor_x) # Spearman-Brown formula
 ## [1] 0.6966
 #--------------
 
@@ -134,8 +134,8 @@ cor.x <- cor(ts1, ts2)
 # even-odd split
 df1 <- HCI_items[, seq(1, 20, 2)]; df2 <- HCI_items[, seq(2, 20, 2)]
 ts1 <- rowSums(df1); ts2 <- rowSums(df2)
-cor.x <- cor(ts1, ts2)
-2 * cor.x / (1 + cor.x) # Spearman-Brown formula
+cor_x <- cor(ts1, ts2)
+2 * cor_x / (1 + cor_x) # Spearman-Brown formula
 ## [1] 0.7415
 #--------------
 
@@ -145,8 +145,8 @@ set.seed(123) # setting seed for reproducibility
 samp <- sample(1:20, 10) # 10 random items
 df1 <- HCI_items[, samp]; df2 <- HCI_items[, setdiff(1:20, samp)]
 ts1 <- rowSums(df1); ts2 <- rowSums(df2)
-cor.x <- cor(ts1, ts2)
-2 * cor.x / (1 + cor.x) # Spearman-Brown formula
+cor_x <- cor(ts1, ts2)
+2 * cor_x / (1 + cor_x) # Spearman-Brown formula
 ## [1] 0.7386
 #--------------
 
@@ -240,21 +240,21 @@ ggplot(data = AIBS, aes(x = ScoreRankAdj, y = Score, group = ID)) +
 
 #--------------
 n = 72; m = 3
-mean.proposals <- tapply(AIBS$Score, AIBS$ID, mean)
-mean.overall <- mean(AIBS$Score)
+mean_proposals <- tapply(AIBS$Score, AIBS$ID, mean)
+mean_overall <- mean(AIBS$Score)
 
-(SSP <- m*sum((mean.proposals - mean.overall)^2)) # Observed SSb
+(SSP <- m * sum((mean_proposals - mean_overall)^2)) # observed SSb
 ## [1] 78.7398
-(SSe <- sum((AIBS$Score - AIBS$ScoreAvg)^2)) # Observed SSw
+(SSe <- sum((AIBS$Score - AIBS$ScoreAvg)^2)) # observed SSw
 ## [1] 57.6400
 #--------------
 
 #--------------
 (MSP <- SSP / (n - 1))
 ## [1] 1.1090
-(MSe <- SSe / (n * (m - 1)))  # Estimate of residual variance
+(MSe <- SSe / (n * (m - 1)))  # estimate of residual variance
 ## [1] 0.4003
-(MSP - MSe) / m # Proposal (true-score) variance
+(MSP - MSe) / m # proposal (true-score) variance
 ## [1] 0.2362
 #--------------
 
@@ -289,16 +289,16 @@ n <- nlevels(as.factor(HCIlong$id)) # number of persons
 
 #--------------
 # mean ratings
-mean.overall <- mean(HCIlong$rating)
-mean.items <- tapply(HCIlong$rating, HCIlong$item, mean)
-mean.persons <- tapply(HCIlong$rating, HCIlong$id, mean)
+mean_overall <- mean(HCIlong$rating)
+mean_items <- tapply(HCIlong$rating, HCIlong$item, mean)
+mean_persons <- tapply(HCIlong$rating, HCIlong$id, mean)
 #--------------
 
 #--------------
 # sum of squares
-SStotal <- sum((HCIlong$rating - mean.overall)^2)
-SSP <- m * sum((mean.persons - mean.overall)^2)
-SSI <- n * sum((mean.items - mean.overall)^2)
+SStotal <- sum((HCIlong$rating - mean_overall)^2)
+SSP <- m * sum((mean_persons - mean_overall)^2)
+SSI <- n * sum((mean_items - mean_overall)^2)
 SSe <- SStotal - SSP - SSI
 #--------------
 
@@ -355,9 +355,7 @@ gamma <- 0.05 # significance level
 #--------------
 # confidence interval in psychometric package
 a <- psychometric::alpha(HCI_items)
-psychometric::alpha.CI(
-  a, N = nrow(HCI_items), k = ncol(HCI_items), level = 0.95
-  )
+psychometric::alpha.CI(a, N = nrow(HCI_items), k = ncol(HCI_items), level = 0.95)
 ##      LCL  ALPHA    UCL
 ## 1 0.6828 0.7155 0.7462
 #--------------
@@ -375,10 +373,8 @@ psych::alpha(HCI_items)$feldt
 # not shown in the book
 # NOTE: for some reason does not work now (no output)
 a <- psych::alpha(HCI_items)$total[1]
-psych::alpha.ci(
-  a, n.obs = nrow(HCI_items), n.var = ncol(HCI_items),
-  p.val = 0.05, digits = 4
-)
+psych::alpha.ci(a, n.obs = nrow(HCI_items), n.var = ncol(HCI_items), p.val = 0.05, 
+                digits = 4)
 ## $lower.ci
 ## raw_alpha
 ## 0.6837
@@ -407,7 +403,7 @@ psych::alpha.ci(
 #--------------
 
 #-----------------------------------------------------------------
-# # 4.4.2 Maximum likelihood
+# 4.4.2 Maximum likelihood
 #-----------------------------------------------------------------
 
 #--------------
@@ -497,11 +493,8 @@ sigma2P_HCI / (sigma2P_HCI + sigma2e_HCI / m)
 #-----------------------------------------------------------------
 
 #--------------
-boot <- bootMer(
-  model2_REML,
-  FUN = function(mm) unlist(as.data.frame(VarCorr(mm))["vcov"]),
-  nsim = 100, seed = 543
-)
+boot <- bootMer(model2_REML, nsim = 100, seed = 543,
+                FUN = function(mm) unlist(as.data.frame(VarCorr(mm))["vcov"]))
 #--------------
 
 #--------------
@@ -514,8 +507,7 @@ head(bootVars, n = 2)
 #--------------
 
 #--------------
-bootAlphaCR <- bootVars[, "id"] /
-  (bootVars[, "id"] + bootVars[, "Residual"] / m)
+bootAlphaCR <- bootVars[, "id"] / (bootVars[, "id"] + bootVars[, "Residual"] / m)
 #--------------
 
 #--------------
@@ -549,14 +541,13 @@ ggplot(
 #--------------
 
 #-----------------------------------------------------------------
-# # 4.4.5 Bayesian estimation
+# 4.4.5 Bayesian estimation
 #-----------------------------------------------------------------
 
 #--------------
 library(brms)
-set.seed(1234) # TODO: resave results with seed
-fitB <- brm(rating ~ (1 | id) + (1 | item),
-            data = HCIlong)
+set.seed(1234) 
+fitB <- brm(rating ~ (1 | id) + (1 | item), data = HCIlong)
 #--------------
 
 #--------------
@@ -680,8 +671,7 @@ varP / (varP + varDeltaRel)
 
 #--------------
 model <- rating ~ (1 | id) + (1 | item)
-(gfit <- gtheory::gstudy(formula = model, 
-                         data = HCIlong))
+(gfit <- gtheory::gstudy(formula = model, data = HCIlong))
 ## $components
 ##     source    var percent n
 ## 1       id 0.0237     9.9 1
@@ -690,8 +680,8 @@ model <- rating ~ (1 | id) + (1 | item)
 #--------------
 
 #--------------
-gtheory::dstudy(gfit, colname.objects = "id",
-                colname.scores = "rating", data = HCIlong)
+gtheory::dstudy(gfit, colname.objects = "id", colname.scores = "rating", 
+                data = HCIlong)
 ## $components
 ##     source    var percent  n
 ## 1       id 0.0237    68.7  1
@@ -746,11 +736,9 @@ hemp::dstudy(G_pxi, n = c(item = 20), unit = "id")
 #--------------
 
 #--------------
-hemp::dstudy_plot(G_pxi, unit = "id",
-                  facets = list(item = seq(0, 30, 5)), 
+hemp::dstudy_plot(G_pxi, unit = "id", facets = list(item = seq(0, 30, 5)), 
                   g_coef = TRUE)
-hemp::dstudy_plot(G_pxi, unit = "id", 
-                  facets = list(item = seq(0, 30, 5)),
+hemp::dstudy_plot(G_pxi, unit = "id", facets = list(item = seq(0, 30, 5)),
                   g_coef = FALSE)
 #--------------
 
@@ -772,11 +760,8 @@ head(data.ratings2)
 
 #--------------
 m <- 5 # number of items
-data.long2 <- reshape(
-  data.ratings2, direction = "long",
-  varying = list(3:7), v.names = "ratings",
-  timevar = "items", new.row.names = 1:3075
-)
+data.long2 <- reshape(data.ratings2, direction = "long", varying = list(3:7), 
+      v.names = "ratings", timevar = "items", new.row.names = 1:3075)
 data.long2 <- data.long2[,-5]
 data.long2$rater <- as.factor(data.long2$rater)
 data.long2$items <- as.factor(data.long2$items)
@@ -809,10 +794,8 @@ gfit
 
 #--------------
 # D-study with gtheory package
-dfit <- gtheory::dstudy(
-  gfit, colname.objects = "idstud",
-  colname.scores = "ratings", data = data.long2
-)
+dfit <- gtheory::dstudy(gfit, colname.objects = "idstud", 
+                        colname.scores = "ratings", data = data.long2)
 dfit$components
 ##         source    var percent  n
 ## 1 idstud:items 0.0207     4.5  5
@@ -851,9 +834,9 @@ dfit$generalizability
 
 #--------------
 # G-study with hemp package
-fit <- lmer(ratings ~ (1 | items) + (1 | rater) + (1 | idstud) +
-              (1 | items:rater) + (1 | idstud:rater) +
-              (1 | idstud:items), data = data.long2)
+fit <- lmer(ratings ~ (1 | items) + (1 | rater) + (1 | idstud) + 
+              (1 | items:rater) + (1 | idstud:rater) + (1 | idstud:items), 
+            data = data.long2)
 (G_pxixr <- hemp::gstudy(fit))
 ##         Source Est.Variance Percent.Variance
 ## 1 idstud:items       0.1037            13.1%
@@ -880,49 +863,18 @@ hemp::dstudy(G_pxixr, n = c("items" = 20, "rater" = 2), unit = "idstud")
 ## The generalizability coefficient is: 0.8924222.
 ## The dependability coefficient is: 0.8482307.
 
-hemp::dstudy_plot(
-  G_pxixr, unit = "idstud",
-  facets = list("items" = seq(from = 0, to = 5),
-                "rater" = c(1, 2, 3)),
-  g_coef = TRUE
-)
-hemp::dstudy_plot(
-  G_pxixr, unit = "idstud",
-  facets = list("items" = seq(from = 0, to = 5),
-                "rater" = c(1, 2, 3)),
-  g_coef = FALSE
-)
+hemp::dstudy_plot(G_pxixr, unit = "idstud",
+                  facets = list("items" = seq(from = 0, to = 5),
+                                "rater" = c(1, 2, 3)),
+                  g_coef = TRUE)
+hemp::dstudy_plot(G_pxixr, unit = "idstud",
+                  facets = list("items" = seq(from = 0, to = 5),
+                                "rater" = c(1, 2, 3)),
+                  g_coef = FALSE)
 #--------------
-
-#-----------------------------------------------------------------
-# 4.6.3 Issues with range restriction
-#-----------------------------------------------------------------
-
-# estimate reliability with ICC for complete AIBS dataset
-library(ShinyItemAnalysis)
-ICCrestricted(Data = AIBS, case = "ID", var = "Score", 
-              rank = "ScoreRankAdj")
-
-# estimate range-restricted ICC
-ICCrestricted(Data = AIBS, case = "ID", var = "Score",
-              rank = "ScoreRankAdj", sel = 0.90, dir = "top")
-
-
-# estimate all possible top-restricted subsets
-all_top_restricted <- map_dfr(2:72,
-                              ~ ICCrestricted(Data = AIBS, case = "ID", var = "Score",
-                                              rank = "ScoreRankAdj", sel = .x, nsim = 10))
-all_top_restricted
-
-# plot
-all_top_restricted %>%
-  ggplot(aes(prop_sel, ICC1, ymin = ICC1_LCI, ymax = ICC1_UCI)) +
-  geom_pointrange() + scale_x_continuous(labels = scales::percent) +
-  labs(x = ("Proportion of top ratees"), y = "Reliability") +
-  coord_cartesian(ylim = c(0, 1), xlim = c(0, 1)) +
-  theme_app()
 
 #-----------------------------------------------------------------
 # 4.7 Reliability in interactive application
 #-----------------------------------------------------------------
+
 ShinyItemAnalysis::run_app()
