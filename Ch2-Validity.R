@@ -36,15 +36,15 @@ n <- 37
 (Z <- (Y - n / 2) / (sqrt(n) / 2))
 ## [1]  5.0964  0.4932  5.0964  2.4660  2.7948 -0.4932  1.1508
 qnorm(1 - 0.05)
-## [1] 1.645
+## [1] 1.6449
 #-------------- 
 
 #-------------- 
 # not shown in the book
-(1 - pnorm(Z))/2 # p value 
+(1 - pnorm(Z)) / 2 # p value 
 pnorm(Z, lower.tail = FALSE)
 # lower bound of one-sided confidence interval
-p - qnorm(1 - 0.05)*sqrt(p*(1-p)/n)
+p - qnorm(1 - 0.05) * sqrt(p * (1 - p) / n)
 ## [1] 0.8451 0.4058 0.8451 0.5791 0.6096 0.3247 0.4618
 #-------------- 
 
@@ -58,7 +58,7 @@ Z^2
 # p value:
 (1 - pchisq(Z^2, df = 1)) # p value (alternative: greater)
 ## [1] 3.462e-07 6.219e-01 3.462e-07 1.366e-02 5.193e-03 6.219e-01 2.498e-01
-(1 - pchisq(Z^2, df = 1))/2 # p value (alternative: two sided)
+(1 - pchisq(Z^2, df = 1)) / 2 # p value (alternative: two sided)
 ## [1] 1.731e-07 3.109e-01 1.731e-07 6.832e-03 2.597e-03 3.109e-01 1.249e-01 
 #--------------
 
@@ -92,8 +92,7 @@ prop.test(x = 34, n = 37, alternative = "two.sided", correct = FALSE)
 #--------------
 
 #--------------
-proptests <- lapply(Y, prop.test, n = n, alternative = "greater", 
-                    correct = FALSE)
+proptests <- lapply(Y, prop.test, n = n, alternative = "greater", correct = FALSE)
 # p-values
 sapply(proptests, function(x) x$p.value)
 ## [1] 0.0000 0.3109 0.0000 0.0068 0.0026 0.6891 0.1249
@@ -104,14 +103,11 @@ sapply(proptests, function(x) x$conf.int)
 ## [2,] 1.0000 1.0000 1.0000 1.0000 1.0000 1.0000 1.0000
 #--------------
 
-
-
 #-----------------------------------------------------------------
 # 2.3.2  t-tests
 #-----------------------------------------------------------------
 
 #--------------
-# set.seed(987)
 data(HCIprepost, package = "ShinyItemAnalysis")
 library(ggplot2)
 ggplot(data.frame(
@@ -124,9 +120,9 @@ ggplot(data.frame(
 #--------------
 
 #--------------
-ggplot(data.frame(
-  score = HCIprepost$score.post - HCIprepost$score.pre,
-  group = factor(rep(c("Post-Pre"), each = 16), levels = "Post-Pre")),
+ggplot(data.frame(score = HCIprepost$score.post - HCIprepost$score.pre,
+                  group = factor(rep(c("Post-Pre"), each = 16), 
+                                 levels = "Post-Pre")),
   aes(x = group, y = score, fill = group)) +
   geom_boxplot() +
   ylab("Posttest - pretest score") + xlab("") +
@@ -259,10 +255,8 @@ data(HCIdata, package = "ShinyItemAnalysis")
 
 #--------------
 # boxplots (code not shown in the book)
-#set.seed(978)
 ggplot(HCIdata, aes(x = typeSCH, y = total, fill = typeSCH)) +
   geom_boxplot() +
-  #geom_jitter(height = 0, width = 0.25) +
   xlab("") + ylab("Total score") +
   theme_fig() +
   theme(legend.position = "none")
@@ -273,7 +267,7 @@ ggplot(HCIdata, aes(x = typeSCH, y = total, fill = typeSCH)) +
 ggplot(HCIdata, aes(total, fill = typeSCH)) +
   geom_density(aes(y = ..density.., color = typeSCH,
                    linetype = typeSCH),
-               position = "identity", alpha = 0.5, size = 1) +
+               position = "identity", alpha = 0.5, linewidth = 1) +
   xlab("Total score on HCI") + ylab("Density") +
   scale_y_continuous(expand = c(0, 0), limits = c(0, 0.16)) +
   theme_fig() + theme(legend.position = c(0.15, 0.8),
@@ -419,9 +413,9 @@ cor.test(HI$total, HI$HeightCM, method = "kendal")
 #-----------------------------------------------------------------
 
 #--------------
-(b1 = cov(HI$total, HI$HeightCM) / var(HI$total))
+(b1 <- cov(HI$total, HI$HeightCM) / var(HI$total))
 ## [1] 0.5019
-(b0 = mean(HI$HeightCM) - b1 * mean(HI$total))
+(b0 <- mean(HI$HeightCM) - b1 * mean(HI$total))
 ## [1] 139.2778  
 #--------------
 
@@ -488,28 +482,28 @@ SSR / SST # R^22
 
 #--------------
 # F calculated by hand (code not shown in the book)
-SSR / (SST/(nrow(HI) - 2))
+SSR / (SST / (nrow(HI) - 2))
 ## [1] 0.7617
 #--------------
 
 #--------------
-# Calculation of t by hand (not shown in the book)
-# Compare with output of summary(lmHI)
+# calculation of t by hand (not shown in the book)
+# compare with output of summary(lmHI)
 
-# Residual standard error
-(S = sqrt(SSE / (nrow(HI) - 2)))
+# residual standard error
+(S <- sqrt(SSE / (nrow(HI) - 2)))
 ## [1] 4.7299
 
-# Std. Error
-(seBeta1 = S/sqrt(sum((HI$total - mean(HI$total))^2)))
-## [1] 0.0041862  
+# std. error
+(seBeta1 <- S / sqrt(sum((HI$total - mean(HI$total))^2)))
+## [1] 0.0042  
 
 # t value
-b1/seBeta1  
-## [1] [1] 119.89
+b1 / seBeta1  
+## [1] 119.8931
 
 # df
-(nrow(HI) - 2)
+nrow(HI) - 2
 ## [1] 4497
 #--------------
 
@@ -552,8 +546,8 @@ plot(lmHI, which = 4)
 # 2.3.6.2 Multiple linear regression model
 #-----------------------------------------------------------------
 
-lmF <- lm(total ~ gender + major + as.factor(yearc5) +
-            minority + EnglishF + typeSCH, data = HCIdata)
+lmF <- lm(total ~ gender + major + factor(yearc5) + minority + EnglishF + typeSCH, 
+          data = HCIdata)
 anova(lmF)
 ## Analysis of Variance Table
 ## 
@@ -561,7 +555,7 @@ anova(lmF)
 ##                    Df    Sum Sq  Mean Sq F value     Pr(>F)    
 ## gender              2  260.7217 130.3608 13.2054 2.3855e-06 ***
 ## major               1  393.8370 393.8370 39.8952 4.9471e-10 ***
-## as.factor(yearc5)   4  647.2713 161.8178 16.3920 8.2999e-13 ***
+## factor(yearc5)      4  647.2713 161.8178 16.3920 8.2999e-13 ***
 ## minority            2  529.8117 264.9059 26.8347 6.2913e-12 ***
 ## EnglishF            1  319.7232 319.7232 32.3876 1.9058e-08 ***
 ## typeSCH             3  291.5606  97.1869  9.8449 2.3389e-06 ***
@@ -573,8 +567,8 @@ anova(lmF)
 #--------------
 summary(lmF)
 ## Call:
-## lm(formula = total ~ gender + major + as.factor(yearc5) + 
-##    minority + EnglishF + typeSCH, data = HCIdata)
+## lm(formula = total ~ gender + major + factor(yearc5) + minority + 
+##     EnglishF + typeSCH, data = HCIdata)
 ##
 ## Residuals:
 ##     Min      1Q  Median      3Q     Max 
@@ -586,10 +580,10 @@ summary(lmF)
 ## genderF            -0.8086     0.2597 -3.1132    0.0019 ** 
 ## gendernone         -2.2278     0.8311 -2.6805    0.0075 ** 
 ## major               1.2866     0.2657  4.8424 1.602e-06 ***
-## as.factor(yearc5)2  2.0424     0.5102  4.0034 6.959e-05 ***
-## as.factor(yearc5)3  1.1911     0.4951  2.4058    0.0164 *  
-## as.factor(yearc5)4  1.7943     0.5221  3.4366    0.0006 ***
-## as.factor(yearc5)5  3.7029     0.5893  6.2839 6.024e-10 ***
+## factor(yearc5)2     2.0424     0.5102  4.0034 6.959e-05 ***
+## factor(yearc5)3     1.1911     0.4951  2.4058    0.0164 *  
+## factor(yearc5)4     1.7943     0.5221  3.4366    0.0006 ***
+## factor(yearc5)5     3.7029     0.5893  6.2839 6.024e-10 ***
 ## minoritymin        -1.5932     0.3258 -4.8905 1.267e-06 ***
 ## minoritynone       -2.2996     0.6276 -3.6642    0.0003 ***
 ## EnglishFno         -1.4160     0.3147 -4.4993 8.066e-06 ***
@@ -602,6 +596,73 @@ summary(lmF)
 ## Residual standard error: 3.14 on 655 degrees of freedom
 ## Multiple R-squared:  0.274,	Adjusted R-squared:  0.26
 ## F-statistic:   19 on 13 and 655 DF,  p-value: <2e-16
+#--------------
+
+#-----------------------------------------------------------------
+# 2.4.2 Model selection, model fit
+#-----------------------------------------------------------------
+#-----------------------------------------------------------------
+# 2.4.2.1 Likelihood-ratio test
+#-----------------------------------------------------------------
+
+#--------------
+lmFrestr <- lm(total ~ gender + factor(yearc5) + minority + EnglishF + typeSCH, 
+               data = HCIdata)
+anova(lmFrestr, lmF, test = "Chisq")
+## Analysis of Variance Table
+## 
+## Model 1: total ~ gender + factor(yearc5) + minority + EnglishF + typeSCH
+## Model 2: total ~ gender + major + factor(yearc5) + minority + EnglishF + typeSCH
+##   Res.Df  RSS Df Sum of Sq Pr(>Chi)    
+## 1    656 6698                          
+## 2    655 6466  1       232  1.3e-06 ***
+##  ---
+##  Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+#--------------
+
+#--------------
+# LRT with lrtest() function
+library(lmtest)
+lrtest(lmFrestr, lmF)
+## Likelihood ratio test
+##
+## Model 1: total ~ gender + factor(yearc5) + minority + EnglishF + typeSCH
+## Model 2: total ~ gender + major + factor(yearc5) + minority + EnglishF + typeSCH
+##   #Df LogLik Df Chisq Pr(>Chisq)    
+## 1  14  -1720                        
+## 2  15  -1708  1  23.5    1.2e-06 ***
+## ---
+## Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+#--------------
+
+#--------------
+# LRT calculation by hand (code not shown in the book)
+logLik.diff <- logLik(lmFrestr) - logLik(lmF)
+df.diff <- lmFrestr$df.residual - lmF$df.residual
+pchisq(as.numeric(logLik.diff) * (-2), df = df.diff, lower.tail = FALSE)
+## [1] 1.229e-06
+#--------------
+
+#-----------------------------------------------------------------
+# 2.4.2.2 Akaike information criterion
+#-----------------------------------------------------------------
+
+#--------------
+AIC(lmF, lmFrestr)
+##          df       AIC
+## lmF      15 3446.1876
+## lmFrestr 14 3467.7192
+#--------------
+
+#-----------------------------------------------------------------
+# 2.4.2.1 Bayesian information criterion
+#-----------------------------------------------------------------
+
+#--------------
+BIC(lmF, lmFrestr)
+##          df       BIC
+## lmF      15 3513.7743
+## lmFrestr 14 3530.8001
 #--------------
 
 #-----------------------------------------------------------------
@@ -690,3 +751,9 @@ psych::rangeCorrection(r = cor(admitted2$xvar, admitted2$yvar),
    scale_y_continuous(limits = c(5, 31))
 )
 #-------------- 
+
+#-----------------------------------------------------------------
+# 2.5 Validity in interactive application
+#-----------------------------------------------------------------
+
+ShinyItemAnalysis::run_app()
