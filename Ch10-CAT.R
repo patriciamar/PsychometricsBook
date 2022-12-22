@@ -1,17 +1,8 @@
 #-----------------------------------------------------------------
-# Chapter 9 - Computerized Adaptive Testing and Other Topics
+# Chapter 10 - Outlook on applications and more advanced psychometric topics
 # Computational aspects of psychometric methods. With R.
 # P. Martinkova & A. Hladka
 #-----------------------------------------------------------------
-
-#-----------------------------------------------------------------
-# Packages
-#-----------------------------------------------------------------
-
-library(mirt)
-library(mirtCAT)
-library(ShinyItemAnalysis)
-library(Cairo)
 
 #-----------------------------------------------------------------
 # Plot settings
@@ -31,18 +22,17 @@ theme_fig <- function(base_size = 17, base_family = "") {
 }
 
 #-----------------------------------------------------------------
-# 9.2  Item banks and automatic item generation
+# 10.2  Computerized adaptive testing
 #-----------------------------------------------------------------
 
 #--------------
+# Automatic item generation (code not shown in the book)
 # simple algebra - multiplication tables 1 to 10 (open answer)
 n <- 10
 Type <- rep("text", n * n)
 Question <- rep("", n * n)
 Answer <- rep("", n * n)
-#--------------
 
-#--------------
 # setting difficulty of items
 Diff <- rep(99, n * n)
 ipos <- 0
@@ -51,7 +41,7 @@ for (i in 1:n) {
     ipos <- ipos + 1
     Question[ipos] <- paste0(i, " * ", j, " = ?")
     Answer[ipos] <- i * j
-    
+
     if (min(i, j) == 1 & Diff[ipos] == 99) {
       Diff[ipos] <- -1.5
     }
@@ -69,25 +59,19 @@ for (i in 1:n) {
     }
   }
 }
-#--------------
 
-#--------------
 # summary of defined item difficulties (not displayed in book)
 summary(Diff)
 hist(Diff)
 #--------------
 
 #-----------------------------------------------------------------
-# 9.3. Computerized adaptive testing
-#-----------------------------------------------------------------
-
-#-----------------------------------------------------------------
-# 9.3.2  CAT implementation in interactive application
+# 10.2.5  CAT implementation in interactive application
 #-----------------------------------------------------------------
 
 #--------------
 # creating data frame with item wording
-df <- data.frame(Question = Question, Answer = Answer, Type = Type,
+df <- data.frame(Question = Question, Answer = Answer, Type = Type, 
                  stringsAsFactors = FALSE)
 head(df, n = 2)
 ##     Question Answer Type
@@ -115,7 +99,7 @@ results <- mirtCAT(df, mo = model, method = "MAP", criteria = "MI",
                    design = list(max_items = 10, min_SEM = 0.6))
 #--------------
 
-# Note: Note: to match with the results presented, only the 1st (value 1), 6th (value 20) and 8th (last, value 30)
+# Note: to match with the results presented, only the 1st (value 1), 6th (value 20) and 8th (last, value 30)
 #        items are answered correctly
 
 #--------------
@@ -157,6 +141,9 @@ summary(results)
 ##
 ##  $terminated_sucessfully
 ##  [1] TRUE
+##
+##  $item_time
+##  [1] 2.72 2.20 1.85 2.25 2.00 3.48 2.42 3.76
 #--------------
 
 #--------------
@@ -164,10 +151,9 @@ plot(results)
 #--------------
 
 #--------------
-# Further setting the CAT (not displayed in the book)
-df <- data.frame(
-  Question = Question, Answer = Answer, Type = Type, Timer = rep(15, 100),
-  stringsAsFactors = FALSE) # item timer set
+# Further setting the CAT (code not shown in the book)
+df <- data.frame(Question = Question, Answer = Answer, Type = Type, 
+                 Timer = rep(15, 100), stringsAsFactors = FALSE) # item timer set
 design <- list(max_items = 15, min_SEM = 0.6) # stopping criterion combines 2 rules
 preCAT <- list(min_items = 3, max_items = 3, criteria = "random") # preCAT set
 
@@ -191,8 +177,8 @@ shinyGUI <- list(
 
 # Starting the CAT application
 results <- mirtCAT(df,
-                   mo = model, preCAT = preCAT,
-                   method = "MAP", criteria = "MI", start_item = "MI", design = design, shinyGUI = shinyGUI
+  mo = model, preCAT = preCAT,
+  method = "MAP", criteria = "MI", start_item = "MI", design = design, shinyGUI = shinyGUI
 )
 
 # Summary of the results
@@ -201,7 +187,7 @@ plot(results)
 #--------------
 
 #-----------------------------------------------------------------
-# 9.3.3 Post-hoc analysis
+# 10.2.6 Post-hoc analysis
 #-----------------------------------------------------------------
 
 #--------------
@@ -228,11 +214,9 @@ plot(fit2pl, type = "infotrace", facet_items = FALSE)
 
 #---------------
 # CAT using SE as a stopping criterion
-posthocSim1 <- mirtCAT(
-  mo = fit2pl, local_pattern = data[1, ],
-  start_item = "MI", method = "MAP", criteria = "MI",
-  design = list(min_SEM = 0.30)
-)
+posthocSim1 <- mirtCAT(mo = fit2pl, local_pattern = data[1, ],
+                       start_item = "MI", method = "MAP", 
+                       criteria = "MI", design = list(min_SEM = 0.30))
 
 print(posthocSim1)
 ## n.items.answered Theta_1 SE.Theta_1
@@ -273,7 +257,7 @@ plot(posthocSim1)
 #---------------
 # CAT for classification (passed/fail)
 posthocSim2 <- mirtCAT(mo = fit2pl, local_pattern = data[1, ],
-                       start_item = "MI", method = "MAP", criteria = "MI",
+                       start_item = "MI", method = "MAP", criteria = "MI", 
                        design = list(classify = -0.1, classify_CI = 0.90))
 
 print(posthocSim2)
@@ -317,9 +301,9 @@ summary(posthocSim2)
 #---------------
 # calculation of 90% CI for the final ability estimate
 posthocSim2$thetas - qnorm(0.95) * posthocSim2$SE_thetas
-## -0.06373
+## [1,] -0.0637
 posthocSim2$thetas + qnorm(0.95) * posthocSim2$SE_thetas
-## 0.9058
+## [1,] 0.9058
 #---------------
 
 #---------------
@@ -339,21 +323,23 @@ plot(posthocSim2, SE = qnorm(0.975))
 # with catR (code not shown in the book)
 library(catR)
 
-start = list(nrItems = 1, theta = 0)
-test = list(method = "BM", itemSelect = "MFI", random.seed = 1)
-stop = list(rule = "precision", thr = 0.3)
-final = list(method = "BM")
+start <- list(nrItems = 1, theta = 0)
+test <- list(method = "BM", itemSelect = "MFI", random.seed = 1)
+stop <- list(rule = "precision", thr = 0.3)
+final <- list(method = "BM")
+#---------------
 
-sim = simulateRespondents(thetas = 0.5,
-                          itemBank = coef(fit2pl, IRTpars = TRUE, simplify = TRUE)$items, 
-                          responsesMatrix = dataMedical[1,1:100], model = "GPCM", 
-                          start=start, test = test, stop = stop, final = final)
+#---------------
+sim <- simulateRespondents(thetas = 0.5,
+                           itemBank = coef(fit2pl, IRTpars = TRUE, simplify = TRUE)$items, 
+                           responsesMatrix = dataMedical[1, 1:100], model = "GPCM", 
+                           start = start, test = test, stop = stop, final = final)
 sim
 plot(sim, ci = TRUE)
 #---------------
 
 #-----------------------------------------------------------------
-# 9.3.4 CAT simulation study with MCMC
+# 10.2.7 CAT simulation study with MCMC
 #-----------------------------------------------------------------
 
 #--------------
@@ -370,40 +356,47 @@ hist(thetas)
 
 #--------------
 # Simulation of 100 person responses to the test of the same item parameters as those estimated with 2PL model on dataMedical
-set.seed(123)
 responses <- simdata(model = fit2pl, Theta = as.matrix(thetas))
 Zscores <- scale(rowSums(responses))
 cor(thetas, Zscores)
-## 0.9680
+## [1,] 0.9682
 #--------------
 
 #--------------
-# scatterplot Z-scores vs. underlying true scores (not displayed in the book)
+# scatterplot Z-scores vs. underlying true scores (code not displayed in the book)
 plot(thetas, Zscores)
 abline(0, 1, col = "blue")
 #--------------
 
 #--------------
 # MCMC simulation
-# TODO: select other criteria, MI does not work well in initial steps
-MCMCsim <- list()
+MCMCsim <- lapply(1:100, function(p) 
+  mirtCAT(mo = fit2pl, local_pattern = responses[p, ], start_item = "MI", 
+          method = "MAP", criteria = "MI", design = list(min_SEM = 0.30)))
+#--------------
 
+#--------------
+# MCMC simulation with for cycle (slower, code not shown in the book)
+MCMCsim2 <- list()
 for (p in 1:length(thetas)) {
-  MCMCsim[[p]] <- mirtCAT(
-    mo = fit2pl, local_pattern = responses[p, ],
-    start_item = "MI", method = "MAP", criteria = "MI",
-    design = list(min_SEM = 0.30)
+  MCMCsim2[[p]] <- mirtCAT(
+    mo = fit2pl, local_pattern = responses[p, ], start_item = "MI", 
+    method = "MAP", criteria = "MI", design = list(min_SEM = 0.30)
   )
 }
+
+# the same result:
+summary(MCMCsim[[1]])
+summary(MCMCsim2[[1]])
 #--------------
 
 #--------------
 # CAT plot for the first "hypothetical" respondent, whose responses were generated assuming theta = -0.5605
 thetas[1]
-## -0.5605
+## [1] -0.5605
 print(MCMCsim[[1]])
 ## n.items.answered Theta_1 SE.Theta_1
-##               19 -0.4098     0.2994
+##               23 -0.8921     0.2963
 
 #--------------
 # more detailed display (not shown in the book)
@@ -415,23 +408,23 @@ plot(MCMCsim[[1]])
 # extract thetas, plot them against true scores, etc.  
 CAT_thetas <- sapply(MCMCsim, function(x) x$thetas)
 cor(thetas, CAT_thetas)
-## 0.9491 (only slightly lower than when estimate is done from all items)
+## [1] 0.9523 (only slightly lower than when estimate is done from all items)
 cor(Zscores, CAT_thetas)
-## 0.9559
+## [1] 0.9557
 
 CAT_SE <- sapply(MCMCsim, function(x) x$SE_thetas)
 summary(CAT_SE)
 ##   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-## 0.2920  0.2959  0.2978  0.2975  0.2986  0.3122
+## 0.2928  0.2968  0.2984  0.2983  0.2990  0.3560
 sd(CAT_SE)
-## 0.0024
+## 0.0061
 
 CAT_items <- sapply(MCMCsim, function(x) length(x$items_answered))
 summary(CAT_items)
-##  Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-##  18.0    19.0    20.5    25.5    24.0   100.0 
+##  Min.    1st Qu.  Median     Mean   3rd Qu.    Max. 
+##  18.00    19.00    20.00    24.74    25.00   100.00 
 sd(CAT_items)
-## [1] 14.7172
+## [1] 13.0420
 #--------------
 
 #--------------
@@ -495,12 +488,10 @@ cor(CAT_thetas, catR_thetas)
 ## [1] 1
 plot(CAT_thetas, catR_thetas)
 
-
 cor(thetas, catR_thetas)
 ## [1] 0.9491 
 cor(Zscores, catR_thetas)
 ## [1] 0.9559
-
 cor(CAT_SE, catR_ses)
 ## [1]
 
@@ -509,10 +500,7 @@ summary(CAT_SE)
 ## 0.2920  0.2959  0.2978  0.2975  0.2986  0.3122
 sd(CAT_SE)
 ## 0.0024
-
 summary(catR_ses)
-
-
 CAT_items <- catR_items
 summary(CAT_items)
 ##  Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
@@ -521,23 +509,21 @@ sd(CAT_items)
 ## [1] 14.7172
 
 # nice plotting options of catR
-start = list(nrItems = 1, theta = 0, seed = 1)
-test = list(method = "WL", itemSelect = "MFI", random.seed = 1)
-stop = list(rule = "length", thr = 20)  # TODO: implement precision criterion SE < 0.30
-final = list(method = "ML")
+start <- list(nrItems = 1, theta = 0, seed = 1)
+test <- list(method = "WL", itemSelect = "MFI", random.seed = 1)
+stop <- list(rule = "length", thr = 20)  # TODO: implement precision criterion SE < 0.30
+final <- list(method = "ML")
 
-
-sim = simulateRespondents(thetas = thetas, 
-                          itemBank = coef(fit2pl, IRTpars = TRUE, simplify = TRUE)$items, 
-                          start=start, test = test, stop = stop, final = final)
-
+sim <- simulateRespondents(thetas = thetas, 
+                           itemBank = coef(fit2pl, IRTpars = TRUE, simplify = TRUE)$items, 
+                           start = start, test = test, stop = stop, final = final)
 sim
 plot(sim)
 
-## Fixing maximum exposure rate
-sim2 = simulateRespondents(thetas = thetas, 
-                           itemBank = coef(fit2pl, IRTpars = TRUE, simplify = TRUE)$items, start=start,
-                           test = test, stop = stop, final = final, rmax = 0.6)
+## fixing maximum exposure rate
+sim2 <- simulateRespondents(thetas = thetas, 
+                           itemBank = coef(fit2pl, IRTpars = TRUE, simplify = TRUE)$items, 
+                           start = start, test = test, stop = stop, final = final, rmax = 0.6)
 sim2
 plot(sim2)
 #--------------
