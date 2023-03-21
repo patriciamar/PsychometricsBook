@@ -178,6 +178,22 @@ tetrachoric(x = HCI[, 1:20])$rho
 plot_corr(Data = HCI[, 1:20], cor = "polychoric")
 #--------------
 
+#--------------
+# Tetrachoric and polychoric correlations in lavaan package
+# (code not shown in the book)
+
+library(lavaan)
+?lavCor
+lavCor(HCI[, 1:20]) # Pearson correlation
+lavCor(HCI[, 1:20], ordered = names(HCI[, 1:20])) # polychoric correlation
+lavCor(HCI[, 1:20], ordered = names(HCI[, 1:20]), output = "th") # thresholds only
+lavCor(HCI[, 1:20], ordered = names(HCI[, 1:20]), se = "standard", 
+       output = "est") # full output, with SE, significance levels and CI
+lC <- lavCor(HCI[, 1:20], ordered = names(HCI[, 1:20]), se = "standard", 
+             output = "est") # full output, with SE, significance levels and CI
+View(lC)
+#--------------
+
 #-----------------------------------------------------------------
 # 3.2  Cluster analysis
 #-----------------------------------------------------------------
@@ -294,13 +310,26 @@ var(HCI[, 1])
 #--------------
 
 #--------------
-# with factanal() (code not shown in the book)
+# EFA with factanal() function (code not shown in the book)
 # (FA1b <- factanal(x = HCI[, 1:20], covmat = corHCI, factors = 1, 
 #                   rotation = "none"))
 # names(FA1b)
 (FA1b <- factanal(covmat = corHCI, factors = 1, rotation = "none"))
 FA1b$loadings
 FA1b$uniquenesses
+#--------------
+
+#--------------
+# EFA with efa() function of the lavaan package (code not shown in the book)
+?efa
+
+# TODO: keeping original names (here renaming the item names)
+dfHCI <- HCI[, 1:20]
+names(dfHCI) <- paste("i", 1:20, sep = "")
+
+FA1c <- efa(data = dfHCI, 
+            ov.names = names(dfHCI))
+summary(FA1c)                 
 #--------------
 
 #-----------------------------------------------------------------
@@ -383,7 +412,8 @@ text(x = 0.9, y = -0.25, labels = expression(hat(alpha)[i1r]))
 #--------------
 
 #--------------
-# with factanal() and GPArotation()
+# with factanal() function and GPArotation package 
+# (code not shown in the book)
 library(GPArotation)
 ?rotations
 (FA2b_tAnxiety <- factanal(covmat = TestAnxietyCor, factors = 2, 
@@ -391,6 +421,15 @@ library(GPArotation)
 (FA2b_tAnxiety_obl <- factanal(covmat = TestAnxietyCor, factors = 2, 
                                rotation = "oblimin", n.obs = 335))
 update(FA2b_tAnxiety, rotation = "oblimin")
+#--------------
+
+#--------------
+# TODO: keeping original item names?
+# EFA with efa() function of the lavaan package (code not shown in the book)
+
+FA123c <- efa(data = dfHCI, 
+              nfactors = 1:3)
+summary(FA123c)                 
 #--------------
 
 #-----------------------------------------------------------------
@@ -461,6 +500,14 @@ mean(FS$scores)
 sd(FS$scores)
 #--------------
 
+#--------------
+# TODO: make align with factor scores from psych, find relations
+# Factor scores with lavaan
+# (code not shown in the book)
+?lavPredict
+lavPredict(FA1c)[1:3]
+#--------------
+
 #-----------------------------------------------------------------
 # 3.3.4 The number of factors
 #-----------------------------------------------------------------
@@ -519,10 +566,10 @@ summary(BFI2) # code not shown in the book
 #--------------
 
 #--------------
-model_EN <- "E =~ i1 + i6 + i11 + i16 + i21 + i26 + 
+model_EN <- 'E =~ i1 + i6 + i11 + i16 + i21 + i26 + 
                   i31 + i36 + i41 + i46 + i51 + i56
              N =~ i4 + i9 + i14 + i19 + i24 + i29 + 
-                  i34 + i39 + i44 + i49 + i54 + i59"
+                  i34 + i39 + i44 + i49 + i54 + i59'
 #--------------
 
 #--------------
@@ -555,12 +602,21 @@ parameterEstimates(fit_EN, ci = FALSE, standardized = TRUE)
 #--------------
 
 #--------------
-model_ENs <- "E =~ NA * i1 + i6 + i11 + i16 + i21 + i26 + 
+fit_ENstd <- cfa(model_EN, data = BFI2, std.lv = TRUE)
+parameterEstimates(fit_ENstd)
+##    lhs op rhs    est    se       z pvalue ci.lower ci.upper
+## 1    E =~  i1  0.699 0.024  29.740      0    0.653    0.745
+## 2    E =~  i6  0.678 0.024  28.552      0    0.631    0.724
+## ...
+#--------------
+
+#--------------
+model_ENs <- 'E =~ NA * i1 + i6 + i11 + i16 + i21 + i26 + 
                    i31 + i36 + i41 + i46 + i51 + i56
               N =~ NA * i4 + i9 + i14 + i19 + i24 + i29 + 
                    i34 + i39 + i44 + i49 + i54 + i59
               E ~~ 1 * E
-              N ~~ 1 * N"
+              N ~~ 1 * N'
 fit_ENs <- cfa(model = model_ENs, data = BFI2)
 parameterEstimates(fit_ENs, ci = FALSE, standardized = TRUE)
 ##    lhs op rhs    est    se       z pvalue std.lv std.all std.nox
