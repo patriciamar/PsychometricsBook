@@ -218,9 +218,9 @@ mean(as.ordered(HCIdata$yearc5))
 #--------------
 data(HCIlong, package = "ShinyItemAnalysis")
 head(HCIlong, n = 2)
-##    id   item rating gender major total
-##  1  1 Item 1      1      0     1    16
-##  2  1 Item 2      1      0     1    16
+##    id   item rating gender major total zscore
+##  1  1 Item 1      1      0     1    16  1.041
+##  2  1 Item 2      1      0     1    16  1.041
 #--------------
 
 #--------------
