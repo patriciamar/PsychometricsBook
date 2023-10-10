@@ -5,8 +5,6 @@
 # Code for installation of packages
 #-----------------------------------------------------------------
 
-install.packages("remotes")
-
 install.packages("aod")
 install.packages("brms")
 install.packages("catR")
@@ -24,6 +22,7 @@ install.packages("hemp")
 install.packages("lattice")
 install.packages("lavaan")
 install.packages("lme4")
+install.packages("lmTest")
 install.packages("lordif")
 install.packages("ltm")
 install.packages("mirt")
@@ -34,13 +33,17 @@ install.packages("nlme")
 install.packages("nnet")
 install.packages("psych")
 install.packages("psychometric")
+install.packages("remotes")
 install.packages("semPlot")
+install.packages("shiny")
 install.packages("ShinyItemAnalysis", dependencies = TRUE)
+install.packages("SIAmodules")
 install.packages("TAM")
 install.packages("tidyverse")
 install.packages("VGAM")
 
 # install from GitHub (packages not available on CRAN, or newest versions)
 remotes::install_github("adelahladka/difNLR")  # newest GitHub version
-remotes::install_github("cddesja/hemp")
 remotes::install_github("patriciamar/ShinyItemAnalysis") # newest GitHub version
+remotes::install_github("cddesja/hemp")
+remotes::install_github("paul-buerkner/brms") # see https://github.com/paul-buerkner/brms
