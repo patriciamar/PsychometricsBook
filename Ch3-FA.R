@@ -49,7 +49,7 @@ cor.test(EPIA_items$i1, EPIA_items$i2)
 
 # correlation heat map (code not shown in the book)
 library(ShinyItemAnalysis)
-plot_corr(Data = EPIA_items)
+plot_corr(Data = EPIA_items, cor = "pearson")
 #--------------
 
 #-----------------------------------------------------------------
@@ -158,7 +158,7 @@ cor(Anxiety$R1, Anxiety$R2)
 #--------------
 
 #--------------
-# polychoric is generalization of tetrachoric correlation
+# Polychoric is generalization of tetrachoric correlation
 # the same results are obtained for binary data (code not shown in the book)
 polychoric(x = HCI[, 1:20])$rho
 tetrachoric(x = HCI[, 1:20])$rho
@@ -179,18 +179,19 @@ plot_corr(Data = HCI[, 1:20], cor = "polychoric")
 #--------------
 
 #--------------
-# Tetrachoric and polychoric correlations in lavaan package
+# Tetrachoric and polychoric correlations in the lavaan package
 # (code not shown in the book)
 
 library(lavaan)
 ?lavCor
 lavCor(HCI[, 1:20]) # Pearson correlation
-lavCor(HCI[, 1:20], ordered = names(HCI[, 1:20])) # polychoric correlation
+lavCor(HCI[, 1:20], ordered = names(HCI[, 1:20])) # terachoric/polychoric correlation
 lavCor(HCI[, 1:20], ordered = names(HCI[, 1:20]), output = "th") # thresholds only
+
 lavCor(HCI[, 1:20], ordered = names(HCI[, 1:20]), se = "standard", 
        output = "est") # full output, with SE, significance levels and CI
 lC <- lavCor(HCI[, 1:20], ordered = names(HCI[, 1:20]), se = "standard", 
-             output = "est") # full output, with SE, significance levels and CI
+             output = "est") 
 View(lC)
 #--------------
 
@@ -207,7 +208,7 @@ ggdendrogram(data = hc)
 #--------------
 
 #--------------
-plot_corr(Data = HCI[, 1:20], cor = "poly", clust_method = "ward.D2")
+plot_corr(Data = HCI[, 1:20], cor = "polychoric", clust_method = "ward.D2")
 #--------------
 
 #-----------------------------------------------------------------
@@ -323,7 +324,8 @@ FA1b$uniquenesses
 # EFA with efa() function of the lavaan package (code not shown in the book)
 ?efa
 
-# TODO: keeping original names (here renaming the item names)
+# TODO: make run while keeping original names
+# renaming item names
 dfHCI <- HCI[, 1:20]
 names(dfHCI) <- paste("i", 1:20, sep = "")
 
@@ -423,15 +425,6 @@ library(GPArotation)
 update(FA2b_tAnxiety, rotation = "oblimin")
 #--------------
 
-#--------------
-# TODO: keeping original item names?
-# EFA with efa() function of the lavaan package (code not shown in the book)
-
-FA123c <- efa(data = dfHCI, 
-              nfactors = 1:3)
-summary(FA123c)                 
-#--------------
-
 #-----------------------------------------------------------------
 # 3.3.3 Factor scores
 #-----------------------------------------------------------------
@@ -465,6 +458,7 @@ head(FSa, n = 3)
 #--------------
 (FS <- psych::factor.scores(x = HCI[, 1:20], f = FA1, rho = corHCI, 
                             method = "Thurstone"))
+
 ## $scores
 ##          ML1
 ## [1,]  0.8109
@@ -487,25 +481,38 @@ head(FSa, n = 3)
            fm = "ml", scores = "Thurstone"))
 FA1$scores[1:4]
 # ## [1] 1.203982 1.806541 1.331732 1.875942
-# seems to give different results, somewhat different setting
+# $scores seems to give results as if cor = "tet" was ignored:
+psych::factor.scores(x = HCI[, 1:20], f = FA1, method = "Thurstone")
+# $scores
+# ML1
+# [1,]  1.2039
+# [2,]  1.8065
+#...
 plot(FS$scores ~ FA1$scores)
-cor(FS$scores, FA1$scores) # but highly correlated
+cor(FS$scores, FA1$scores) # but still highly correlated
 ##        ML1
 ## ML1 0.9988
 
-hist(FS$scores)
+# quite highly correlated with total scores
 plot(FS$scores ~ rowSums(HCI[, 1:20]))
 cor(FS$scores, rowSums(HCI[, 1:20]))
+hist(FS$scores)
 mean(FS$scores)
 sd(FS$scores)
 #--------------
 
 #--------------
-# TODO: make align with factor scores from psych, find relations
 # Factor scores with lavaan
 # (code not shown in the book)
 ?lavPredict
 lavPredict(FA1c)[1:3]
+# [1] 0.9589 1.4176 1.0389
+predict(FA1c)[1:3]
+# [1] 0.9589 1.4176 1.0389
+FSlavaan <- lavPredict(FA1c)
+
+plot(FS$scores ~ FSlavaan)
+cor(FS$scores, FA1$scores) # highly correlated
 #--------------
 
 #-----------------------------------------------------------------
@@ -602,6 +609,7 @@ parameterEstimates(fit_EN, ci = FALSE, standardized = TRUE)
 #--------------
 
 #--------------
+# (code not shown in the book)
 fit_ENstd <- cfa(model_EN, data = BFI2, std.lv = TRUE)
 parameterEstimates(fit_ENstd)
 ##    lhs op rhs    est    se       z pvalue ci.lower ci.upper
@@ -671,14 +679,14 @@ head(FS, n = 3)
 #-----------------------------------------------------------------
 
 #--------------
-model_EN_hier <- "Escb =~ i1 + i16 + i31 + i46
+model_EN_hier <- 'Escb =~ i1 + i16 + i31 + i46
                   Easr =~ i6 + i21 + i36 + i51
                   Eenl =~ i11 + i26 + i41 + i56
                   Nanx =~ i4 + i19 + i34 + i49
                   Ndep =~ i9 + i24 + i39 + i54
                   Nemt =~ i14 + i29 + i44 + i59
                   E =~ Escb + Easr + Eenl
-                  N =~ Nanx + Ndep + Nemt"
+                  N =~ Nanx + Ndep + Nemt'
 fit_EN_hier <- cfa(model = model_EN_hier, data = BFI2)
 #--------------
 
@@ -716,4 +724,3 @@ fitMeasures(fit_EN_hier, c("cfi", "tli", "rmsea", "bic"))
 #-----------------------------------------------------------------
 
 ShinyItemAnalysis::run_app()
-
