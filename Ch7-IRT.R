@@ -89,7 +89,7 @@ coef(fit_rasch_mirt, IRTpars = TRUE, simplify = TRUE)
 # code not shown in the book
 sqrt(0.669) # 0.818 is the SD of the latent trait
 0.963 / sqrt(0.669) # latent trait 1.177 below average is needed
-                    # to answer Item 1 correctly with probability 0.5
+# to answer Item 1 correctly with probability 0.5
 #--------------
 
 #--------------
@@ -555,7 +555,7 @@ data("HCIlong", package = "ShinyItemAnalysis")
 #--------------
 # explore the data (code not shown in the book)
 head(HCIlong)
-HCIlong$zscore <- (HCIlong$total - mean(HCI$total))/sd(HCI$total)
+#HCIlong$zscore <- (HCIlong$total - mean(HCI$total))/sd(HCI$total)
 HCIlong$id <- factor(HCIlong$id)
 HCIlong$item <- factor(gsub("Item ", "", HCIlong$item), levels = 1:20)
 summary(HCIlong)
@@ -587,10 +587,10 @@ library(brms)
 formula_1PL <- bf(rating ~ 1 + (1 | item) + (1 | id))
 # formula_1PL <- bf(rating ~ 0 + item + (1 | id))
 prior_1PL <- prior("normal(0, 3)", class = "sd", group = "id") +
-             prior("normal(0, 3)", class = "sd", group = "item")
+  prior("normal(0, 3)", class = "sd", group = "item")
 # prior_1PL <- prior("normal(0, 3)", class = "sd", group = "id")
 
-fit_1PL_brms <- brm(formula = formula_1PL, data = HLIlong, prior = prior_1PL,
+fit_1PL_brms <- brm(formula = formula_1PL, data = HCIlong, prior = prior_1PL,
                     family = brmsfamily("bernoulli", "logit"), seed = 123)
 coef(fit_1PL_brms)$item[, , "Intercept"]
 ##     Estimate Est.Error     Q2.5    Q97.5
