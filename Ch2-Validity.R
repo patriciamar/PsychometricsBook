@@ -123,9 +123,9 @@ ggplot(data.frame(
 ggplot(data.frame(score = HCIprepost$score.post - HCIprepost$score.pre,
                   group = factor(rep(c("Post-Pre"), each = 16), 
                                  levels = "Post-Pre")),
-  aes(x = group, y = score, fill = group)) +
+       aes(x = group, y = score, fill = group)) +
   geom_boxplot() +
-  ylab("Posttest - pretest score") + xlab("") +
+  ylab("Post-test - pre-test score") + xlab("") +
   theme_fig() +
   theme(legend.position = "none")
 #--------------
@@ -312,7 +312,6 @@ HI <- na.omit(HeightInventory)
 #--------------
 
 #--------------
-HI$total <- rowSums(HI[, 1:26])
 summary(HI$total)
 ##    Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
 ## 26.0000  54.0000  67.0000  65.6517  78.0000 104.0000 
@@ -344,7 +343,7 @@ cor.test(HI$total, HI$HeightCM)
 #--------------
 
 #--------------
-HI$GenderM <- 1 * (HI$Gender == "M")
+HI$GenderM <- 1 * (HI$gender == "M")
 # (code not shown in the book)
 summary(HI$Gender)
 str(HI$Gender)
@@ -725,7 +724,7 @@ psych::rangeCorrection(r = cor(admitted$xvar, admitted$yvar),
 #--------------
 
 #-------------- 
-# Only those above 58 or bellow 43
+# Only those above 58 or below 43
 admitted2 <- subset(df, xvar > 58 | xvar < 43)
 cor(admitted2$xvar, admitted2$yvar)
 ## [1] 0.8128
